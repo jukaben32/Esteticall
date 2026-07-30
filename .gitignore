@@ -1,41 +1,40 @@
-# === Dependencias ===
-node_modules/
+# dependencies
+/node_modules
+/.pnp
+.pnp.js
 
-# === Variables de entorno (¡NUNCA subir credenciales!) ===
-.env
-.env.*
-!.env.example
+# testing
+/coverage
 
-# === Build / compilado ===
-dist/
-build/
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+
+
+# vercel
+.vercel
+
+# typescript
 *.tsbuildinfo
 
-# === Prisma (cliente generado) ===
-# El cliente se regenera con "npx prisma generate", no hace falta subirlo
-node_modules/.prisma/
+# environment variables — never commit secrets
 
-# === Logs ===
-*.log
-npm-debug.log*
-logs/
 
-# === Archivos del sistema / editor ===
-.DS_Store
-Thumbs.db
-.vscode/
-.idea/
-
-# === Archivos temporales de prueba ===
-test-*.mts
-test_*.mjs
-apply_sql*.py
-seed_sql.py
-
-# === Estado interno del asistente (no es parte del proyecto) ===
-ESTADO.md
-
-# === Frontend (landing + dashboard Next.js) ===
-estatecall-frontend/**/node_modules/
-estatecall-frontend/**/.env
-estatecall-frontend/**/.next/
+.env
+.env.local
+.env.*.local
+.env.development.local
+.env.production.local

@@ -1,91 +1,103 @@
-# EstateCall — Backend
+# Real Estate AI Calling Agent SaaS
 
-Backend en **Node.js + Express + TypeScript + PostgreSQL (Prisma)** para la plataforma
-"Real Estate Multi AI Agent Platform": llamadas de IA, calificación de leads, reserva de
-citas, portal de clientes, pagos con Stripe y sitio web embebible — recreado a partir del
-video tutorial (originalmente Next.js + Supabase) con Express + Postgres, según lo pedido.
+![alt text](https://www.daulathussain.com/wp-content/uploads/2026/07/Build-Deploy-Real-Estate-AI-Calling-Agent-SaaS-Appointment-Bookig-System-Property-Buy-Sell-Rent-Next.js-Stripe-Multi-AI-Agents.jpg)
 
-## Funcionalidades implementadas
+- [Final Source Code](https://www.theblockchaincoders.com/sourceCode/build-and-deploy-real-estate-ai-calling-agent-saas-+-appointment-bookig-system-or-property-buy-sell-and-rent-or-next.js-stripe-and-multi-ai-agents)
 
-- **Auth dual**: JWT separado para agentes (dashboard) y clientes (portal), incluyendo el
-  flujo de "creá tu cuenta con el mismo email que usaste para reservar".
-- **Propiedades**: CRUD completo, contadores por estado (Available/Pending/Sold), feed
-  público filtrado por `aiAgentId` para que el agente de IA solo hable de lo permitido
-  (`visibleToAiAgent`), carga de imágenes (vía URLs — conectar a S3/Cloudinary).
-- **AI Agents**: perfiles de agentes de llamada (nombre, especialidad, guion de saludo,
-  voz, personalidad), asignables a propiedades. Endpoint de "runtime context" protegido
-  con API key para que el orquestador de voz/LLM arme el system prompt.
-- **Citas (appointments)**: reserva (por IA o widget del sitio), slots disponibles,
-  confirmar, cancelar, reprogramar (con estado `RESCHEDULE_REQUESTED` pendiente de
-  aprobación, igual que en el video), pago en efectivo o marcado tras pago online.
-- **Pagos**: Stripe PaymentIntents para pagar la cita, webhook para confirmar el pago y
-  notificar por email, suscripción mensual para el website builder ($29/mes en el demo).
-- **Llamadas**: registro de cada llamada (call log) con transcripción, duración y
-  resultado, listado para el dashboard.
-- **Clientes**: vista del agente con historial de citas por cliente.
-- **Soporte**: tickets y chat cliente-agente.
-- **Website builder**: configuración de micro-sitio (tema, hero, agente de IA activo),
-  publicación, requiere suscripción activa.
-- Emails transaccionales en cada paso (reserva, confirmación, cancelación, reprogramación,
-  pago, invitación al portal) vía Nodemailer/SMTP.
+#### Setup Video
 
-## Instalación
+- [Final Code Setup video](https://youtu.be/zg2BP6cglVU?si=Vn3UF8a-VJXaP-Ev)
 
-```bash
-cd estatecall-backend
-npm install
-cp .env.example .env   # completá DATABASE_URL, JWT secrets, Stripe, SMTP
-npx prisma migrate dev --name init
-npm run seed            # crea un agente demo + los 4 listados del video
-npm run dev
+## Project Overview
+
+Build & Deploy Real Estate AI Calling Agent SaaS + Appointment Bookig System | Property Buy, Sell & Rent | Next.js, Stripe & Multi AI Agents
+
+Build a complete Real Estate AI Calling Agent SaaS from scratch using Next.js, Stripe, and Multi AI Agents. In this project, you'll create an AI-powered platform that helps real estate businesses automate property inquiries, schedule appointments, qualify leads, and manage buy, sell, and rental requests—all with intelligent AI voice agents.
+
+In this tutorial, you'll learn how to build and deploy a production-ready SaaS application with modern technologies and real-world features.
+
+## 🔥 What You'll Build
+
+- AI Voice Calling Agents for Real Estate
+- Property Buy, Sell & Rent Assistant
+- Multi AI Agent Architecture
+- AI Appointment Booking System
+- Lead Qualification & Customer Management
+- Agent Dashboard
+- Property Management System
+- Stripe Subscription & Payment Integration
+- Authentication & User Management
+- Responsive Modern UI with Next.js
+- Production Deployment
+
+## 💻 Tech Stack
+
+- Next.js
+- React.js
+- TypeScript
+- Tailwind CSS
+- Node.js
+- AI Voice Agents
+- Stripe
+- PostgreSQL
+- Prisma ORM
+- REST APIs
+
+This project is perfect for developers who want to learn how to build AI-powered SaaS applications, automate real estate businesses, integrate AI calling agents, and monetize their products using Stripe subscriptions.
+
+If you enjoy this tutorial, don't forget to Like, Share, and Subscribe for more AI, SaaS, Next.js, Blockchain, and Full Stack development projects.
+
+## Instruction
+
+Kindly follow the following Instructions to run the project in your system and install the necessary requirements
+
+#### Deploying Blockchain & Dapp
+
+```
+  WATCH: Digital Ocean
+  Get : $200 Free Credit
+  URL: https://m.do.co/c/fbe1551c5ae1
 ```
 
-Login de prueba tras el seed: `agent@estatecall.com` / `password123`
-
-## Estructura
-
 ```
-src/
-  config/        # env vars, cliente Prisma
-  middleware/     # auth (JWT agente/cliente/servicio), manejo de errores
-  modules/
-    auth/         # registro/login de agentes y clientes
-    properties/   # listados
-    agents/       # perfiles de AI agent (llamadas)
-    appointments/  # reservas, confirmación, cancelación, reprogramación
-    calls/        # call log
-    clients/      # vista de clientes del agente
-    support/      # tickets de soporte
-    payments/     # Stripe (intents, webhook, suscripción)
-    website/      # website builder
-  routes/         # router principal /api
-  app.ts          # Express app + middlewares
-  index.ts        # arranque del servidor
-prisma/
-  schema.prisma   # modelo de datos completo
-  seed.ts         # datos de ejemplo
+  WATCH: Hostinger
+  Get : Discount 75%
+  URL: https://www.hostg.xyz/aff_c?offer_id=6&aff_id=139422
 ```
 
-## Autenticación
+### MULTI-CURRENCY ICO DAPP
 
-Dos audiencias de JWT independientes (secrets distintos):
+```
+  PROJECT: MULTI-CURRENCY ICO DAPP
+  Code: https://www.theblockchaincoders.com/sourceCode/multi-currency-ico-dapp-using-next.js-solidity-and-wagmi
+  VIDEO: https://youtu.be/j8NO8ea5zVo?si=jCmvfXmpmefwjhO5
+```
 
-- **Agente** (dashboard): `Authorization: Bearer <token>` obtenido en
-  `POST /api/auth/agent/login`.
-- **Cliente** (portal): mismo header, token de `POST /api/auth/client/login`.
-- **Servicio** (orquestador de voz IA / webhooks internos): header
-  `x-service-key: <AI_SERVICE_KEY>` — agregalo a tu `.env` para las rutas de
-  `runtime-context` y logging de llamadas.
+#### Install Vs Code Editor
 
-## Próximos pasos sugeridos
+```
+  GET: VsCode Editor
+  URL: https://code.visualstudio.com/download
+```
 
-1. **Almacenamiento de imágenes**: conectar `POST /properties/:id/images` a S3/Cloudinary
-   antes de guardar las URLs (hoy el endpoint espera URLs ya subidas).
-2. **Orquestación de voz**: este backend expone todo lo que un orquestador de voz (Twilio +
-   LLM, Vapi, Retell, etc.) necesita — `GET /ai-agents/:id/runtime-context` para el
-   contexto y `POST /appointments` + `POST /calls` para registrar resultados — pero no
-   incluye la integración de telefonía en sí.
-3. **Stripe**: crear el producto/precio del website builder en el dashboard de Stripe y
-   configurar `STRIPE_WEBSITE_PRICE_ID`, y apuntar el webhook a
-   `POST /api/payments/webhook`.
-4. **Migraciones en producción**: usar `prisma migrate deploy` en el pipeline de CI/CD.
+#### NodeJs & NPM Version
+
+```
+  NodeJs: 20 / LATEST
+  URL: https://nodejs.org/en/download
+  Video: https://youtu.be/PIR0oBVowXU?si=9eNdR29u37F2ujJJ
+```
+
+All you need to follow the complete project and follow the instructions which are explained in the tutorial by Daulat
+
+## Important Links
+
+- [Get Pro Blockchain Developer Course](https://www.theblockchaincoders.com/pro-nft-marketplace)
+- [Support Creator](https://bit.ly/Support-Creator)
+- [All Projects Source Code](https://www.theblockchaincoders.com/SourceCode)
+
+## Authors
+
+- [@theblockchaincoders.com](https://www.theblockchaincoders.com/)
+- [@consultancy](https://www.theblockchaincoders.com/consultancy)
+- [@youtube](https://www.youtube.com/@daulathussain)
