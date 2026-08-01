@@ -36,23 +36,32 @@ export async function POST(request: Request, { params }: { params: { agentId: st
   })
 
   const systemPrompt = buildSystemPrompt({ business, agent, listings })
+  const turnDetection = {
+    type: 'server_vad',
+    threshold: Number(agent.sensitivity) || 0.5,
+    prefix_padding_ms: 300,
+    silence_duration_ms: 500,
+  }
 
-  const openaiResponse = await fetch('https://api.openai.com/v1/realtime/sessions', {
+  // OpenAI retired /v1/realtime/sessions in favor of /v1/realtime/client_secrets,
+  // which nests the session config under `session` and moves voice/turn_detection
+  // under `session.audio.output`/`session.audio.input`.
+  const openaiResponse = await fetch('https://api.openai.com/v1/realtime/client_secrets', {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      model: OPENAI_REALTIME_MODEL,
-      voice: agent.voice,
-      instructions: systemPrompt,
-      tools: REALTIME_TOOLS,
-      turn_detection: {
-        type: 'server_vad',
-        threshold: Number(agent.sensitivity) || 0.5,
-        prefix_padding_ms: 300,
-        silence_duration_ms: 500,
+      session: {
+        type: 'realtime',
+        model: OPENAI_REALTIME_MODEL,
+        instructions: systemPrompt,
+        tools: REALTIME_TOOLS,
+        audio: {
+          output: { voice: agent.voice },
+          input: { turn_detection: turnDetection },
+        },
       },
     }),
   })
@@ -71,13 +80,8 @@ export async function POST(request: Request, { params }: { params: { agentId: st
     model: OPENAI_REALTIME_MODEL,
     systemPrompt,
     tools: REALTIME_TOOLS,
-    turnDetection: {
-      type: 'server_vad',
-      threshold: Number(agent.sensitivity) || 0.5,
-      prefix_padding_ms: 300,
-      silence_duration_ms: 500,
-    },
-    clientSecret: session.client_secret.value,
-    expiresAt: session.client_secret.expires_at,
+    turnDetection,
+    clientSecret: session.value,
+    expiresAt: session.expires_at,
   })
 }
