@@ -18,7 +18,7 @@ export async function GET(_request: Request, { params }: { params: { businessId:
     return NextResponse.json({ error: 'Widget not found or disabled' }, { status: 404 })
   }
 
-  const { data: agent } = await supabase
+  const { data: agent, error: agentError } = await supabase
     .from('ai_agents')
     .select('id, name')
     .eq('business_id', params.businessId)
@@ -26,5 +26,11 @@ export async function GET(_request: Request, { params }: { params: { businessId:
     .limit(1)
     .maybeSingle()
 
-  return NextResponse.json({ ...config, agentId: agent?.id ?? null, agentName: agent?.name ?? null })
+  return NextResponse.json({
+    ...config,
+    agentId: agent?.id ?? null,
+    agentName: agent?.name ?? null,
+    _debugBusinessId: params.businessId,
+    _debugAgentError: agentError ? { message: agentError.message, code: agentError.code, details: agentError.details } : null,
+  })
 }
