@@ -191,12 +191,31 @@ al intentar crear el cliente de Supabase con `NEXT_PUBLIC_SUPABASE_URL`/`ANON_KE
 Es el proyecto detrás del dominio `real-estate-multi-ai-agent-saa-s-is.vercel.app` — **no es
 el mismo dominio de producción real** (`real-estate-multi-ai-agent-saa-s.vercel.app`, sin `-is`).
 
-Se cargaron las mismas variables de entorno que en el proyecto correcto (con un
-`NEXT_PUBLIC_APP_URL` propio) y se re-desplegó; ya sirve 200 y el middleware redirige
-correctamente a `/login`. **Pendiente de decidir:** si no vas a usar este proyecto
-duplicado, mejor eliminarlo desde el dashboard de Vercel para evitar confundirlo de nuevo
-con el real — el dominio bueno para todo (login, Stripe webhook, etc.) sigue siendo
+Se cargaron las mismas variables de entorno que en el proyecto correcto y se re-desplegó
+para confirmar la causa; el proyecto duplicado ya se **eliminó** por pedido tuyo. El único
+proyecto/dominio real para todo (login, Stripe webhook, etc.) es
 `real-estate-multi-ai-agent-saa-s.vercel.app`.
+
+### 6c. Widget de voz no respondía / no conectaba — ✅ resuelto (1 ago 2026)
+Dos bugs distintos, encontrados al probar el widget con un agente ya activo:
+
+1. **`/api/widget/[businessId]/config` devolvía siempre `agentId: null`.** La consulta
+   encadenada `.eq('business_id', x).eq('status', 'live').maybeSingle()` en supabase-js
+   devolvía `data: null` sin error, aunque la misma fila existía y el mismo filtro vía REST
+   crudo sí la encontraba (confirmado comparando ambas directamente en producción). Se
+   reemplazó por un select simple + filtro en JS, que sí funciona.
+2. **La llamada nunca conectaba: `POST /api/agents/[agentId]/session` fallaba con
+   `OpenAI Realtime error: Invalid URL (POST /v1/realtime/sessions)`.** OpenAI retiró ese
+   endpoint; el reemplazo es `/v1/realtime/client_secrets`, con el body anidado bajo
+   `session` (`voice` ahora va en `session.audio.output.voice`, `turn_detection` en
+   `session.audio.input.turn_detection`) y el token efímero se lee de `value`/`expires_at`
+   en vez de `client_secret.value`/`client_secret.expires_at`. Verificado contra la API real
+   de OpenAI antes de aplicar el cambio.
+
+Además, cada negocio nuevo ahora siembra su fila de `widgets` automáticamente al crearse
+(antes había que guardar el formulario del dashboard una vez para que existiera, y hasta
+entonces el endpoint público daba 404), y el Dashboard → Widget ahora incluye una prueba
+en vivo del asistente (antes solo mostraba el snippet para embeber en un sitio externo).
 
 ### 7. Seguridad (bloqueante, urgente)
 Rotar TODOS los tokens que fueron expuestos en el chat: GitHub PAT, Vercel access
