@@ -1,7 +1,8 @@
 # ESTATECALL — ESTADO DEL PROYECTO
 
-> Última actualización: julio 2026, tras completar las páginas de dashboard que
-> faltaban (ver sección "Dashboard completo" más abajo).
+> Última actualización: 1 agosto 2026. Producto funcionalmente completo y en
+> producción (ver "PENDIENTES" — todo resuelto salvo rotar credenciales expuestas
+> en el chat).
 
 ## RESUMEN RÁPIDO
 
@@ -9,9 +10,10 @@ El backend Express + Prisma **ya no existe**. Fue reemplazado por completo por u
 app **Next.js 14 full-stack** (el starter Real-Estate-AI-Calling-Agent-SaaS,
 implementado). Todo vive ahora en un solo proyecto: frontend, API y lógica de negocio.
 
-El dashboard ya tiene las 14 secciones de su barra lateral implementadas (antes solo
-3 de 14 existían — ver detalle abajo). Fase actual: **ejecutar el schema en Supabase,
-corregir el deploy de Vercel y terminar el frontend público/landing**.
+El dashboard tiene las 14 secciones de su barra lateral implementadas y funcionales
+contra Supabase real, con la identidad de marca original (esmeralda/marfil, español)
+restaurada, landing propia, carga de fotos, y voz/email conectados (OpenAI + Resend).
+Deployado en `real-estate-multi-ai-agent-saa-s.vercel.app`.
 
 ---
 
@@ -159,29 +161,33 @@ Vercel. El webhook endpoint se creó vía API de Stripe apuntando a
 ya cargado también. Son keys de **test mode** — para cobrar de verdad hay que repetir
 el proceso con las keys de modo live desde dashboard.stripe.com (o pedírmelo).
 
-### 4. Variables de entorno que todavía faltan (bloqueante para funcionalidad completa)
-Con lo cargado hoy, el dashboard funciona (auth, listings, agentes, viewings, schedule,
-clients, services, knowledge, widget config, website, notifications, plan/billing con
-Stripe test — todo lectura y escritura contra Supabase/Stripe reales). Sin esto, dos
-funciones fallan de forma esperada:
+### 4. Variables de entorno — ✅ todas resueltas (1 ago 2026)
+`OPENAI_API_KEY` y `RESEND_API_KEY`/`RESEND_FROM_EMAIL` ya cargadas en Vercel (production/
+preview/development). Verificadas contra las APIs reales antes de cargarlas: el modelo
+`gpt-realtime` responde con la key de OpenAI, y se mandó un email de prueba con Resend
+usando el dominio verificado `mail.resendcegmas.com` como remitente
+(`RESEND_FROM_EMAIL=EstateCall <noreply@mail.resendcegmas.com>`).
 
-| Variable | Bloquea | Dónde conseguirla |
-|---|---|---|
-| `OPENAI_API_KEY` | La voz del agente IA (Realtime): `/api/agents/[agentId]/session`, el widget de voz, `widget-demo`, `/embed/[businessId]` | platform.openai.com/api-keys |
-| `RESEND_API_KEY`, `RESEND_FROM_EMAIL` | Emails de confirmación de cita y de lead nuevo (`src/services/email.ts`) — no rompen el flujo, simplemente no se envía el correo | resend.com/api-keys |
+Con esto el producto queda funcionalmente completo: auth, listings (con fotos), agentes
+IA con voz realtime, viewings, schedule, clients, services, knowledge, widget, website,
+notifications, plan/billing (Stripe test), y emails de confirmación de cita/lead nuevo.
 
-Cuando se agreguen, avisar para cargarlas también en Vercel (mismo proceso que se
-usó hoy con las de Supabase y Stripe).
+### 5. Merge a main y deploy de producción — ✅ resuelto (1 ago 2026)
+PR #1 mergeado a `main` (squash). `real-estate-multi-ai-agent-saa-s.vercel.app` ya sirve
+el build de producción con todo lo de arriba.
 
-### 6. Frontend nuevo
-La landing actual es la del starter, en inglés y genérica. Se está construyendo una
-propia.
+### 6. Frontend / landing — ✅ resuelto (1 ago 2026)
+Reconstruida en `src/app/page.tsx` a partir del diseño original recuperado del historial
+de git (`estatecall-frontend/landing/index.html`, borrado en el commit 7724fed): paleta
+esmeralda/marfil, copy en español, hero/cómo-funciona/funciones/propiedades/precios/CTA,
+con botones que van a `/login` y `/signup` reales.
 
 ### 7. Seguridad (bloqueante, urgente)
 Rotar TODOS los tokens que fueron expuestos en el chat: GitHub PAT, Vercel access
-token, Supabase service role key y access token (`sbp_...`), y las keys de Stripe test
-mode. Ya van varias veces que se pegan credenciales reales directo en la conversación
-— la próxima vez, cargarlas directo en los dashboards de Vercel/Supabase/Stripe en vez
+token, Supabase service role key y access token (`sbp_...`), las keys de Stripe test
+mode, y ahora también las de OpenAI y Resend. Ya van varias veces que se pegan
+credenciales reales directo en la conversación — la próxima vez, cargarlas directo en
+los dashboards de Vercel/Supabase/Stripe/etc. en vez
 de pasarlas por acá.
 
 ---
