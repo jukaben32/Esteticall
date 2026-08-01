@@ -26,11 +26,25 @@ export async function GET(_request: Request, { params }: { params: { businessId:
     .limit(1)
     .maybeSingle()
 
+  const { data: allAgentsForBusiness, error: allErr } = await supabase
+    .from('ai_agents')
+    .select('id, name, status, business_id')
+    .eq('business_id', params.businessId)
+
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? null
+  const serviceKeyPresent = Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY)
+  const serviceKeyLen = process.env.SUPABASE_SERVICE_ROLE_KEY?.length ?? 0
+
   return NextResponse.json({
     ...config,
     agentId: agent?.id ?? null,
     agentName: agent?.name ?? null,
     _debugBusinessId: params.businessId,
     _debugAgentError: agentError ? { message: agentError.message, code: agentError.code, details: agentError.details } : null,
+    _debugAllAgents: allAgentsForBusiness,
+    _debugAllErr: allErr ? { message: allErr.message, code: allErr.code } : null,
+    _debugSupabaseUrl: supabaseUrl,
+    _debugServiceKeyPresent: serviceKeyPresent,
+    _debugServiceKeyLen: serviceKeyLen,
   })
 }
