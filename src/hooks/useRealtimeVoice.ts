@@ -4,7 +4,9 @@ import { useCallback, useRef } from 'react'
 import { useVoiceStore } from '@/store/voice'
 import type { RealtimeSessionResponse } from '@/types'
 
-const REALTIME_URL = 'https://api.openai.com/v1/realtime'
+// OpenAI retired the beta SDP-exchange shape at /v1/realtime (still returns
+// 400 beta_api_shape_disabled) — the GA WebRTC endpoint is /v1/realtime/calls.
+const REALTIME_URL = 'https://api.openai.com/v1/realtime/calls'
 
 interface StartCallOptions {
   agentId: string
