@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import {
@@ -18,6 +19,8 @@ import {
   Bell,
   Clock,
   LogOut,
+  Menu,
+  X,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
@@ -55,6 +58,12 @@ const NAV_SECTIONS = [
 export function DashboardSidebar({ businessName, planName }: { businessName: string; planName: string }) {
   const pathname = usePathname()
   const router = useRouter()
+  const [mobileOpen, setMobileOpen] = useState(false)
+
+  // Close the mobile drawer automatically whenever navigation happens.
+  useEffect(() => {
+    setMobileOpen(false)
+  }, [pathname])
 
   async function handleSignOut() {
     const supabase = createClient()
@@ -64,54 +73,95 @@ export function DashboardSidebar({ businessName, planName }: { businessName: str
   }
 
   return (
-    <aside className="w-64 shrink-0 bg-[var(--teal-900)] text-[var(--bg-page)] flex flex-col">
-      <div className="h-16 flex items-center gap-2 px-6 border-b border-white/10 shrink-0">
-        <span className="grid place-items-center w-9 h-9 rounded-xl bg-[var(--teal-700)] text-white font-display font-bold text-lg">
-          E
-        </span>
-        <span className="font-display font-semibold text-lg">
-          Estate<span className="text-[var(--teal-400)]">Call</span>
-        </span>
-      </div>
-
-      <div className="px-6 py-3 border-b border-white/10 shrink-0">
-        <p className="text-sm font-medium truncate">{businessName}</p>
-        <p className="text-xs uppercase tracking-wide text-[var(--bg-page)]/50">{planName}</p>
-      </div>
-
-      <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-5">
-        {NAV_SECTIONS.map((section, i) => (
-          <div key={i}>
-            {section.title && (
-              <p className="section-label px-3 mb-2">{section.title}</p>
-            )}
-            <div className="space-y-1">
-              {section.items.map((item) => {
-                const active =
-                  item.href === '/dashboard' ? pathname === item.href : pathname.startsWith(item.href)
-                const Icon = item.icon
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className={active ? 'sidebar-link-active' : 'sidebar-link'}
-                  >
-                    <Icon className="w-[18px] h-[18px]" />
-                    {item.label}
-                  </Link>
-                )
-              })}
-            </div>
-          </div>
-        ))}
-      </nav>
-
-      <div className="p-3 border-t border-white/10 shrink-0">
-        <button onClick={handleSignOut} className="sidebar-link w-full">
-          <LogOut className="w-[18px] h-[18px]" />
-          Cerrar sesión
+    <>
+      <header className="lg:hidden h-14 shrink-0 flex items-center justify-between px-4 bg-[var(--teal-900)] text-[var(--bg-page)]">
+        <div className="flex items-center gap-2">
+          <span className="grid place-items-center w-8 h-8 rounded-lg bg-[var(--teal-700)] text-white font-display font-bold">
+            E
+          </span>
+          <span className="font-display font-semibold">
+            Estate<span className="text-[var(--teal-400)]">Call</span>
+          </span>
+        </div>
+        <button
+          onClick={() => setMobileOpen(true)}
+          aria-label="Abrir menú"
+          className="p-2 -mr-2 text-[var(--bg-page)]"
+        >
+          <Menu className="w-6 h-6" />
         </button>
-      </div>
-    </aside>
+      </header>
+
+      {mobileOpen && (
+        <div
+          className="lg:hidden fixed inset-0 bg-black/40 z-40"
+          onClick={() => setMobileOpen(false)}
+          aria-hidden="true"
+        />
+      )}
+
+      <aside
+        className={`w-64 shrink-0 bg-[var(--teal-900)] text-[var(--bg-page)] flex flex-col fixed inset-y-0 left-0 z-50 transition-transform duration-200 ease-out lg:static lg:z-auto lg:translate-x-0 ${
+          mobileOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
+      >
+        <div className="h-16 flex items-center justify-between gap-2 px-6 border-b border-white/10 shrink-0">
+          <div className="flex items-center gap-2">
+            <span className="grid place-items-center w-9 h-9 rounded-xl bg-[var(--teal-700)] text-white font-display font-bold text-lg">
+              E
+            </span>
+            <span className="font-display font-semibold text-lg">
+              Estate<span className="text-[var(--teal-400)]">Call</span>
+            </span>
+          </div>
+          <button
+            onClick={() => setMobileOpen(false)}
+            aria-label="Cerrar menú"
+            className="lg:hidden p-1 text-[var(--bg-page)]/70"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <div className="px-6 py-3 border-b border-white/10 shrink-0">
+          <p className="text-sm font-medium truncate">{businessName}</p>
+          <p className="text-xs uppercase tracking-wide text-[var(--bg-page)]/50">{planName}</p>
+        </div>
+
+        <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-5">
+          {NAV_SECTIONS.map((section, i) => (
+            <div key={i}>
+              {section.title && (
+                <p className="section-label px-3 mb-2">{section.title}</p>
+              )}
+              <div className="space-y-1">
+                {section.items.map((item) => {
+                  const active =
+                    item.href === '/dashboard' ? pathname === item.href : pathname.startsWith(item.href)
+                  const Icon = item.icon
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className={active ? 'sidebar-link-active' : 'sidebar-link'}
+                    >
+                      <Icon className="w-[18px] h-[18px]" />
+                      {item.label}
+                    </Link>
+                  )
+                })}
+              </div>
+            </div>
+          ))}
+        </nav>
+
+        <div className="p-3 border-t border-white/10 shrink-0">
+          <button onClick={handleSignOut} className="sidebar-link w-full">
+            <LogOut className="w-[18px] h-[18px]" />
+            Cerrar sesión
+          </button>
+        </div>
+      </aside>
+    </>
   )
 }

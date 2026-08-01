@@ -54,27 +54,29 @@ export function ViewingsManager({ initialAppointments }: { initialAppointments: 
 
       <div className="divide-y divide-[var(--border)]">
         {filtered.map((appt) => (
-          <div key={appt.id} className="py-3 flex items-center gap-4">
+          <div key={appt.id} className="py-3 flex flex-col sm:flex-row sm:items-center gap-2">
             <div className="flex-1 min-w-0">
               <p className="font-medium text-[var(--text-1)]">{new Date(appt.scheduled_at).toLocaleString('es-DO')}</p>
               {appt.notes && <p className="text-xs text-[var(--text-3)] truncate">{appt.notes}</p>}
             </div>
-            <span className={`badge border-transparent ${STATUS_STYLES[appt.status] ?? ''}`}>
-              {STATUS_LABELS[appt.status] ?? appt.status}
-            </span>
-            {appt.status === 'scheduled' && (
-              <div className="flex gap-1">
-                <button className="btn-secondary" onClick={() => setAppointmentStatus(appt.id, 'completed')}>
-                  Completar
-                </button>
-                <button className="btn-secondary" onClick={() => setAppointmentStatus(appt.id, 'no_show')}>
-                  No asistió
-                </button>
-                <button className="btn-secondary" onClick={() => setAppointmentStatus(appt.id, 'cancelled')}>
-                  Cancelar
-                </button>
-              </div>
-            )}
+            <div className="flex flex-wrap items-center gap-2">
+              <span className={`badge border-transparent ${STATUS_STYLES[appt.status] ?? ''}`}>
+                {STATUS_LABELS[appt.status] ?? appt.status}
+              </span>
+              {appt.status === 'scheduled' && (
+                <div className="flex flex-wrap gap-1">
+                  <button className="btn-secondary" onClick={() => setAppointmentStatus(appt.id, 'completed')}>
+                    Completar
+                  </button>
+                  <button className="btn-secondary" onClick={() => setAppointmentStatus(appt.id, 'no_show')}>
+                    No asistió
+                  </button>
+                  <button className="btn-secondary" onClick={() => setAppointmentStatus(appt.id, 'cancelled')}>
+                    Cancelar
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         ))}
         {filtered.length === 0 && (

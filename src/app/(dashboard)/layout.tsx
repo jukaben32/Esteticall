@@ -20,9 +20,9 @@ export default async function DashboardLayout({ children }: { children: ReactNod
 
   return (
     <BusinessProvider business={business} subscription={subscription}>
-      <div className="min-h-screen flex">
+      <div className="min-h-screen flex flex-col lg:flex-row">
         <DashboardSidebar businessName={business.name} planName={subscription?.plan ?? 'free'} />
-        <main className="flex-1 p-6">{children}</main>
+        <main className="flex-1 min-w-0 p-4 lg:p-6">{children}</main>
       </div>
     </BusinessProvider>
   )

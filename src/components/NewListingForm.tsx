@@ -59,7 +59,7 @@ export function NewListingForm({ onCreated, onClose }: NewListingFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="card-surface p-4 mb-4 grid grid-cols-2 gap-3">
+    <form onSubmit={handleSubmit} className="card-surface p-4 mb-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
       {error && <p className="col-span-2 text-sm text-red-600">{error}</p>}
       <input
         placeholder="Título"

@@ -31,19 +31,21 @@ export function ClientsTable({ initialClients }: { initialClients: Client[] }) {
       />
       <div className="divide-y divide-[var(--border)]">
         {filtered.map((client) => (
-          <div key={client.id} className="py-3 flex items-center gap-4">
+          <div key={client.id} className="py-3 flex flex-col sm:flex-row sm:items-center gap-2">
             <div className="flex-1 min-w-0">
               <p className="font-medium text-[var(--text-1)]">{client.name}</p>
               <p className="text-xs text-[var(--text-3)] truncate">
                 {[client.phone, client.email].filter(Boolean).join(' · ') || 'Sin datos de contacto'}
               </p>
             </div>
-            {client.budget != null && (
-              <p className="text-sm font-semibold w-28 text-right text-[var(--teal-700)]">${client.budget.toLocaleString()}</p>
-            )}
-            <span className="badge bg-[var(--teal-50)] border-transparent text-[var(--teal-700)]">
-              {SOURCE_LABELS[client.source] ?? client.source}
-            </span>
+            <div className="flex flex-wrap items-center gap-3">
+              {client.budget != null && (
+                <p className="text-sm font-semibold sm:w-28 sm:text-right text-[var(--teal-700)]">${client.budget.toLocaleString()}</p>
+              )}
+              <span className="badge bg-[var(--teal-50)] border-transparent text-[var(--teal-700)]">
+                {SOURCE_LABELS[client.source] ?? client.source}
+              </span>
+            </div>
           </div>
         ))}
         {filtered.length === 0 && (

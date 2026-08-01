@@ -54,7 +54,7 @@ export function ServicesManager({ initialServices }: { initialServices: Business
       )}
 
       {showForm && (
-        <form onSubmit={handleCreate} className="card-surface p-4 mb-4 grid grid-cols-2 gap-3">
+        <form onSubmit={handleCreate} className="card-surface p-4 mb-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
           <input
             placeholder="Nombre del servicio (ej. Visita a propiedad)"
             value={form.name}

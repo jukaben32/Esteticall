@@ -103,60 +103,64 @@ export function ListingsTable({ initialListings }: { initialListings: ListingWit
 
       <div className="divide-y divide-[var(--border)]">
         {filtered.map((listing) => (
-          <div key={listing.id} className="py-3 flex items-center gap-4">
-            <label className="shrink-0 cursor-pointer group relative">
-              {listing.cover_photo_url ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={listing.cover_photo_url}
-                  alt={listing.title}
-                  className="w-14 h-14 rounded-lg object-cover border border-[var(--border)]"
+          <div key={listing.id} className="py-3 flex flex-col sm:flex-row sm:items-center gap-2">
+            <div className="flex items-center gap-3 min-w-0 sm:flex-1">
+              <label className="shrink-0 cursor-pointer group relative">
+                {listing.cover_photo_url ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={listing.cover_photo_url}
+                    alt={listing.title}
+                    className="w-14 h-14 rounded-lg object-cover border border-[var(--border)]"
+                  />
+                ) : (
+                  <span className="w-14 h-14 rounded-lg border border-dashed border-[var(--border)] grid place-items-center text-[var(--text-4)] text-[10px] text-center leading-tight">
+                    + Foto
+                  </span>
+                )}
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp,image/gif"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0]
+                    if (file) uploadPhoto(listing.id, file)
+                    e.target.value = ''
+                  }}
                 />
-              ) : (
-                <span className="w-14 h-14 rounded-lg border border-dashed border-[var(--border)] grid place-items-center text-[var(--text-4)] text-[10px] text-center leading-tight">
-                  + Foto
-                </span>
-              )}
-              <input
-                type="file"
-                accept="image/png,image/jpeg,image/webp,image/gif"
-                className="hidden"
-                onChange={(e) => {
-                  const file = e.target.files?.[0]
-                  if (file) uploadPhoto(listing.id, file)
-                  e.target.value = ''
-                }}
-              />
-            </label>
-            <div className="flex-1 min-w-0">
-              <p className="font-medium truncate">
-                {listing.title} {listing.featured && '⭐'}
-              </p>
-              <p className="text-xs text-[var(--text-3)] truncate">
-                {listing.address_line}, {listing.area_name}, {listing.city}
-              </p>
-              <p className="text-xs text-[var(--text-3)]">
-                {listing.bedrooms} hab. · {listing.bathrooms} baños · {listing.area_sqft.toLocaleString()} pies²
-              </p>
+              </label>
+              <div className="flex-1 min-w-0">
+                <p className="font-medium truncate">
+                  {listing.title} {listing.featured && '⭐'}
+                </p>
+                <p className="text-xs text-[var(--text-3)] truncate">
+                  {listing.address_line}, {listing.area_name}, {listing.city}
+                </p>
+                <p className="text-xs text-[var(--text-3)]">
+                  {listing.bedrooms} hab. · {listing.bathrooms} baños · {listing.area_sqft.toLocaleString()} pies²
+                </p>
+              </div>
             </div>
-            <p className="font-semibold w-28 text-right text-[var(--teal-700)]">
-              ${listing.price.toLocaleString()}
-              {listing.listing_type === 'rent' ? '/mes' : ''}
-            </p>
-            <span className="badge bg-[var(--teal-50)] border-transparent text-[var(--teal-800)] capitalize">
-              {LISTING_STATUS_LABELS[listing.status] ?? listing.status}
-            </span>
-            <label className="flex items-center gap-1 text-xs">
-              <input
-                type="checkbox"
-                checked={listing.visible_to_ai_agent}
-                onChange={() => toggleVisibility(listing)}
-              />
-              IA
-            </label>
-            <button onClick={() => remove(listing.id)} className="text-red-600 text-sm">
-              Eliminar
-            </button>
+            <div className="flex flex-wrap items-center gap-3 pl-[68px] sm:pl-0">
+              <p className="font-semibold sm:w-28 sm:text-right text-[var(--teal-700)]">
+                ${listing.price.toLocaleString()}
+                {listing.listing_type === 'rent' ? '/mes' : ''}
+              </p>
+              <span className="badge bg-[var(--teal-50)] border-transparent text-[var(--teal-800)] capitalize">
+                {LISTING_STATUS_LABELS[listing.status] ?? listing.status}
+              </span>
+              <label className="flex items-center gap-1 text-xs">
+                <input
+                  type="checkbox"
+                  checked={listing.visible_to_ai_agent}
+                  onChange={() => toggleVisibility(listing)}
+                />
+                IA
+              </label>
+              <button onClick={() => remove(listing.id)} className="text-red-600 text-sm">
+                Eliminar
+              </button>
+            </div>
           </div>
         ))}
         {filtered.length === 0 && (

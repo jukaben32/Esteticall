@@ -61,21 +61,23 @@ export function CallLogTable({ initialConversations }: { initialConversations: C
         <div key={conv.id}>
           <button
             onClick={() => toggleExpand(conv.id)}
-            className="w-full py-3 flex items-center gap-4 text-left"
+            className="w-full py-3 flex flex-col sm:flex-row sm:items-center gap-2 text-left"
           >
             <div className="flex-1 min-w-0">
               <p className="font-medium text-[var(--text-1)]">{new Date(conv.started_at).toLocaleString('es-DO')}</p>
               <p className="text-xs text-[var(--text-3)]">{CHANNEL_LABELS[conv.channel] ?? conv.channel}</p>
             </div>
-            <span className="text-sm w-14 text-right">{formatDuration(conv.duration_seconds)}</span>
-            <span className="badge bg-[var(--bg-raised)] border-transparent text-[var(--text-3)]">
-              {STATUS_LABELS[conv.status] ?? conv.status}
-            </span>
-            {conv.outcome && (
-              <span className={`badge border-transparent ${OUTCOME_STYLES[conv.outcome] ?? ''}`}>
-                {OUTCOME_LABELS[conv.outcome] ?? conv.outcome.replace('_', ' ')}
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-sm sm:w-14 sm:text-right">{formatDuration(conv.duration_seconds)}</span>
+              <span className="badge bg-[var(--bg-raised)] border-transparent text-[var(--text-3)]">
+                {STATUS_LABELS[conv.status] ?? conv.status}
               </span>
-            )}
+              {conv.outcome && (
+                <span className={`badge border-transparent ${OUTCOME_STYLES[conv.outcome] ?? ''}`}>
+                  {OUTCOME_LABELS[conv.outcome] ?? conv.outcome.replace('_', ' ')}
+                </span>
+              )}
+            </div>
           </button>
 
           {expandedId === conv.id && (
