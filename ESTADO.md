@@ -182,6 +182,22 @@ de git (`estatecall-frontend/landing/index.html`, borrado en el commit 7724fed):
 esmeralda/marfil, copy en español, hero/cómo-funciona/funciones/propiedades/precios/CTA,
 con botones que van a `/login` y `/signup` reales.
 
+### 6b. Error 500 MIDDLEWARE_INVOCATION_FAILED en otro dominio — ✅ resuelto (1 ago 2026)
+Vercel había creado un **segundo proyecto duplicado** (`real-estate-multi-ai-agent-saa-s-isqz`,
+`prj_5TCe6ctIzthxN65b3a36rm9ulpit`) apuntando al mismo repo de GitHub, seguramente al
+reintentar importar el repo desde el dashboard de Vercel. Ese proyecto no tenía ninguna
+variable de entorno cargada, así que su middleware fallaba con `MIDDLEWARE_INVOCATION_FAILED`
+al intentar crear el cliente de Supabase con `NEXT_PUBLIC_SUPABASE_URL`/`ANON_KEY` undefined.
+Es el proyecto detrás del dominio `real-estate-multi-ai-agent-saa-s-is.vercel.app` — **no es
+el mismo dominio de producción real** (`real-estate-multi-ai-agent-saa-s.vercel.app`, sin `-is`).
+
+Se cargaron las mismas variables de entorno que en el proyecto correcto (con un
+`NEXT_PUBLIC_APP_URL` propio) y se re-desplegó; ya sirve 200 y el middleware redirige
+correctamente a `/login`. **Pendiente de decidir:** si no vas a usar este proyecto
+duplicado, mejor eliminarlo desde el dashboard de Vercel para evitar confundirlo de nuevo
+con el real — el dominio bueno para todo (login, Stripe webhook, etc.) sigue siendo
+`real-estate-multi-ai-agent-saa-s.vercel.app`.
+
 ### 7. Seguridad (bloqueante, urgente)
 Rotar TODOS los tokens que fueron expuestos en el chat: GitHub PAT, Vercel access
 token, Supabase service role key y access token (`sbp_...`), las keys de Stripe test

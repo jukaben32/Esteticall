@@ -52,6 +52,17 @@ export async function createBusiness(
     .insert({ business_id: data.id, plan: 'free', status: 'active' })
   if (subError) throw subError
 
+  // Seed a default widget row so the public embed/test call works immediately,
+  // without requiring a trip through Dashboard > Widget > Guardar first.
+  const { error: widgetError } = await supabase.from('widgets').insert({
+    business_id: data.id,
+    is_enabled: true,
+    primary_color: '#0E7C5A',
+    greeting_message: '¡Hola! Pregúntame sobre cualquiera de nuestras propiedades.',
+    allowed_origins: [],
+  })
+  if (widgetError) throw widgetError
+
   return data
 }
 
