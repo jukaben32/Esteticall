@@ -4,6 +4,20 @@ import { useState } from 'react'
 import type { Listing } from '@/types'
 import { PROPERTY_TYPES, LISTING_TYPES } from '@/constants'
 
+const PROPERTY_TYPE_LABELS: Record<string, string> = {
+  house: 'Casa',
+  apartment: 'Apartamento',
+  townhouse: 'Townhouse',
+  commercial: 'Comercial',
+  condo: 'Condominio',
+  land: 'Terreno',
+}
+
+const LISTING_TYPE_LABELS: Record<string, string> = {
+  sale: 'En venta',
+  rent: 'En alquiler',
+}
+
 interface NewListingFormProps {
   onCreated: (listing: Listing) => void
   onClose: () => void
@@ -75,7 +89,7 @@ export function NewListingForm({ onCreated, onClose }: NewListingFormProps) {
       >
         {LISTING_TYPES.map((t) => (
           <option key={t.value} value={t.value}>
-            {t.label}
+            {LISTING_TYPE_LABELS[t.value] ?? t.label}
           </option>
         ))}
       </select>
@@ -86,7 +100,7 @@ export function NewListingForm({ onCreated, onClose }: NewListingFormProps) {
       >
         {PROPERTY_TYPES.map((t) => (
           <option key={t.value} value={t.value}>
-            {t.label}
+            {PROPERTY_TYPE_LABELS[t.value] ?? t.label}
           </option>
         ))}
       </select>

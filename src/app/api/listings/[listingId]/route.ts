@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { getBusinessForOwner } from '@/services/businesses'
-import { updateListing, deleteListing } from '@/services/listings'
+import { updateListing, deleteListing, assignAgentToListing, unassignAgentFromListing } from '@/services/listings'
 
 async function requireBusiness() {
   const supabase = await createClient()
@@ -18,9 +18,33 @@ export async function PATCH(request: Request, { params }: { params: { listingId:
   const ctx = await requireBusiness()
   if ('error' in ctx) return NextResponse.json({ error: ctx.error }, { status: 401 })
 
-  const patch = await request.json()
-  const listing = await updateListing(ctx.supabase, ctx.business.id, params.listingId, patch)
-  return NextResponse.json({ listing })
+  const body = await request.json()
+  const { agentId, ...patch } = body as { agentId?: string | null; [key: string]: unknown }
+
+  if (agentId !== undefined) {
+    if (agentId) {
+      await assignAgentToListing(ctx.supabase, ctx.business.id, params.listingId, agentId)
+    } else {
+      await unassignAgentFromListing(ctx.supabase, ctx.business.id, params.listingId)
+    }
+  }
+
+  const listing = Object.keys(patch).length
+    ? await updateListing(ctx.supabase, ctx.business.id, params.listingId, patch)
+    : await getListingByIdPlain(ctx.supabase, ctx.business.id, params.listingId)
+
+  return NextResponse.json({ listing, agentId: agentId ?? null })
+}
+
+async function getListingByIdPlain(supabase: Awaited<ReturnType<typeof createClient>>, businessId: string, listingId: string) {
+  const { data, error } = await supabase
+    .from('listings')
+    .select('*')
+    .eq('business_id', businessId)
+    .eq('id', listingId)
+    .single()
+  if (error) throw error
+  return data
 }
 
 export async function DELETE(_request: Request, { params }: { params: { listingId: string } }) {

@@ -136,14 +136,84 @@ export async function deleteListing(supabase: DB, businessId: string, listingId:
   if (error) throw error
 }
 
+// El schema soporta varios agentes por listing (agent_listings es N:M), pero
+// la UI (como el video de referencia) usa un selector único por propiedad —
+// se borra cualquier asignación previa antes de insertar la nueva, para que
+// el dropdown de "un solo agente" no deje filas huérfanas.
 export async function assignAgentToListing(
   supabase: DB,
   businessId: string,
   listingId: string,
   agentId: string
 ) {
+  await supabase.from('agent_listings').delete().eq('business_id', businessId).eq('listing_id', listingId)
   const { error } = await supabase
     .from('agent_listings')
-    .upsert({ business_id: businessId, listing_id: listingId, agent_id: agentId })
+    .insert({ business_id: businessId, listing_id: listingId, agent_id: agentId })
   if (error) throw error
+}
+
+export async function unassignAgentFromListing(supabase: DB, businessId: string, listingId: string) {
+  const { error } = await supabase
+    .from('agent_listings')
+    .delete()
+    .eq('business_id', businessId)
+    .eq('listing_id', listingId)
+  if (error) throw error
+}
+
+export async function deleteListingPhoto(supabase: DB, businessId: string, photoId: string) {
+  const { data: photo, error: fetchError } = await supabase
+    .from('listing_photos')
+    .select('id, listing_id, is_cover')
+    .eq('id', photoId)
+    .eq('business_id', businessId)
+    .maybeSingle()
+  if (fetchError) throw fetchError
+  if (!photo) return
+
+  const { error: deleteError } = await supabase
+    .from('listing_photos')
+    .delete()
+    .eq('id', photoId)
+    .eq('business_id', businessId)
+  if (deleteError) throw deleteError
+
+  if (photo.is_cover) {
+    const { data: nextCover } = await supabase
+      .from('listing_photos')
+      .select('id, url')
+      .eq('listing_id', photo.listing_id)
+      .order('sort_order', { ascending: true })
+      .limit(1)
+      .maybeSingle()
+
+    if (nextCover) {
+      await supabase.from('listing_photos').update({ is_cover: true }).eq('id', nextCover.id)
+    }
+    await supabase
+      .from('listings')
+      .update({ cover_photo_url: nextCover?.url ?? null })
+      .eq('id', photo.listing_id)
+  }
+}
+
+export async function setListingCoverPhoto(supabase: DB, businessId: string, listingId: string, photoId: string) {
+  const { data: photo, error: fetchError } = await supabase
+    .from('listing_photos')
+    .select('id, url')
+    .eq('id', photoId)
+    .eq('listing_id', listingId)
+    .eq('business_id', businessId)
+    .maybeSingle()
+  if (fetchError) throw fetchError
+  if (!photo) throw new Error('Foto no encontrada')
+
+  await supabase.from('listing_photos').update({ is_cover: false }).eq('listing_id', listingId)
+  await supabase.from('listing_photos').update({ is_cover: true }).eq('id', photoId)
+  const { error: updateError } = await supabase
+    .from('listings')
+    .update({ cover_photo_url: photo.url })
+    .eq('id', listingId)
+  if (updateError) throw updateError
 }

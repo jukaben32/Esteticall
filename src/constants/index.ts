@@ -56,18 +56,22 @@ export const LISTING_TYPES = [
 ] as const
 
 export const AMENITIES = [
+  'Pool',
+  'Garage',
+  'Garden',
+  'Balcony',
+  'Fireplace',
+  'Air Conditioning',
+  'Pet Friendly',
+  'Gym',
+  'Elevator',
   'Security System',
   'Laundry',
   'Storage',
   'Solar Panels',
   'Smart Home',
-  'Gym',
-  'Pet Friendly',
-  'Air Conditioning',
-  'Fireplace',
-  'Balcony',
-  'Garden',
-  'Garage',
+  'Sea View',
+  'City View',
 ] as const
 
 // Voices supported by the OpenAI Realtime API.

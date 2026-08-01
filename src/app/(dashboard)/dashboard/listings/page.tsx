@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { getBusinessForOwner } from '@/services/businesses'
 import { listListingsForBusiness } from '@/services/listings'
+import { listAgentsForBusiness } from '@/services/aiAgents'
 import { ListingsTable } from '@/components/ListingsTable'
 
 export default async function ListingsPage() {
@@ -11,7 +12,10 @@ export default async function ListingsPage() {
   const business = await getBusinessForOwner(supabase, user!.id)
   if (!business) return null
 
-  const listings = await listListingsForBusiness(supabase, business.id)
+  const [listings, agents] = await Promise.all([
+    listListingsForBusiness(supabase, business.id),
+    listAgentsForBusiness(supabase, business.id),
+  ])
 
   return (
     <div className="card-surface p-5">
@@ -23,7 +27,7 @@ export default async function ListingsPage() {
           </p>
         </div>
       </div>
-      <ListingsTable initialListings={listings} />
+      <ListingsTable initialListings={listings} agents={agents} />
     </div>
   )
 }

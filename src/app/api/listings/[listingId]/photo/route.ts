@@ -59,19 +59,33 @@ export async function POST(request: Request, { params }: { params: { listingId: 
   const { data: publicUrlData } = admin.storage.from('listing-photos').getPublicUrl(path)
   const url = publicUrlData.publicUrl
 
-  await admin.from('listing_photos').update({ is_cover: false }).eq('listing_id', params.listingId)
-  const { error: photoInsertError } = await admin
+  // Solo la primera foto de la propiedad se marca como portada automáticamente;
+  // las siguientes se agregan a la galería sin reemplazarla (la portada se
+  // cambia explícitamente con PATCH /photo/[photoId]).
+  const { count: existingCount } = await admin
     .from('listing_photos')
-    .insert({ listing_id: params.listingId, business_id: ctx.business.id, url, is_cover: true })
-  if (photoInsertError) throw photoInsertError
+    .select('id', { count: 'exact', head: true })
+    .eq('listing_id', params.listingId)
+  const isFirstPhoto = (existingCount ?? 0) === 0
 
-  const { data: updatedListing, error: updateError } = await admin
-    .from('listings')
-    .update({ cover_photo_url: url })
-    .eq('id', params.listingId)
+  const { data: insertedPhoto, error: photoInsertError } = await admin
+    .from('listing_photos')
+    .insert({ listing_id: params.listingId, business_id: ctx.business.id, url, is_cover: isFirstPhoto })
     .select('*')
     .single()
-  if (updateError) throw updateError
+  if (photoInsertError) throw photoInsertError
 
-  return NextResponse.json({ listing: updatedListing, url })
+  let updatedListing = listing
+  if (isFirstPhoto) {
+    const { data, error: updateError } = await admin
+      .from('listings')
+      .update({ cover_photo_url: url })
+      .eq('id', params.listingId)
+      .select('*')
+      .single()
+    if (updateError) throw updateError
+    updatedListing = data
+  }
+
+  return NextResponse.json({ listing: updatedListing, url, photo: insertedPhoto })
 }

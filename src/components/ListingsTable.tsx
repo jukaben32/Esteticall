@@ -1,9 +1,12 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import type { ListingWithPhotos } from '@/types'
+import Link from 'next/link'
+import { Eye, Pencil, Trash2 } from 'lucide-react'
+import type { AiAgent, ListingWithPhotos } from '@/types'
 import { LISTING_STATUSES, PROPERTY_TYPES } from '@/constants'
 import { NewListingForm } from '@/components/NewListingForm'
+import { EditListingModal } from '@/components/EditListingModal'
 
 const LISTING_STATUS_LABELS: Record<string, string> = {
   available: 'Disponible',
@@ -13,12 +16,19 @@ const LISTING_STATUS_LABELS: Record<string, string> = {
   withdrawn: 'Retirada',
 }
 
-export function ListingsTable({ initialListings }: { initialListings: ListingWithPhotos[] }) {
+export function ListingsTable({
+  initialListings,
+  agents,
+}: {
+  initialListings: ListingWithPhotos[]
+  agents: AiAgent[]
+}) {
   const [listings, setListings] = useState(initialListings)
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState('all')
   const [type, setType] = useState('all')
   const [showForm, setShowForm] = useState(false)
+  const [editingListing, setEditingListing] = useState<ListingWithPhotos | null>(null)
 
   const filtered = useMemo(() => {
     return listings.filter((l) => {
@@ -157,9 +167,29 @@ export function ListingsTable({ initialListings }: { initialListings: ListingWit
                 />
                 IA
               </label>
-              <button onClick={() => remove(listing.id)} className="text-red-600 text-sm">
-                Eliminar
-              </button>
+              <div className="flex items-center gap-1">
+                <Link
+                  href={`/dashboard/listings/${listing.id}`}
+                  title="Ver detalle"
+                  className="p-1.5 rounded-lg text-[var(--text-3)] hover:bg-[var(--bg-raised)] hover:text-[var(--text-1)]"
+                >
+                  <Eye className="w-4 h-4" />
+                </Link>
+                <button
+                  onClick={() => setEditingListing(listing)}
+                  title="Editar"
+                  className="p-1.5 rounded-lg text-[var(--text-3)] hover:bg-[var(--bg-raised)] hover:text-[var(--text-1)]"
+                >
+                  <Pencil className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => remove(listing.id)}
+                  title="Eliminar"
+                  className="p-1.5 rounded-lg text-red-600 hover:bg-red-50"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
             </div>
           </div>
         ))}
@@ -167,6 +197,18 @@ export function ListingsTable({ initialListings }: { initialListings: ListingWit
           <p className="py-6 text-center text-sm text-[var(--text-3)]">Ninguna propiedad coincide con estos filtros.</p>
         )}
       </div>
+
+      {editingListing && (
+        <EditListingModal
+          listing={editingListing}
+          agents={agents}
+          onClose={() => setEditingListing(null)}
+          onSaved={(updated) => {
+            setListings((prev) => prev.map((l) => (l.id === updated.id ? updated : l)))
+            setEditingListing(null)
+          }}
+        />
+      )}
     </div>
   )
 }
