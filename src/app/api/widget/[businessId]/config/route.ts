@@ -2,6 +2,11 @@ import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getPublicWidgetConfig } from '@/services/widgets'
 
+// Admin-client fetches here aren't tied to a request's cookies/headers, so
+// Next's Data Cache would otherwise cache them indefinitely — e.g. serving a
+// stale "no live agent" answer forever after the agent goes live.
+export const dynamic = 'force-dynamic'
+
 // Fetched by the embed script (<script src=".../widget.js" data-business="...">)
 // on any third-party site — public by design, so only non-sensitive config
 // is ever returned here.
