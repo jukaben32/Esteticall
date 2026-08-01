@@ -18,45 +18,17 @@ export async function GET(_request: Request, { params }: { params: { businessId:
     return NextResponse.json({ error: 'Widget not found or disabled' }, { status: 404 })
   }
 
-  const { data: agent, error: agentError } = await supabase
+  // Plain select + client-side filter — chaining .eq('status', 'live') with
+  // .maybeSingle() here was silently returning no rows against a live agent
+  // (confirmed against a raw REST call with the identical filter), so avoid
+  // that combination and filter in JS instead.
+  const { data: agents, error: agentsError } = await supabase
     .from('ai_agents')
-    .select('id, name')
+    .select('id, name, status')
     .eq('business_id', params.businessId)
-    .eq('status', 'live')
-    .limit(1)
-    .maybeSingle()
+  if (agentsError) return NextResponse.json({ error: agentsError.message }, { status: 500 })
 
-  const { data: allAgentsForBusiness, error: allErr } = await supabase
-    .from('ai_agents')
-    .select('id, name, status, business_id')
-    .eq('business_id', params.businessId)
+  const agent = agents?.find((a) => a.status === 'live') ?? null
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? null
-  const serviceKeyPresent = Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY)
-  const serviceKeyLen = process.env.SUPABASE_SERVICE_ROLE_KEY?.length ?? 0
-
-  const rawUrl = `${supabaseUrl}/rest/v1/ai_agents?business_id=eq.${params.businessId}&status=eq.live&select=id,name`
-  const rawRes = await fetch(rawUrl, {
-    headers: {
-      apikey: process.env.SUPABASE_SERVICE_ROLE_KEY!,
-      Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
-    },
-    cache: 'no-store',
-  })
-  const rawJson = await rawRes.json().catch(() => null)
-
-  return NextResponse.json({
-    ...config,
-    agentId: agent?.id ?? null,
-    agentName: agent?.name ?? null,
-    _debugBusinessId: params.businessId,
-    _debugAgentError: agentError ? { message: agentError.message, code: agentError.code, details: agentError.details } : null,
-    _debugAllAgents: allAgentsForBusiness,
-    _debugAllErr: allErr ? { message: allErr.message, code: allErr.code } : null,
-    _debugSupabaseUrl: supabaseUrl,
-    _debugServiceKeyPresent: serviceKeyPresent,
-    _debugServiceKeyLen: serviceKeyLen,
-    _debugRawStatus: rawRes.status,
-    _debugRawJson: rawJson,
-  })
+  return NextResponse.json({ ...config, agentId: agent?.id ?? null, agentName: agent?.name ?? null })
 }
