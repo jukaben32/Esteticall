@@ -50,6 +50,13 @@ export const LISTING_STATUSES = [
   { value: 'withdrawn', label: 'Withdrawn', color: 'red' },
 ] as const
 
+export const PRICE_DISPLAY_OPTIONS = [
+  { value: 'fixed', label: 'Precio fijo' },
+  { value: 'negotiable', label: 'Negociable' },
+  { value: 'starting_at', label: 'Desde' },
+  { value: 'contact', label: 'Consultar precio' },
+] as const
+
 export const LISTING_TYPES = [
   { value: 'sale', label: 'For Sale' },
   { value: 'rent', label: 'For Rent' },

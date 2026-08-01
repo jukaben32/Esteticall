@@ -94,6 +94,9 @@ export interface Database {
           address_line: string | null
           area_name: string | null
           city: string | null
+          state: string | null
+          zip: string | null
+          price_display: 'fixed' | 'negotiable' | 'starting_at' | 'contact'
           amenities: string[]
           featured: boolean
           visible_to_ai_agent: boolean

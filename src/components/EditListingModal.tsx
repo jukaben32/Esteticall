@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import type { AiAgent, ListingWithPhotos } from '@/types'
-import { PROPERTY_TYPES, LISTING_TYPES, LISTING_STATUSES, AMENITIES } from '@/constants'
+import { PROPERTY_TYPES, LISTING_TYPES, LISTING_STATUSES, AMENITIES, PRICE_DISPLAY_OPTIONS } from '@/constants'
 
 const LISTING_STATUS_LABELS: Record<string, string> = {
   available: 'Disponible',
@@ -43,7 +43,10 @@ export function EditListingModal({ listing, agents, onSaved, onClose }: EditList
     addressLine: listing.address_line ?? '',
     areaName: listing.area_name ?? '',
     city: listing.city ?? '',
+    state: listing.state ?? '',
+    zip: listing.zip ?? '',
     price: String(listing.price),
+    priceDisplay: listing.price_display,
     bedrooms: String(listing.bedrooms),
     bathrooms: String(listing.bathrooms),
     areaSqft: String(listing.area_sqft),
@@ -130,7 +133,10 @@ export function EditListingModal({ listing, agents, onSaved, onClose }: EditList
         address_line: form.addressLine || null,
         area_name: form.areaName || null,
         city: form.city || null,
+        state: form.state || null,
+        zip: form.zip || null,
         price: Number(form.price) || 0,
+        price_display: form.priceDisplay,
         bedrooms: Number(form.bedrooms) || 0,
         bathrooms: Number(form.bathrooms) || 0,
         area_sqft: Number(form.areaSqft) || 0,
@@ -259,7 +265,7 @@ export function EditListingModal({ listing, agents, onSaved, onClose }: EditList
           onChange={(e) => setForm({ ...form, addressLine: e.target.value })}
           className="input-field w-full"
         />
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <input
             placeholder="Ciudad"
             value={form.city}
@@ -267,21 +273,44 @@ export function EditListingModal({ listing, agents, onSaved, onClose }: EditList
             className="input-field"
           />
           <input
-            placeholder="Zona / Sector"
-            value={form.areaName}
-            onChange={(e) => setForm({ ...form, areaName: e.target.value })}
+            placeholder="Provincia / Estado"
+            value={form.state}
+            onChange={(e) => setForm({ ...form, state: e.target.value })}
+            className="input-field"
+          />
+          <input
+            placeholder="Código postal"
+            value={form.zip}
+            onChange={(e) => setForm({ ...form, zip: e.target.value })}
             className="input-field"
           />
         </div>
-
         <input
-          placeholder="Precio"
-          type="number"
-          value={form.price}
-          onChange={(e) => setForm({ ...form, price: e.target.value })}
+          placeholder="Zona / Sector"
+          value={form.areaName}
+          onChange={(e) => setForm({ ...form, areaName: e.target.value })}
           className="input-field w-full"
-          required
         />
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <input
+            placeholder="Precio"
+            type="number"
+            value={form.price}
+            onChange={(e) => setForm({ ...form, price: e.target.value })}
+            className="input-field"
+            required
+          />
+          <select
+            value={form.priceDisplay}
+            onChange={(e) => setForm({ ...form, priceDisplay: e.target.value as typeof form.priceDisplay })}
+            className="input-field"
+          >
+            {PRICE_DISPLAY_OPTIONS.map((p) => (
+              <option key={p.value} value={p.value}>{p.label}</option>
+            ))}
+          </select>
+        </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <input placeholder="Habitaciones" type="number" value={form.bedrooms} onChange={(e) => setForm({ ...form, bedrooms: e.target.value })} className="input-field" />

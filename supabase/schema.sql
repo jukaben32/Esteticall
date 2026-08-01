@@ -526,3 +526,10 @@ create policy "Business owners can manage their services"
   on business_services for all using (is_business_owner(business_id));
 create policy "Public can view active services"
   on business_services for select using (is_active);
+
+-- 19. LISTINGS — state/zip + price display (additive, matches the reference
+-- template's full address block and "Price Display" field on the edit form)
+alter table listings add column if not exists state text;
+alter table listings add column if not exists zip text;
+alter table listings add column if not exists price_display text not null default 'fixed'
+  check (price_display in ('fixed', 'negotiable', 'starting_at', 'contact'));

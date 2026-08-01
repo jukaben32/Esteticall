@@ -134,7 +134,9 @@ export function PropertyDetailView({
                   {listing.title} {listing.featured && '⭐'}
                 </h1>
                 <p className="text-sm text-[var(--text-3)]">
-                  {[listing.address_line, listing.area_name, listing.city].filter(Boolean).join(', ') || 'Sin dirección'}
+                  {[listing.address_line, listing.area_name, listing.city, listing.state, listing.zip]
+                    .filter(Boolean)
+                    .join(', ') || 'Sin dirección'}
                 </p>
               </div>
               <p className="text-2xl font-bold text-[var(--teal-700)]">
