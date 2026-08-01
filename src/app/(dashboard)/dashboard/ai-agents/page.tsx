@@ -21,11 +21,11 @@ export default async function AiAgentsPage() {
   const plan: PlanId = (subscription?.plan as PlanId) ?? 'free'
 
   return (
-    <div className="card-surface p-4">
+    <div className="card-surface p-5">
       <div className="mb-4">
-        <h1 className="font-semibold text-lg">AI Agents</h1>
+        <h1 className="font-display font-semibold text-xl text-[var(--text-1)]">Agentes IA</h1>
         <p className="text-sm text-[var(--text-3)]">
-          {agents.length} / {PLAN_LIMITS[plan].agentLimit || '∞'} agents on the {PLAN_LIMITS[plan].name} plan
+          {agents.length} / {PLAN_LIMITS[plan].agentLimit || '∞'} agentes en el plan {PLAN_LIMITS[plan].name}
         </p>
       </div>
       <AiAgentsManager initialAgents={agents} agentLimit={PLAN_LIMITS[plan].agentLimit} />

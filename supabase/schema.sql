@@ -498,3 +498,31 @@ create policy "Clients can send messages on their own tickets"
   );
 create policy "Business owners can manage all support messages"
   on support_messages for all using (is_business_owner(business_id));
+
+-- 18. BUSINESS SERVICES (the offerings a business's AI agents can quote —
+-- e.g. "Property Viewing", "Investment Consultation" — decoupled from
+-- listings so this works for non-real-estate verticals too)
+create table if not exists business_services (
+  id            uuid primary key default gen_random_uuid(),
+  business_id   uuid not null references businesses(id) on delete cascade,
+  name          text not null,
+  description   text,
+  price         numeric(14,2),
+  is_active     boolean not null default true,
+  sort_order    integer not null default 0,
+  created_at    timestamptz not null default now(),
+  updated_at    timestamptz not null default now()
+);
+
+create index if not exists idx_business_services_business_id on business_services (business_id);
+
+create trigger update_business_services_updated_at
+  before update on business_services
+  for each row execute function update_updated_at_column();
+
+alter table business_services enable row level security;
+
+create policy "Business owners can manage their services"
+  on business_services for all using (is_business_owner(business_id));
+create policy "Public can view active services"
+  on business_services for select using (is_active);

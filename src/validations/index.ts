@@ -94,3 +94,28 @@ export const supportTicketSchema = z.object({
   body: z.string().min(3),
 })
 export type SupportTicketInput = z.infer<typeof supportTicketSchema>
+
+export const availabilitySchema = z.object({
+  dayOfWeek: z.coerce.number().int().min(0).max(6),
+  startTime: z.string().regex(/^\d{2}:\d{2}$/, 'Use HH:MM'),
+  endTime: z.string().regex(/^\d{2}:\d{2}$/, 'Use HH:MM'),
+  slotMinutes: z.coerce.number().int().positive().default(30),
+  isActive: z.boolean().default(true),
+})
+export type AvailabilityInput = z.infer<typeof availabilitySchema>
+
+export const knowledgeDocumentSchema = z.object({
+  title: z.string().min(2),
+  content: z.string().min(1),
+  sourceUrl: z.string().url().optional().or(z.literal('')),
+})
+export type KnowledgeDocumentInput = z.infer<typeof knowledgeDocumentSchema>
+
+export const businessServiceSchema = z.object({
+  name: z.string().min(2),
+  description: z.string().optional(),
+  price: z.coerce.number().nonnegative().optional(),
+  isActive: z.boolean().default(true),
+  sortOrder: z.coerce.number().int().default(0),
+})
+export type BusinessServiceInput = z.infer<typeof businessServiceSchema>

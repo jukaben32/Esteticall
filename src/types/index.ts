@@ -16,6 +16,7 @@ export type Website = Tables<'websites'>
 export type Notification = Tables<'notifications'>
 export type SupportTicket = Tables<'support_tickets'>
 export type SupportMessage = Tables<'support_messages'>
+export type BusinessService = Tables<'business_services'>
 
 export type PlanId = 'free' | 'pro' | 'business'
 

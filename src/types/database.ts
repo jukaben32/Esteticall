@@ -347,6 +347,25 @@ export interface Database {
         Update: Partial<Database['public']['Tables']['support_messages']['Row']>
         Relationships: []
       }
+      business_services: {
+        Row: {
+          id: string
+          business_id: string
+          name: string
+          description: string | null
+          price: number | null
+          is_active: boolean
+          sort_order: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: Partial<Database['public']['Tables']['business_services']['Row']> & {
+          business_id: string
+          name: string
+        }
+        Update: Partial<Database['public']['Tables']['business_services']['Row']>
+        Relationships: []
+      }
     }
     Views: Record<string, never>
     Functions: Record<string, never>

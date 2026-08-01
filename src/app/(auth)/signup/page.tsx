@@ -28,7 +28,7 @@ export default function SignupPage() {
 
     const parsed = signupSchema.safeParse({ businessName, email, password })
     if (!parsed.success) {
-      setError(parsed.error.issues[0]?.message ?? 'Invalid input')
+      setError(parsed.error.issues[0]?.message ?? 'Datos inválidos')
       return
     }
 
@@ -41,7 +41,7 @@ export default function SignupPage() {
 
     if (authError || !data.user) {
       setLoading(false)
-      setError(authError?.message ?? 'Sign up failed')
+      setError(authError?.message ?? 'No se pudo crear la cuenta')
       return
     }
 
@@ -53,7 +53,7 @@ export default function SignupPage() {
       })
     } catch (err) {
       setLoading(false)
-      setError(err instanceof Error ? err.message : 'Could not create business')
+      setError(err instanceof Error ? err.message : 'No se pudo crear el negocio')
       return
     }
 
@@ -63,39 +63,48 @@ export default function SignupPage() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="card-surface p-6 space-y-4">
-      <h1 className="text-xl font-semibold">Create your business account</h1>
+    <form onSubmit={handleSubmit} className="card-raised p-7 space-y-4">
+      <div className="text-center mb-2">
+        <h1 className="font-display text-2xl font-semibold text-[var(--text-1)]">Crea tu cuenta</h1>
+        <p className="text-sm text-[var(--text-3)]">Empieza gratis, sin tarjeta</p>
+      </div>
       {error && <p className="text-sm text-red-600">{error}</p>}
-      <input
-        type="text"
-        placeholder="Business name"
-        value={businessName}
-        onChange={(e) => setBusinessName(e.target.value)}
-        className="w-full border rounded-lg px-3 py-2"
-        required
-      />
-      <input
-        type="email"
-        placeholder="Email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        className="w-full border rounded-lg px-3 py-2"
-        required
-      />
-      <input
-        type="password"
-        placeholder="Password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        className="w-full border rounded-lg px-3 py-2"
-        required
-        minLength={8}
-      />
-      <button type="submit" className="btn-primary w-full" disabled={loading}>
-        {loading ? 'Creating…' : 'Sign up'}
+      <div>
+        <label className="block text-sm font-medium text-[var(--text-1)] mb-1">Nombre del negocio</label>
+        <input
+          type="text"
+          value={businessName}
+          onChange={(e) => setBusinessName(e.target.value)}
+          className="input-field"
+          required
+        />
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-[var(--text-1)] mb-1">Correo</label>
+        <input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className="input-field"
+          required
+        />
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-[var(--text-1)] mb-1">Contraseña</label>
+        <input
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          className="input-field"
+          required
+          minLength={8}
+        />
+      </div>
+      <button type="submit" className="btn-primary w-full py-3" disabled={loading}>
+        {loading ? 'Creando…' : 'Crear cuenta'}
       </button>
-      <p className="text-sm text-center">
-        Already have an account? <a href="/login" className="underline">Log in</a>
+      <p className="text-sm text-center text-[var(--text-3)]">
+        ¿Ya tienes cuenta? <a href="/login" className="text-[var(--teal-700)] font-medium">Inicia sesión</a>
       </p>
     </form>
   )

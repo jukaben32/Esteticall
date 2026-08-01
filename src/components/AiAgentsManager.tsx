@@ -16,11 +16,11 @@ export function AiAgentsManager({
   const [error, setError] = useState<string | null>(null)
   const [form, setForm] = useState({
     name: '',
-    specialty: 'Residential Specialist',
+    specialty: 'Especialista residencial',
     voice: AGENT_VOICES[0] as string,
     personality: 'friendly',
     sensitivity: 0.5,
-    greetingMessage: 'Hello! Thank you for calling. How can I help you today?',
+    greetingMessage: '¡Hola! Gracias por llamar. ¿Cómo puedo ayudarte hoy?',
   })
 
   const atLimit = agentLimit !== 0 && agents.length >= agentLimit
@@ -35,7 +35,7 @@ export function AiAgentsManager({
     })
     if (!res.ok) {
       const body = await res.json().catch(() => ({}))
-      setError(body.error ?? 'Could not create agent')
+      setError(body.error ?? 'No se pudo crear el agente')
       return
     }
     const { agent } = await res.json()
@@ -60,7 +60,7 @@ export function AiAgentsManager({
     <div>
       {!showForm && (
         <button className="btn-primary mb-4" onClick={() => setShowForm(true)} disabled={atLimit}>
-          {atLimit ? 'Agent limit reached — upgrade plan' : '+ New Agent'}
+          {atLimit ? 'Límite de agentes alcanzado — mejora tu plan' : '+ Nuevo agente'}
         </button>
       )}
 
@@ -68,22 +68,22 @@ export function AiAgentsManager({
         <form onSubmit={handleCreate} className="card-surface p-4 mb-4 grid grid-cols-2 gap-3">
           {error && <p className="col-span-2 text-sm text-red-600">{error}</p>}
           <input
-            placeholder="Agent name (e.g. Alexis)"
+            placeholder="Nombre del agente (ej. Alexis)"
             value={form.name}
             onChange={(e) => setForm({ ...form, name: e.target.value })}
-            className="col-span-2 border rounded-lg px-3 py-2"
+            className="input-field col-span-2"
             required
           />
           <input
-            placeholder="Specialty"
+            placeholder="Especialidad"
             value={form.specialty}
             onChange={(e) => setForm({ ...form, specialty: e.target.value })}
-            className="border rounded-lg px-3 py-2"
+            className="input-field"
           />
           <select
             value={form.voice}
             onChange={(e) => setForm({ ...form, voice: e.target.value })}
-            className="border rounded-lg px-3 py-2"
+            className="input-field"
           >
             {AGENT_VOICES.map((v) => (
               <option key={v} value={v}>
@@ -94,7 +94,7 @@ export function AiAgentsManager({
           <select
             value={form.personality}
             onChange={(e) => setForm({ ...form, personality: e.target.value })}
-            className="border rounded-lg px-3 py-2"
+            className="input-field"
           >
             {AGENT_PERSONALITIES.map((p) => (
               <option key={p.value} value={p.value}>
@@ -103,7 +103,7 @@ export function AiAgentsManager({
             ))}
           </select>
           <div className="flex items-center gap-2">
-            <label className="text-sm">Sensitivity</label>
+            <label className="text-sm">Sensibilidad</label>
             <input
               type="range"
               min={0}
@@ -114,18 +114,18 @@ export function AiAgentsManager({
             />
           </div>
           <textarea
-            placeholder="Greeting message"
+            placeholder="Mensaje de saludo"
             value={form.greetingMessage}
             onChange={(e) => setForm({ ...form, greetingMessage: e.target.value })}
-            className="col-span-2 border rounded-lg px-3 py-2"
+            className="input-field col-span-2"
             rows={2}
           />
           <div className="col-span-2 flex gap-2 justify-end">
             <button type="button" onClick={() => setShowForm(false)} className="btn-secondary">
-              Cancel
+              Cancelar
             </button>
             <button type="submit" className="btn-primary">
-              Create Agent
+              Crear agente
             </button>
           </div>
         </form>
@@ -134,24 +134,29 @@ export function AiAgentsManager({
       <div className="space-y-2">
         {agents.map((agent) => (
           <div key={agent.id} className="card-surface p-3 flex items-center justify-between">
-            <div>
-              <p className="font-medium">{agent.name}</p>
-              <p className="text-xs text-[var(--text-3)]">
-                {agent.specialty} · {agent.voice} · {agent.calls_handled} calls handled
-              </p>
+            <div className="flex items-center gap-3">
+              <span className="grid place-items-center w-10 h-10 rounded-full bg-[var(--teal-50)] text-[var(--teal-700)] font-bold shrink-0">
+                {agent.name[0]}
+              </span>
+              <div>
+                <p className="font-medium text-[var(--text-1)]">{agent.name}</p>
+                <p className="text-xs text-[var(--text-3)]">
+                  {agent.specialty} · {agent.voice} · {agent.calls_handled} llamadas atendidas
+                </p>
+              </div>
             </div>
             <button
               onClick={() => toggleLive(agent)}
-              className={`text-xs rounded-full px-3 py-1 ${
-                agent.status === 'live' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'
+              className={`badge border-transparent ${
+                agent.status === 'live' ? 'bg-[var(--teal-50)] text-[var(--teal-800)]' : 'bg-[var(--bg-raised)] text-[var(--text-3)]'
               }`}
             >
-              {agent.status === 'live' ? 'Live · Handling calls' : 'Paused'}
+              {agent.status === 'live' ? 'Activo · Atendiendo llamadas' : 'Pausado'}
             </button>
           </div>
         ))}
         {agents.length === 0 && (
-          <p className="text-sm text-[var(--text-3)]">No agents yet — create your first one above.</p>
+          <p className="text-sm text-[var(--text-3)]">Todavía no hay agentes — crea el primero arriba.</p>
         )}
       </div>
     </div>

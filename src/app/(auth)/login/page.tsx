@@ -1,11 +1,19 @@
 'use client'
 
-import { useState } from 'react'
+import { Suspense, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { loginSchema } from '@/validations'
 
 export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginForm />
+    </Suspense>
+  )
+}
+
+function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [email, setEmail] = useState('')
@@ -19,7 +27,7 @@ export default function LoginPage() {
 
     const parsed = loginSchema.safeParse({ email, password })
     if (!parsed.success) {
-      setError(parsed.error.issues[0]?.message ?? 'Invalid input')
+      setError(parsed.error.issues[0]?.message ?? 'Datos inválidos')
       return
     }
 
@@ -38,30 +46,37 @@ export default function LoginPage() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="card-surface p-6 space-y-4">
-      <h1 className="text-xl font-semibold">Log in</h1>
+    <form onSubmit={handleSubmit} className="card-raised p-7 space-y-4">
+      <div className="text-center mb-2">
+        <h1 className="font-display text-2xl font-semibold text-[var(--text-1)]">EstateCall</h1>
+        <p className="text-sm text-[var(--text-3)]">Accede a tu panel</p>
+      </div>
       {error && <p className="text-sm text-red-600">{error}</p>}
-      <input
-        type="email"
-        placeholder="Email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        className="w-full border rounded-lg px-3 py-2"
-        required
-      />
-      <input
-        type="password"
-        placeholder="Password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        className="w-full border rounded-lg px-3 py-2"
-        required
-      />
-      <button type="submit" className="btn-primary w-full" disabled={loading}>
-        {loading ? 'Logging in…' : 'Log in'}
+      <div>
+        <label className="block text-sm font-medium text-[var(--text-1)] mb-1">Correo</label>
+        <input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className="input-field"
+          required
+        />
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-[var(--text-1)] mb-1">Contraseña</label>
+        <input
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          className="input-field"
+          required
+        />
+      </div>
+      <button type="submit" className="btn-primary w-full py-3" disabled={loading}>
+        {loading ? 'Entrando…' : 'Entrar'}
       </button>
-      <p className="text-sm text-center">
-        No account? <a href="/signup" className="underline">Sign up</a>
+      <p className="text-sm text-center text-[var(--text-3)]">
+        ¿No tienes cuenta? <a href="/signup" className="text-[var(--teal-700)] font-medium">Regístrate</a>
       </p>
     </form>
   )

@@ -14,7 +14,7 @@ export default async function DashboardLayout({ children }: { children: ReactNod
   if (!user) redirect('/login')
 
   const business = await getBusinessForOwner(supabase, user.id)
-  if (!business) redirect('/signup')
+  if (!business) redirect('/onboarding')
 
   const subscription = await getSubscription(supabase, business.id)
 

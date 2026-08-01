@@ -14,12 +14,12 @@ export default async function ListingsPage() {
   const listings = await listListingsForBusiness(supabase, business.id)
 
   return (
-    <div className="card-surface p-4">
+    <div className="card-surface p-5">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h1 className="font-semibold text-lg">Property Listings</h1>
+          <h1 className="font-display font-semibold text-xl text-[var(--text-1)]">Propiedades</h1>
           <p className="text-sm text-[var(--text-3)]">
-            {listings.length} listings · {listings.filter((l) => l.featured).length} featured
+            {listings.length} propiedades · {listings.filter((l) => l.featured).length} destacadas
           </p>
         </div>
       </div>
