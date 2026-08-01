@@ -24,7 +24,7 @@ export function VoiceWidget({ businessId }: { businessId: string }) {
   useEffect(() => {
     fetch(`/api/widget/${businessId}/config`)
       .then((res) => {
-        if (!res.ok) throw new Error('Widget unavailable')
+        if (!res.ok) throw new Error('El widget no está disponible. Actívalo y guárdalo en Dashboard → Widget.')
         return res.json()
       })
       .then(setConfig)
@@ -41,9 +41,17 @@ export function VoiceWidget({ businessId }: { businessId: string }) {
   }
 
   if (loadError) return <div className="card-surface p-4 text-sm text-red-600">{loadError}</div>
-  if (!config) return <div className="card-surface p-4 text-sm">Loading assistant…</div>
+  if (!config) return <div className="card-surface p-4 text-sm">Cargando asistente…</div>
   if (!config.agentId) {
-    return <div className="card-surface p-4 text-sm">No live AI agent for this business yet.</div>
+    return (
+      <div className="card-surface p-4 text-sm">
+        Todavía no tienes ningún agente IA activo. Crea uno en{' '}
+        <a href="/dashboard/ai-agents" className="underline text-[var(--teal-700)]">
+          Agentes IA
+        </a>{' '}
+        y ponlo en estado &quot;Activo&quot; para poder probar la llamada.
+      </div>
+    )
   }
 
   return (
@@ -58,13 +66,13 @@ export function VoiceWidget({ businessId }: { businessId: string }) {
             startCall({ agentId: config.agentId!, onToolCall: handleToolCall })
           }
         >
-          Start call
+          Iniciar llamada
         </button>
       )}
-      {status === 'connecting' && <p className="text-sm">Connecting…</p>}
+      {status === 'connecting' && <p className="text-sm">Conectando…</p>}
       {status === 'active' && (
         <button className="btn-secondary" onClick={endCall}>
-          End call
+          Terminar llamada
         </button>
       )}
       {status === 'error' && <p className="text-sm text-red-600">{error}</p>}
@@ -72,7 +80,7 @@ export function VoiceWidget({ businessId }: { businessId: string }) {
       <div className="mt-3 space-y-1 max-h-48 overflow-y-auto text-sm">
         {transcript.map((t, i) => (
           <p key={i}>
-            <strong>{t.role === 'agent' ? config.agentName : 'You'}:</strong> {t.text}
+            <strong>{t.role === 'agent' ? config.agentName : 'Tú'}:</strong> {t.text}
           </p>
         ))}
       </div>

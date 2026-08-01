@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import type { Widget } from '@/types'
+import { VoiceWidget } from '@/components/VoiceWidget'
 
 export function WidgetConfigForm({
   businessId,
@@ -48,6 +49,16 @@ export function WidgetConfigForm({
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div className="card-surface p-4 lg:col-span-2">
+        <h2 className="font-display font-semibold mb-1 text-[var(--text-1)]">Probar el asistente</h2>
+        <p className="text-sm text-[var(--text-3)] mb-3">
+          Haz una llamada de prueba real ahora mismo, sin salir del panel. Necesitas al menos un
+          agente IA en estado &quot;Activo&quot; (sección Agentes IA) y darle permiso al navegador para usar
+          el micrófono.
+        </p>
+        <VoiceWidget businessId={businessId} />
+      </div>
+
       <form onSubmit={save} className="card-surface p-4 space-y-3">
         <label className="flex items-center gap-2 text-sm">
           <input
