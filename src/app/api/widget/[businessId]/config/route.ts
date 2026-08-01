@@ -35,6 +35,16 @@ export async function GET(_request: Request, { params }: { params: { businessId:
   const serviceKeyPresent = Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY)
   const serviceKeyLen = process.env.SUPABASE_SERVICE_ROLE_KEY?.length ?? 0
 
+  const rawUrl = `${supabaseUrl}/rest/v1/ai_agents?business_id=eq.${params.businessId}&status=eq.live&select=id,name`
+  const rawRes = await fetch(rawUrl, {
+    headers: {
+      apikey: process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
+    },
+    cache: 'no-store',
+  })
+  const rawJson = await rawRes.json().catch(() => null)
+
   return NextResponse.json({
     ...config,
     agentId: agent?.id ?? null,
@@ -46,5 +56,7 @@ export async function GET(_request: Request, { params }: { params: { businessId:
     _debugSupabaseUrl: supabaseUrl,
     _debugServiceKeyPresent: serviceKeyPresent,
     _debugServiceKeyLen: serviceKeyLen,
+    _debugRawStatus: rawRes.status,
+    _debugRawJson: rawJson,
   })
 }
