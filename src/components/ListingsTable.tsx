@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
-import { Eye, Pencil, Trash2 } from 'lucide-react'
+import { ExternalLink, Eye, Pencil, Trash2 } from 'lucide-react'
 import type { AiAgent, ListingWithPhotos } from '@/types'
 import { LISTING_STATUSES, PROPERTY_TYPES } from '@/constants'
 import { NewListingForm } from '@/components/NewListingForm'
@@ -168,6 +168,14 @@ export function ListingsTable({
                 IA
               </label>
               <div className="flex items-center gap-1">
+                <Link
+                  href={`/dashboard/listings/${listing.id}`}
+                  target="_blank"
+                  title="Abrir detalle en pestaña nueva"
+                  className="p-1.5 rounded-lg text-[var(--text-3)] hover:bg-[var(--bg-raised)] hover:text-[var(--text-1)]"
+                >
+                  <ExternalLink className="w-4 h-4" />
+                </Link>
                 <Link
                   href={`/dashboard/listings/${listing.id}`}
                   title="Ver detalle"
