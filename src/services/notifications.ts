@@ -25,6 +25,16 @@ export async function listNotificationsForBusiness(
   return data ?? []
 }
 
+export async function countUnreadNotifications(supabase: DB, businessId: string): Promise<number> {
+  const { count, error } = await supabase
+    .from('notifications')
+    .select('id', { count: 'exact', head: true })
+    .eq('business_id', businessId)
+    .eq('is_read', false)
+  if (error) throw error
+  return count ?? 0
+}
+
 export async function markNotificationRead(
   supabase: DB,
   businessId: string,

@@ -24,7 +24,7 @@ import {
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
-const NAV_SECTIONS = [
+export const NAV_SECTIONS = [
   {
     items: [
       { href: '/dashboard', label: 'Inicio', icon: LayoutGrid },
