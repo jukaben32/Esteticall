@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, Bed, Bath, Move, Car, ExternalLink, Pencil, Trash2 } from 'lucide-react'
+import { ArrowLeft, Bed, Bath, Move, Car, ExternalLink, Pencil, Trash2, Copy, Check } from 'lucide-react'
 import type { AiAgent, ListingWithPhotos } from '@/types'
 import { LISTING_STATUSES } from '@/constants'
 import { EditListingModal } from '@/components/EditListingModal'
@@ -14,6 +14,20 @@ const LISTING_STATUS_LABELS: Record<string, string> = {
   sold: 'Vendida',
   rented: 'Rentada',
   withdrawn: 'Retirada',
+}
+
+const PROPERTY_TYPE_LABELS: Record<string, string> = {
+  house: 'Casa',
+  apartment: 'Apartamento',
+  townhouse: 'Townhouse',
+  commercial: 'Comercial',
+  condo: 'Condominio',
+  land: 'Terreno',
+}
+
+const LISTING_TYPE_LABELS: Record<string, string> = {
+  sale: 'En venta',
+  rent: 'En alquiler',
 }
 
 export function PropertyDetailView({
@@ -29,6 +43,13 @@ export function PropertyDetailView({
   const [showEdit, setShowEdit] = useState(false)
   const [savingAgent, setSavingAgent] = useState(false)
   const [savingStatus, setSavingStatus] = useState(false)
+  const [idCopied, setIdCopied] = useState(false)
+
+  function copyListingId() {
+    navigator.clipboard.writeText(listing.listing_code)
+    setIdCopied(true)
+    setTimeout(() => setIdCopied(false), 1500)
+  }
 
   const assignedAgent = listing.agents[0] ?? null
   const photos = listing.photos.length
@@ -198,17 +219,37 @@ export function PropertyDetailView({
               <span>Visible para la IA</span>
               <input type="checkbox" checked={listing.visible_to_ai_agent} onChange={toggleVisible} />
             </label>
+          </div>
 
-            {listing.virtual_tour_url && (
-              <a
-                href={listing.virtual_tour_url}
-                target="_blank"
-                rel="noreferrer"
-                className="btn-secondary w-full flex items-center justify-center gap-1.5"
-              >
-                <ExternalLink className="w-4 h-4" /> Ver tour virtual
-              </a>
-            )}
+          <div className="card-surface p-4">
+            <p className="text-sm font-semibold text-[var(--text-1)] mb-3">Detalles de la propiedad</p>
+            <dl className="space-y-2 text-sm">
+              <div className="flex items-center justify-between">
+                <dt className="text-[var(--text-3)]">Tipo</dt>
+                <dd className="text-[var(--text-1)]">{PROPERTY_TYPE_LABELS[listing.property_type] ?? listing.property_type}</dd>
+              </div>
+              <div className="flex items-center justify-between">
+                <dt className="text-[var(--text-3)]">Listado</dt>
+                <dd className="text-[var(--text-1)]">{LISTING_TYPE_LABELS[listing.listing_type] ?? listing.listing_type}</dd>
+              </div>
+              <div className="flex items-center justify-between">
+                <dt className="text-[var(--text-3)]">Año de construcción</dt>
+                <dd className="text-[var(--text-1)]">{listing.year_built ?? '—'}</dd>
+              </div>
+              <div className="flex items-center justify-between">
+                <dt className="text-[var(--text-3)]">Publicado</dt>
+                <dd className="text-[var(--text-1)]">{new Date(listing.listed_at).toLocaleDateString('es-DO')}</dd>
+              </div>
+              <div className="flex items-center justify-between">
+                <dt className="text-[var(--text-3)]">ID de propiedad</dt>
+                <dd className="flex items-center gap-1.5 text-[var(--text-1)]">
+                  {listing.listing_code}
+                  <button onClick={copyListingId} title="Copiar" className="text-[var(--text-3)] hover:text-[var(--text-1)]">
+                    {idCopied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                  </button>
+                </dd>
+              </div>
+            </dl>
           </div>
 
           <div className="card-surface p-4">
@@ -241,6 +282,20 @@ export function PropertyDetailView({
               ))}
             </select>
           </div>
+
+          {listing.virtual_tour_url && (
+            <div className="card-surface p-4">
+              <p className="text-sm font-semibold text-[var(--text-1)] mb-3">Tour virtual</p>
+              <a
+                href={listing.virtual_tour_url}
+                target="_blank"
+                rel="noreferrer"
+                className="btn-primary w-full flex items-center justify-center gap-1.5"
+              >
+                <ExternalLink className="w-4 h-4" /> Abrir tour virtual
+              </a>
+            </div>
+          )}
         </div>
       </div>
 
