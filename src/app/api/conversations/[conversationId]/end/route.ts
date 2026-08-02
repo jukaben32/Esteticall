@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { endConversation } from '@/services/conversations'
+import { endConversation, getConversationTranscript, setConversationSentiment } from '@/services/conversations'
+import { analyzeSentiment } from '@/services/sentiment'
 
 // Called by the browser when a widget voice call hangs up. Public endpoint
 // (no Supabase session — an anonymous website visitor can be the one calling)
@@ -26,5 +27,10 @@ export async function POST(_request: Request, { params }: { params: { conversati
   )
 
   await endConversation(supabase, params.conversationId, { durationSeconds })
+
+  const transcript = await getConversationTranscript(supabase, params.conversationId)
+  const sentiment = await analyzeSentiment(transcript)
+  if (sentiment) await setConversationSentiment(supabase, params.conversationId, sentiment)
+
   return NextResponse.json({ ok: true })
 }

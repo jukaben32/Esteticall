@@ -82,8 +82,9 @@ export interface Database {
           listing_code: string
           title: string
           description: string | null
-          listing_type: 'sale' | 'rent'
+          listing_type: 'sale' | 'rent' | 'vacation_rental'
           property_type: 'house' | 'apartment' | 'townhouse' | 'commercial' | 'condo' | 'land'
+          rental_period: 'night' | 'week' | 'month' | null
           status: 'available' | 'pending' | 'sold' | 'rented' | 'withdrawn'
           price: number
           bedrooms: number
@@ -177,6 +178,7 @@ export interface Database {
           status: 'in_progress' | 'completed' | 'failed'
           duration_seconds: number
           outcome: 'booked_viewing' | 'qualified_lead' | 'no_action' | 'escalated' | null
+          sentiment: 'positive' | 'neutral' | 'negative' | null
           started_at: string
           ended_at: string | null
           created_at: string

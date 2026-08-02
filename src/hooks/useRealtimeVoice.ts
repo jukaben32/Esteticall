@@ -62,9 +62,19 @@ export function useRealtimeVoice() {
 
           if (msg.type === 'response.audio_transcript.done') {
             appendTranscript({ role: 'agent', text: msg.transcript, final: true })
+            void fetch(`/api/conversations/${session.conversationId}/messages`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ role: 'agent', content: msg.transcript }),
+            })
           }
           if (msg.type === 'conversation.item.input_audio_transcription.completed') {
             appendTranscript({ role: 'caller', text: msg.transcript, final: true })
+            void fetch(`/api/conversations/${session.conversationId}/messages`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ role: 'caller', content: msg.transcript }),
+            })
           }
 
           if (msg.type === 'response.function_call_arguments.done') {

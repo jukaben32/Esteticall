@@ -92,6 +92,7 @@ export async function createListing(
       status: input.status,
       price: input.price,
       price_display: input.priceDisplay,
+      rental_period: input.listingType === 'vacation_rental' ? input.rentalPeriod ?? null : null,
       bedrooms: input.bedrooms,
       bathrooms: input.bathrooms,
       area_sqft: input.areaSqft,

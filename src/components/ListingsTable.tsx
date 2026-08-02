@@ -7,6 +7,16 @@ import type { AiAgent, ListingWithPhotos } from '@/types'
 import { LISTING_STATUSES, PROPERTY_TYPES } from '@/constants'
 import { NewListingForm } from '@/components/NewListingForm'
 import { EditListingModal } from '@/components/EditListingModal'
+import { listingPriceSuffix, isLandListing } from '@/lib/listingFormat'
+
+const PROPERTY_TYPE_LABELS: Record<string, string> = {
+  house: 'Casa',
+  apartment: 'Apartamento',
+  townhouse: 'Townhouse',
+  commercial: 'Comercial',
+  condo: 'Condominio',
+  land: 'Solar',
+}
 
 const LISTING_STATUS_LABELS: Record<string, string> = {
   available: 'Disponible',
@@ -92,7 +102,7 @@ export function ListingsTable({
           <option value="all">Todos los tipos</option>
           {PROPERTY_TYPES.map((t) => (
             <option key={t.value} value={t.value}>
-              {t.label}
+              {PROPERTY_TYPE_LABELS[t.value] ?? t.label}
             </option>
           ))}
         </select>
@@ -147,14 +157,16 @@ export function ListingsTable({
                   {listing.address_line}, {listing.area_name}, {listing.city}
                 </p>
                 <p className="text-xs text-[var(--text-3)]">
-                  {listing.bedrooms} hab. · {listing.bathrooms} baños · {listing.area_sqft.toLocaleString()} pies²
+                  {isLandListing(listing)
+                    ? `${listing.area_sqft.toLocaleString()} m²`
+                    : `${listing.bedrooms} hab. · ${listing.bathrooms} baños · ${listing.area_sqft.toLocaleString()} pies²`}
                 </p>
               </div>
             </div>
             <div className="flex flex-wrap items-center gap-3 pl-[68px] sm:pl-0">
               <p className="font-semibold sm:w-28 sm:text-right text-[var(--teal-700)]">
                 ${listing.price.toLocaleString()}
-                {listing.listing_type === 'rent' ? '/mes' : ''}
+                {listingPriceSuffix(listing)}
               </p>
               <span className="badge bg-[var(--teal-50)] border-transparent text-[var(--teal-800)] capitalize">
                 {LISTING_STATUS_LABELS[listing.status] ?? listing.status}

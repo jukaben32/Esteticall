@@ -60,6 +60,13 @@ export const PRICE_DISPLAY_OPTIONS = [
 export const LISTING_TYPES = [
   { value: 'sale', label: 'For Sale' },
   { value: 'rent', label: 'For Rent' },
+  { value: 'vacation_rental', label: 'Vacation Rental' },
+] as const
+
+export const RENTAL_PERIODS = [
+  { value: 'night', label: 'Por noche' },
+  { value: 'week', label: 'Por semana' },
+  { value: 'month', label: 'Por mes' },
 ] as const
 
 export const AMENITIES = [

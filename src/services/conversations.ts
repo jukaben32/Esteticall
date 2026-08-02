@@ -107,6 +107,15 @@ export async function recordConversationOutcome(
   if (error) throw error
 }
 
+export async function setConversationSentiment(
+  supabase: DB,
+  conversationId: string,
+  sentiment: Conversation['sentiment']
+): Promise<void> {
+  const { error } = await supabase.from('conversations').update({ sentiment }).eq('id', conversationId)
+  if (error) throw error
+}
+
 export async function getConversationTranscript(
   supabase: DB,
   conversationId: string

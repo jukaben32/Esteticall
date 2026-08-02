@@ -8,6 +8,7 @@ import type { AiAgent, ListingWithPhotos } from '@/types'
 import { LISTING_STATUSES } from '@/constants'
 import { EditListingModal } from '@/components/EditListingModal'
 import { formatDate } from '@/lib/formatDate'
+import { listingPriceSuffix, isLandListing } from '@/lib/listingFormat'
 
 const LISTING_STATUS_LABELS: Record<string, string> = {
   available: 'Disponible',
@@ -23,12 +24,13 @@ const PROPERTY_TYPE_LABELS: Record<string, string> = {
   townhouse: 'Townhouse',
   commercial: 'Comercial',
   condo: 'Condominio',
-  land: 'Terreno',
+  land: 'Solar',
 }
 
 const LISTING_TYPE_LABELS: Record<string, string> = {
   sale: 'En venta',
   rent: 'En alquiler',
+  vacation_rental: 'Renta vacacional (Airbnb)',
 }
 
 export function PropertyDetailView({
@@ -163,15 +165,21 @@ export function PropertyDetailView({
               </div>
               <p className="text-2xl font-bold text-[var(--teal-700)]">
                 ${listing.price.toLocaleString()}
-                {listing.listing_type === 'rent' ? '/mes' : ''}
+                {listingPriceSuffix(listing)}
               </p>
             </div>
 
             <div className="flex flex-wrap gap-4 mt-4 text-sm text-[var(--text-2)]">
-              <span className="flex items-center gap-1"><Bed className="w-4 h-4" /> {listing.bedrooms} hab.</span>
-              <span className="flex items-center gap-1"><Bath className="w-4 h-4" /> {listing.bathrooms} baños</span>
-              <span className="flex items-center gap-1"><Move className="w-4 h-4" /> {listing.area_sqft.toLocaleString()} pies²</span>
-              <span className="flex items-center gap-1"><Car className="w-4 h-4" /> {listing.parking_spaces} parqueos</span>
+              {isLandListing(listing) ? (
+                <span className="flex items-center gap-1"><Move className="w-4 h-4" /> {listing.area_sqft.toLocaleString()} m²</span>
+              ) : (
+                <>
+                  <span className="flex items-center gap-1"><Bed className="w-4 h-4" /> {listing.bedrooms} hab.</span>
+                  <span className="flex items-center gap-1"><Bath className="w-4 h-4" /> {listing.bathrooms} baños</span>
+                  <span className="flex items-center gap-1"><Move className="w-4 h-4" /> {listing.area_sqft.toLocaleString()} pies²</span>
+                  <span className="flex items-center gap-1"><Car className="w-4 h-4" /> {listing.parking_spaces} parqueos</span>
+                </>
+              )}
             </div>
 
             {listing.description && (

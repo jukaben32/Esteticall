@@ -1,4 +1,5 @@
 import type { AiAgent, Business, Listing, RealtimeTool } from '@/types'
+import { listingPriceSuffix, isLandListing } from '@/lib/listingFormat'
 
 // Tool definitions handed to the OpenAI Realtime session. Execution happens
 // server-side in POST /api/ai/tools — the browser only ever holds an
@@ -9,11 +10,13 @@ export const REALTIME_TOOLS: RealtimeTool[] = [
     type: 'function',
     name: 'search_listings',
     description:
-      'Search this business\'s available property listings by type, price range, bedrooms, or city. Use this whenever the caller asks about properties.',
+      'Search this business\'s available property listings by type, price range, bedrooms, or city. ' +
+      'listingType "vacation_rental" covers short-term/Airbnb-style stays (priced per night, week, or month) ' +
+      'in tourist areas. Use this whenever the caller asks about properties, land/lots, or vacation stays.',
     parameters: {
       type: 'object',
       properties: {
-        listingType: { type: 'string', enum: ['sale', 'rent', 'any'] },
+        listingType: { type: 'string', enum: ['sale', 'rent', 'vacation_rental', 'any'] },
         maxPrice: { type: 'number' },
         minBedrooms: { type: 'number' },
         city: { type: 'string' },
@@ -81,12 +84,14 @@ export function buildSystemPrompt(opts: {
 
   const listingSummaries = listings.length
     ? listings
-        .map(
-          (l) =>
-            `- ${l.listing_code}: ${l.title} — ${l.property_type}, ${l.bedrooms}bd/${l.bathrooms}ba, ` +
-            `${l.area_sqft}sqft, $${l.price.toLocaleString()}${l.listing_type === 'rent' ? '/mo' : ''}, ` +
+        .map((l) => {
+          const specs = isLandListing(l) ? `${l.area_sqft}sqft lot` : `${l.bedrooms}bd/${l.bathrooms}ba, ${l.area_sqft}sqft`
+          return (
+            `- ${l.listing_code}: ${l.title} — ${l.property_type} (${l.listing_type}), ${specs}, ` +
+            `$${l.price.toLocaleString()}${listingPriceSuffix(l)}, ` +
             `${l.city ?? l.area_name ?? 'location on file'}`
-        )
+          )
+        })
         .join('\n')
     : 'No listings are currently marked visible to AI agents.'
 

@@ -533,3 +533,15 @@ alter table listings add column if not exists state text;
 alter table listings add column if not exists zip text;
 alter table listings add column if not exists price_display text not null default 'fixed'
   check (price_display in ('fixed', 'negotiable', 'starting_at', 'contact'));
+
+-- 20. LISTINGS — vacation rentals (day/week/month, common for tourist-zone
+-- Airbnb-style properties in the DR) + CONVERSATIONS — sentiment, derived
+-- from the transcript once a call ends (see src/services/sentiment.ts).
+-- property_type already included 'land' (solares) from the start.
+alter table listings drop constraint if exists listings_listing_type_check;
+alter table listings add constraint listings_listing_type_check
+  check (listing_type in ('sale', 'rent', 'vacation_rental'));
+alter table listings add column if not exists rental_period text
+  check (rental_period in ('night', 'week', 'month'));
+alter table conversations add column if not exists sentiment text
+  check (sentiment in ('positive', 'neutral', 'negative'));

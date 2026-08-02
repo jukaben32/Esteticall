@@ -3,6 +3,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { getBusinessBySlug } from '@/services/businesses'
 import { listListingsForBusiness } from '@/services/listings'
 import { VoiceWidget } from '@/components/VoiceWidget'
+import { listingPriceSuffix } from '@/lib/listingFormat'
 
 // Public marketing site for one business, e.g. real-estate-co.example.com/sites/real-estate-co
 // or a custom domain mapped to websites.custom_domain. Uses the admin client
@@ -51,7 +52,7 @@ export default async function PublicSitePage({ params }: { params: { slug: strin
             <p className="text-sm text-[var(--text-3)]">{listing.city ?? listing.area_name}</p>
             <p className="font-semibold mt-1">
               ${listing.price.toLocaleString()}
-              {listing.listing_type === 'rent' ? '/mo' : ''}
+              {listingPriceSuffix(listing)}
             </p>
           </div>
         ))}

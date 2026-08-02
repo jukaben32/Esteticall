@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import type { Listing } from '@/types'
-import { PROPERTY_TYPES, LISTING_TYPES } from '@/constants'
+import { PROPERTY_TYPES, LISTING_TYPES, RENTAL_PERIODS } from '@/constants'
 
 const PROPERTY_TYPE_LABELS: Record<string, string> = {
   house: 'Casa',
@@ -10,12 +10,13 @@ const PROPERTY_TYPE_LABELS: Record<string, string> = {
   townhouse: 'Townhouse',
   commercial: 'Comercial',
   condo: 'Condominio',
-  land: 'Terreno',
+  land: 'Solar',
 }
 
 const LISTING_TYPE_LABELS: Record<string, string> = {
   sale: 'En venta',
   rent: 'En alquiler',
+  vacation_rental: 'Renta vacacional (Airbnb)',
 }
 
 interface NewListingFormProps {
@@ -34,6 +35,7 @@ export function NewListingForm({ onCreated, onClose }: NewListingFormProps) {
     areaSqft: '',
     yearBuilt: '',
     city: '',
+    rentalPeriod: 'night',
   })
   const [photo, setPhoto] = useState<File | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -47,7 +49,11 @@ export function NewListingForm({ onCreated, onClose }: NewListingFormProps) {
     const res = await fetch('/api/listings', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...form, yearBuilt: form.yearBuilt || undefined }),
+      body: JSON.stringify({
+        ...form,
+        yearBuilt: form.yearBuilt || undefined,
+        rentalPeriod: form.listingType === 'vacation_rental' ? form.rentalPeriod : undefined,
+      }),
     })
 
     if (!res.ok) {
@@ -113,40 +119,57 @@ export function NewListingForm({ onCreated, onClose }: NewListingFormProps) {
         className="input-field"
         required
       />
+      {form.listingType === 'vacation_rental' && (
+        <select
+          value={form.rentalPeriod}
+          onChange={(e) => setForm({ ...form, rentalPeriod: e.target.value })}
+          className="input-field"
+        >
+          {RENTAL_PERIODS.map((p) => (
+            <option key={p.value} value={p.value}>{p.label}</option>
+          ))}
+        </select>
+      )}
       <input
         placeholder="Ciudad"
         value={form.city}
         onChange={(e) => setForm({ ...form, city: e.target.value })}
         className="input-field"
       />
+      {form.propertyType !== 'land' && (
+        <>
+          <input
+            placeholder="Habitaciones"
+            type="number"
+            value={form.bedrooms}
+            onChange={(e) => setForm({ ...form, bedrooms: e.target.value })}
+            className="input-field"
+          />
+          <input
+            placeholder="Baños"
+            type="number"
+            value={form.bathrooms}
+            onChange={(e) => setForm({ ...form, bathrooms: e.target.value })}
+            className="input-field"
+          />
+        </>
+      )}
       <input
-        placeholder="Habitaciones"
-        type="number"
-        value={form.bedrooms}
-        onChange={(e) => setForm({ ...form, bedrooms: e.target.value })}
-        className="input-field"
-      />
-      <input
-        placeholder="Baños"
-        type="number"
-        value={form.bathrooms}
-        onChange={(e) => setForm({ ...form, bathrooms: e.target.value })}
-        className="input-field"
-      />
-      <input
-        placeholder="Área (pies²)"
+        placeholder={form.propertyType === 'land' ? 'Área del solar (m²)' : 'Área (pies²)'}
         type="number"
         value={form.areaSqft}
         onChange={(e) => setForm({ ...form, areaSqft: e.target.value })}
         className="input-field"
       />
-      <input
-        placeholder="Año de construcción"
-        type="number"
-        value={form.yearBuilt}
-        onChange={(e) => setForm({ ...form, yearBuilt: e.target.value })}
-        className="input-field"
-      />
+      {form.propertyType !== 'land' && (
+        <input
+          placeholder="Año de construcción"
+          type="number"
+          value={form.yearBuilt}
+          onChange={(e) => setForm({ ...form, yearBuilt: e.target.value })}
+          className="input-field"
+        />
+      )}
       <div className="col-span-2">
         <label className="text-xs text-[var(--text-3)]">Foto de portada (opcional)</label>
         <input

@@ -18,6 +18,18 @@ const OUTCOME_LABELS: Record<string, string> = {
   escalated: 'Escalado',
 }
 
+const SENTIMENT_STYLES: Record<string, string> = {
+  positive: 'bg-[var(--teal-50)] text-[var(--teal-800)]',
+  neutral: 'bg-[var(--bg-raised)] text-[var(--text-3)]',
+  negative: 'bg-red-50 text-red-700',
+}
+
+const SENTIMENT_LABELS: Record<string, string> = {
+  positive: '🙂 Positivo',
+  neutral: '😐 Neutral',
+  negative: '🙁 Negativo',
+}
+
 const CHANNEL_LABELS: Record<string, string> = {
   widget_voice: 'Voz · widget',
   widget_chat: 'Chat · widget',
@@ -107,6 +119,11 @@ export function CallLogTable({ initialConversations }: { initialConversations: C
                 <span className="text-sm sm:w-14 sm:text-right">{formatDuration(conv.duration_seconds)}</span>
                 <span className="badge bg-[var(--bg-raised)] border-transparent text-[var(--text-3)]">
                   {STATUS_LABELS[conv.status] ?? conv.status}
+                </span>
+                <span
+                  className={`badge border-transparent ${conv.sentiment ? SENTIMENT_STYLES[conv.sentiment] ?? '' : 'bg-[var(--bg-raised)] text-[var(--text-4)]'}`}
+                >
+                  {conv.sentiment ? SENTIMENT_LABELS[conv.sentiment] ?? conv.sentiment : 'Sentimiento —'}
                 </span>
                 <span
                   className={`badge border-transparent ${conv.outcome ? OUTCOME_STYLES[conv.outcome] ?? '' : 'bg-[var(--bg-raised)] text-[var(--text-4)]'}`}

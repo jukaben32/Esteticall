@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import type { AiAgent, ListingWithPhotos } from '@/types'
-import { PROPERTY_TYPES, LISTING_TYPES, LISTING_STATUSES, AMENITIES, PRICE_DISPLAY_OPTIONS } from '@/constants'
+import { PROPERTY_TYPES, LISTING_TYPES, LISTING_STATUSES, AMENITIES, PRICE_DISPLAY_OPTIONS, RENTAL_PERIODS } from '@/constants'
 
 const LISTING_STATUS_LABELS: Record<string, string> = {
   available: 'Disponible',
@@ -18,12 +18,13 @@ const PROPERTY_TYPE_LABELS: Record<string, string> = {
   townhouse: 'Townhouse',
   commercial: 'Comercial',
   condo: 'Condominio',
-  land: 'Terreno',
+  land: 'Solar',
 }
 
 const LISTING_TYPE_LABELS: Record<string, string> = {
   sale: 'En venta',
   rent: 'En alquiler',
+  vacation_rental: 'Renta vacacional (Airbnb)',
 }
 
 interface EditListingModalProps {
@@ -47,6 +48,7 @@ export function EditListingModal({ listing, agents, onSaved, onClose }: EditList
     zip: listing.zip ?? '',
     price: String(listing.price),
     priceDisplay: listing.price_display,
+    rentalPeriod: listing.rental_period ?? 'night',
     bedrooms: String(listing.bedrooms),
     bathrooms: String(listing.bathrooms),
     areaSqft: String(listing.area_sqft),
@@ -137,6 +139,7 @@ export function EditListingModal({ listing, agents, onSaved, onClose }: EditList
         zip: form.zip || null,
         price: Number(form.price) || 0,
         price_display: form.priceDisplay,
+        rental_period: form.listingType === 'vacation_rental' ? form.rentalPeriod : null,
         bedrooms: Number(form.bedrooms) || 0,
         bathrooms: Number(form.bathrooms) || 0,
         area_sqft: Number(form.areaSqft) || 0,
@@ -312,17 +315,38 @@ export function EditListingModal({ listing, agents, onSaved, onClose }: EditList
           </select>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <input placeholder="Habitaciones" type="number" value={form.bedrooms} onChange={(e) => setForm({ ...form, bedrooms: e.target.value })} className="input-field" />
-          <input placeholder="Baños" type="number" value={form.bathrooms} onChange={(e) => setForm({ ...form, bathrooms: e.target.value })} className="input-field" />
-          <input placeholder="Parqueos" type="number" value={form.parkingSpaces} onChange={(e) => setForm({ ...form, parkingSpaces: e.target.value })} className="input-field" />
-          <input placeholder="Área (pies²)" type="number" value={form.areaSqft} onChange={(e) => setForm({ ...form, areaSqft: e.target.value })} className="input-field" />
-        </div>
+        {form.listingType === 'vacation_rental' && (
+          <select
+            value={form.rentalPeriod}
+            onChange={(e) => setForm({ ...form, rentalPeriod: e.target.value as typeof form.rentalPeriod })}
+            className="input-field w-full"
+          >
+            {RENTAL_PERIODS.map((p) => (
+              <option key={p.value} value={p.value}>{p.label}</option>
+            ))}
+          </select>
+        )}
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <input placeholder="Año de construcción" type="number" value={form.yearBuilt} onChange={(e) => setForm({ ...form, yearBuilt: e.target.value })} className="input-field" />
-          <input placeholder="URL de tour virtual" value={form.virtualTourUrl} onChange={(e) => setForm({ ...form, virtualTourUrl: e.target.value })} className="input-field" />
-        </div>
+        {form.propertyType === 'land' ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <input placeholder="Área del solar (m²)" type="number" value={form.areaSqft} onChange={(e) => setForm({ ...form, areaSqft: e.target.value })} className="input-field" />
+            <input placeholder="URL de tour virtual" value={form.virtualTourUrl} onChange={(e) => setForm({ ...form, virtualTourUrl: e.target.value })} className="input-field" />
+          </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <input placeholder="Habitaciones" type="number" value={form.bedrooms} onChange={(e) => setForm({ ...form, bedrooms: e.target.value })} className="input-field" />
+              <input placeholder="Baños" type="number" value={form.bathrooms} onChange={(e) => setForm({ ...form, bathrooms: e.target.value })} className="input-field" />
+              <input placeholder="Parqueos" type="number" value={form.parkingSpaces} onChange={(e) => setForm({ ...form, parkingSpaces: e.target.value })} className="input-field" />
+              <input placeholder="Área (pies²)" type="number" value={form.areaSqft} onChange={(e) => setForm({ ...form, areaSqft: e.target.value })} className="input-field" />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <input placeholder="Año de construcción" type="number" value={form.yearBuilt} onChange={(e) => setForm({ ...form, yearBuilt: e.target.value })} className="input-field" />
+              <input placeholder="URL de tour virtual" value={form.virtualTourUrl} onChange={(e) => setForm({ ...form, virtualTourUrl: e.target.value })} className="input-field" />
+            </div>
+          </>
+        )}
 
         <textarea
           placeholder="Descripción"
