@@ -3,7 +3,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { getAvailableSlots, createAppointment } from '@/services/appointments'
 import { findOrCreateClientByPhone } from '@/services/clients'
 import { getSubscription } from '@/services/businesses'
-import { appendMessage } from '@/services/conversations'
+import { appendMessage, recordConversationOutcome } from '@/services/conversations'
 import type { PlanId } from '@/types'
 
 // Single relay endpoint for every OpenAI Realtime function call. The browser
@@ -99,6 +99,8 @@ export async function POST(request: Request) {
           scheduledAt: args.datetime,
         })
 
+        await recordConversationOutcome(supabase, conversationId, { clientId: client.id, outcome: 'booked_viewing' })
+
         return NextResponse.json({ booked: true, appointment })
       }
 
@@ -109,6 +111,9 @@ export async function POST(request: Request) {
           budget: args.budget,
           source: 'ai_call',
         })
+
+        await recordConversationOutcome(supabase, conversationId, { clientId: client.id, outcome: 'qualified_lead' })
+
         return NextResponse.json({ captured: true, clientId: client.id })
       }
 

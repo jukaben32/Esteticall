@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import type { Notification } from '@/types'
+import { formatDateTime } from '@/lib/formatDate'
 
 const TYPE_LABELS: Record<string, string> = {
   new_lead: 'Nuevo lead',
@@ -53,7 +54,7 @@ export function NotificationsPanel({ initialNotifications }: { initialNotificati
               <p className={`text-sm ${n.is_read ? 'text-[var(--text-3)]' : 'font-medium text-[var(--text-1)]'}`}>{n.title}</p>
               {n.body && <p className="text-xs text-[var(--text-3)]">{n.body}</p>}
               <p className="text-xs text-[var(--text-4)] mt-0.5">
-                {TYPE_LABELS[n.type] ?? n.type} · {new Date(n.created_at).toLocaleString('es-DO')}
+                {TYPE_LABELS[n.type] ?? n.type} · {formatDateTime(n.created_at)}
               </p>
             </div>
           </button>

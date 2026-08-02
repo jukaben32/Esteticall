@@ -1,6 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '@/types/database'
-import type { Conversation, ConversationMessage } from '@/types'
+import type { Client, Conversation, ConversationMessage, ConversationWithClient } from '@/types'
 
 type DB = SupabaseClient<Database>
 
@@ -65,14 +65,46 @@ export async function endConversation(
 export async function listConversationsForBusiness(
   supabase: DB,
   businessId: string
-): Promise<Conversation[]> {
+): Promise<ConversationWithClient[]> {
   const { data, error } = await supabase
     .from('conversations')
-    .select('*')
+    .select('*, clients(id, name, phone, email)')
     .eq('business_id', businessId)
     .order('started_at', { ascending: false })
   if (error) throw error
-  return data ?? []
+
+  return ((data ?? []) as unknown as (Conversation & { clients: Pick<Client, 'id' | 'name' | 'phone' | 'email'> | null })[]).map(
+    (row) => ({ ...row, client: row.clients ?? null })
+  )
+}
+
+// Called mid-call by the tool relay as soon as a lead/booking happens, so the
+// call log reflects who called and what happened even if the call itself
+// never cleanly reaches endConversation() (dropped connection, closed tab).
+// Never downgrades a stronger outcome already set earlier in the same call
+// (e.g. a booked_viewing shouldn't be overwritten by a later qualified_lead).
+const OUTCOME_RANK: Record<string, number> = { no_action: 0, qualified_lead: 1, escalated: 1, booked_viewing: 2 }
+
+export async function recordConversationOutcome(
+  supabase: DB,
+  conversationId: string,
+  patch: { clientId: string; outcome: NonNullable<Conversation['outcome']> }
+): Promise<void> {
+  const { data: current, error: fetchError } = await supabase
+    .from('conversations')
+    .select('outcome')
+    .eq('id', conversationId)
+    .maybeSingle()
+  if (fetchError) throw fetchError
+
+  const currentRank = current?.outcome ? OUTCOME_RANK[current.outcome] ?? 0 : -1
+  if (OUTCOME_RANK[patch.outcome] < currentRank) return
+
+  const { error } = await supabase
+    .from('conversations')
+    .update({ client_id: patch.clientId, outcome: patch.outcome })
+    .eq('id', conversationId)
+  if (error) throw error
 }
 
 export async function getConversationTranscript(

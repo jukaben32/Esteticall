@@ -117,6 +117,12 @@ export function useRealtimeVoice() {
     audioRef.current?.remove()
     pcRef.current = null
     dcRef.current = null
+
+    const { conversationId } = useVoiceStore.getState()
+    if (conversationId) {
+      void fetch(`/api/conversations/${conversationId}/end`, { method: 'POST' })
+    }
+
     reset()
   }, [setStatus, reset])
 

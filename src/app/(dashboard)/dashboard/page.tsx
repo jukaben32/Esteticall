@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { getBusinessForOwner, getDashboardAnalytics } from '@/services/businesses'
 import { listListingsForBusiness } from '@/services/listings'
 import { listAppointmentsForBusiness } from '@/services/appointments'
+import { formatDateTime } from '@/lib/formatDate'
 
 export default async function OverviewPage() {
   const supabase = await createClient()
@@ -82,7 +83,7 @@ export default async function OverviewPage() {
         <ul className="divide-y divide-[var(--border)]">
           {appointments.slice(0, 5).map((appt) => (
             <li key={appt.id} className="py-3 flex items-center justify-between text-sm">
-              <span className="text-[var(--text-1)]">{new Date(appt.scheduled_at).toLocaleString('es-DO')}</span>
+              <span className="text-[var(--text-1)]">{formatDateTime(appt.scheduled_at)}</span>
               <span className="badge bg-[var(--teal-50)] border-transparent text-[var(--teal-800)] capitalize">
                 {STATUS_LABELS[appt.status] ?? appt.status}
               </span>

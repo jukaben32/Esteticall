@@ -7,6 +7,7 @@ import { ArrowLeft, Bed, Bath, Move, Car, ExternalLink, Pencil, Trash2, Copy, Ch
 import type { AiAgent, ListingWithPhotos } from '@/types'
 import { LISTING_STATUSES } from '@/constants'
 import { EditListingModal } from '@/components/EditListingModal'
+import { formatDate } from '@/lib/formatDate'
 
 const LISTING_STATUS_LABELS: Record<string, string> = {
   available: 'Disponible',
@@ -238,7 +239,7 @@ export function PropertyDetailView({
               </div>
               <div className="flex items-center justify-between">
                 <dt className="text-[var(--text-3)]">Publicado</dt>
-                <dd className="text-[var(--text-1)]">{new Date(listing.listed_at).toLocaleDateString('es-DO')}</dd>
+                <dd className="text-[var(--text-1)]">{formatDate(listing.listed_at)}</dd>
               </div>
               <div className="flex items-center justify-between">
                 <dt className="text-[var(--text-3)]">ID de propiedad</dt>

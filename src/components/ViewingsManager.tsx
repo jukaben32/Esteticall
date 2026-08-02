@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react'
 import type { Appointment } from '@/types'
 import { APPOINTMENT_STATUSES } from '@/constants'
+import { formatDateTime } from '@/lib/formatDate'
 
 const STATUS_STYLES: Record<string, string> = {
   scheduled: 'bg-[var(--teal-50)] text-[var(--teal-700)]',
@@ -56,7 +57,7 @@ export function ViewingsManager({ initialAppointments }: { initialAppointments: 
         {filtered.map((appt) => (
           <div key={appt.id} className="py-3 flex flex-col sm:flex-row sm:items-center gap-2">
             <div className="flex-1 min-w-0">
-              <p className="font-medium text-[var(--text-1)]">{new Date(appt.scheduled_at).toLocaleString('es-DO')}</p>
+              <p className="font-medium text-[var(--text-1)]">{formatDateTime(appt.scheduled_at)}</p>
               {appt.notes && <p className="text-xs text-[var(--text-3)] truncate">{appt.notes}</p>}
             </div>
             <div className="flex flex-wrap items-center gap-2">

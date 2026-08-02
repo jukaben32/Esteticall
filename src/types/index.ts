@@ -42,6 +42,10 @@ export interface ListingWithPhotos extends Listing {
   agents: Pick<AiAgent, 'id' | 'name' | 'specialty' | 'status'>[]
 }
 
+export interface ConversationWithClient extends Conversation {
+  client: Pick<Client, 'id' | 'name' | 'phone' | 'email'> | null
+}
+
 // ─── Scheduling ───────────────────────────────────────────────────────────
 export interface AvailableSlot {
   date: string // YYYY-MM-DD
