@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
-import { ExternalLink, Eye, Pencil, Trash2 } from 'lucide-react'
+import { ExternalLink, Eye, EyeOff, Pencil, Trash2 } from 'lucide-react'
 import type { AiAgent, ListingWithPhotos } from '@/types'
 import { LISTING_STATUSES, PROPERTY_TYPES } from '@/constants'
 import { NewListingForm } from '@/components/NewListingForm'
@@ -159,14 +159,6 @@ export function ListingsTable({
               <span className="badge bg-[var(--teal-50)] border-transparent text-[var(--teal-800)] capitalize">
                 {LISTING_STATUS_LABELS[listing.status] ?? listing.status}
               </span>
-              <label className="flex items-center gap-1 text-xs">
-                <input
-                  type="checkbox"
-                  checked={listing.visible_to_ai_agent}
-                  onChange={() => toggleVisibility(listing)}
-                />
-                IA
-              </label>
               <div className="flex items-center gap-1">
                 <Link
                   href={`/dashboard/listings/${listing.id}`}
@@ -176,13 +168,13 @@ export function ListingsTable({
                 >
                   <ExternalLink className="w-4 h-4" />
                 </Link>
-                <Link
-                  href={`/dashboard/listings/${listing.id}`}
-                  title="Ver detalle"
+                <button
+                  onClick={() => toggleVisibility(listing)}
+                  title={listing.visible_to_ai_agent ? 'Ocultar propiedad (no visible para la IA)' : 'Mostrar propiedad (visible para la IA)'}
                   className="p-1.5 rounded-lg text-[var(--text-3)] hover:bg-[var(--bg-raised)] hover:text-[var(--text-1)]"
                 >
-                  <Eye className="w-4 h-4" />
-                </Link>
+                  {listing.visible_to_ai_agent ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                </button>
                 <button
                   onClick={() => setEditingListing(listing)}
                   title="Editar"
