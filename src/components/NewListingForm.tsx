@@ -32,6 +32,7 @@ export function NewListingForm({ onCreated, onClose }: NewListingFormProps) {
     bedrooms: '',
     bathrooms: '',
     areaSqft: '',
+    yearBuilt: '',
     city: '',
   })
   const [photo, setPhoto] = useState<File | null>(null)
@@ -46,7 +47,7 @@ export function NewListingForm({ onCreated, onClose }: NewListingFormProps) {
     const res = await fetch('/api/listings', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(form),
+      body: JSON.stringify({ ...form, yearBuilt: form.yearBuilt || undefined }),
     })
 
     if (!res.ok) {
@@ -137,7 +138,14 @@ export function NewListingForm({ onCreated, onClose }: NewListingFormProps) {
         type="number"
         value={form.areaSqft}
         onChange={(e) => setForm({ ...form, areaSqft: e.target.value })}
-        className="input-field col-span-2"
+        className="input-field"
+      />
+      <input
+        placeholder="Año de construcción"
+        type="number"
+        value={form.yearBuilt}
+        onChange={(e) => setForm({ ...form, yearBuilt: e.target.value })}
+        className="input-field"
       />
       <div className="col-span-2">
         <label className="text-xs text-[var(--text-3)]">Foto de portada (opcional)</label>
