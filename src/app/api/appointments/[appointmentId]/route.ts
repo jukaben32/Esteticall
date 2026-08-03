@@ -1,7 +1,12 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { getBusinessForOwner } from '@/services/businesses'
-import { updateAppointmentStatus, updateAppointment, getAppointmentWithDetails } from '@/services/appointments'
+import {
+  updateAppointmentStatus,
+  updateAppointmentPayment,
+  updateAppointment,
+  getAppointmentWithDetails,
+} from '@/services/appointments'
 import { sendAppointmentConfirmationEmail, sendAppointmentCompletedEmail, sendAppointmentCancelledEmail } from '@/services/email'
 import type { Appointment } from '@/types'
 
@@ -21,13 +26,14 @@ export async function PATCH(request: Request, { params }: { params: { appointmen
   if ('error' in ctx) return NextResponse.json({ error: ctx.error }, { status: 401 })
 
   const body = await request.json()
-  const { status, scheduled_at, notes, service_id, listing_id, cancellationReason } = body as {
+  const { status, scheduled_at, notes, service_id, listing_id, cancellationReason, payment_status } = body as {
     status?: Appointment['status']
     scheduled_at?: string
     notes?: string
     service_id?: string | null
     listing_id?: string | null
     cancellationReason?: string
+    payment_status?: Appointment['payment_status']
   }
 
   let appointment: Appointment
@@ -35,6 +41,8 @@ export async function PATCH(request: Request, { params }: { params: { appointmen
     appointment = await updateAppointmentStatus(ctx.supabase, ctx.business.id, params.appointmentId, status, {
       cancellationReason,
     })
+  } else if (payment_status) {
+    appointment = await updateAppointmentPayment(ctx.supabase, ctx.business.id, params.appointmentId, payment_status)
   } else {
     appointment = await updateAppointment(ctx.supabase, ctx.business.id, params.appointmentId, {
       ...(scheduled_at !== undefined && { scheduled_at }),

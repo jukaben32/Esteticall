@@ -5,39 +5,13 @@ import { Eye } from 'lucide-react'
 import type { AppointmentWithDetails, BusinessService } from '@/types'
 import { APPOINTMENT_STATUSES } from '@/constants'
 import { formatDateTime } from '@/lib/formatDate'
+import {
+  APPOINTMENT_STATUS_STYLES as STATUS_STYLES,
+  APPOINTMENT_STATUS_LABELS as STATUS_LABELS,
+  PAYMENT_STYLES,
+  PAYMENT_LABELS,
+} from '@/lib/appointmentFormat'
 import { NewViewingModal } from '@/components/NewViewingModal'
-
-const STATUS_STYLES: Record<string, string> = {
-  pending_confirmation: 'bg-[var(--gold)]/15 text-[var(--gold)]',
-  scheduled: 'bg-[var(--teal-50)] text-[var(--teal-700)]',
-  completed: 'bg-[var(--teal-50)] text-[var(--teal-800)]',
-  cancelled: 'bg-red-100 text-red-700',
-  no_show: 'bg-[var(--bg-raised)] text-[var(--text-3)]',
-}
-
-const STATUS_LABELS: Record<string, string> = {
-  pending_confirmation: 'Pendiente',
-  scheduled: 'Confirmada',
-  completed: 'Completada',
-  cancelled: 'Cancelada',
-  no_show: 'No asistió',
-}
-
-const PAYMENT_STYLES: Record<string, string> = {
-  not_required: 'bg-[var(--bg-raised)] text-[var(--text-4)]',
-  pending: 'bg-[var(--gold)]/15 text-[var(--gold)]',
-  paid: 'bg-[var(--teal-50)] text-[var(--teal-800)]',
-  cash: 'bg-[var(--teal-50)] text-[var(--teal-800)]',
-  refunded: 'bg-[var(--bg-raised)] text-[var(--text-3)]',
-}
-
-const PAYMENT_LABELS: Record<string, string> = {
-  not_required: '—',
-  pending: 'Sin pagar',
-  paid: '✓ Pagado',
-  cash: '✓ Pagado (efectivo)',
-  refunded: 'Reembolsado',
-}
 
 function ViewingDetailsModal({ appt, onClose }: { appt: AppointmentWithDetails; onClose: () => void }) {
   return (

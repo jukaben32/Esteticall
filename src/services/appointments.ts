@@ -146,6 +146,27 @@ export async function updateAppointmentStatus(
   return data
 }
 
+export async function updateAppointmentPayment(
+  supabase: DB,
+  businessId: string,
+  appointmentId: string,
+  paymentStatus: Appointment['payment_status']
+): Promise<Appointment> {
+  const patch: Record<string, unknown> = { payment_status: paymentStatus }
+  if (paymentStatus === 'cash' || paymentStatus === 'paid') patch.paid_at = new Date().toISOString()
+  if (paymentStatus === 'refunded' || paymentStatus === 'pending') patch.paid_at = null
+
+  const { data, error } = await supabase
+    .from('appointments')
+    .update(patch)
+    .eq('business_id', businessId)
+    .eq('id', appointmentId)
+    .select('*')
+    .single()
+  if (error) throw error
+  return data
+}
+
 export async function updateAppointment(
   supabase: DB,
   businessId: string,
