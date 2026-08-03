@@ -229,6 +229,22 @@ de pasarlas por acá.
 
 ---
 
+### 8. Overview del dashboard rediseñado (3 ago 2026)
+Se reconstruyó `/dashboard` (Overview, `src/app/(dashboard)/dashboard/page.tsx`) para
+igualar la apariencia y funcionalidad del dashboard de referencia (capturas del
+tutorial original, "EstateCall"): saludo dinámico + badge de agentes en vivo + botón
+Actualizar, 5 stat cards con ícono (propiedades activas, conversaciones totales,
+visitas agendadas, tasa de conversión, duración promedio), gráfica de tendencia de
+14 días (llamadas vs. visitas, `OverviewTrendChart.tsx`, nuevo), panel "Actividad de
+hoy" (llamadas hoy/semana, callbacks, agentes activos, propiedades disponibles),
+cards de propiedades con badges Destacada/Disponible y camas/baños, y lista de
+visitas recientes con cliente, presupuesto y estado. Todo contra datos reales de
+Supabase (`conversations`, `appointments`, `listings`, `ai_agents`), sin mocks.
+
+Nota: no existe en el esquema un campo dedicado de "callback solicitado" — se usa el
+outcome `escalated` de `conversations` como proxy; si se quiere un contador exacto,
+haría falta agregar una columna o un outcome específico.
+
 ## VISIÓN A LARGO PLAZO (clave, no perder)
 
 InmobilIACall no debe ser solo "SaaS de bienes raíces", sino una **base reutilizable
