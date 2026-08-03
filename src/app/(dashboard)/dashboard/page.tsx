@@ -1,9 +1,48 @@
 import Link from 'next/link'
+import {
+  House,
+  MessagesSquare,
+  CalendarCheck,
+  TrendingUp,
+  Clock,
+  PhoneCall,
+  PhoneForwarded,
+  Bot,
+  Bed,
+  Bath,
+} from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { getBusinessForOwner, getDashboardAnalytics } from '@/services/businesses'
 import { listListingsForBusiness } from '@/services/listings'
 import { listAppointmentsForBusiness } from '@/services/appointments'
+import { listConversationsForBusiness } from '@/services/conversations'
+import { listAgentsForBusiness } from '@/services/aiAgents'
 import { formatDateTime } from '@/lib/formatDate'
+import { APPOINTMENT_STATUS_LABELS, APPOINTMENT_STATUS_STYLES } from '@/lib/appointmentFormat'
+import { listingPriceSuffix } from '@/lib/listingFormat'
+import { OverviewTrendChart, type OverviewTrendPoint } from '@/components/OverviewTrendChart'
+import { RefreshButton } from '@/components/RefreshButton'
+
+const DAYS_BACK = 14
+
+function dayKey(iso: string): string {
+  return new Date(iso).toISOString().slice(0, 10)
+}
+
+function dayLabel(key: string): string {
+  return new Date(`${key}T00:00:00Z`).toLocaleDateString('es-DO', {
+    month: 'short',
+    day: 'numeric',
+    timeZone: 'UTC',
+  })
+}
+
+function greeting(): string {
+  const hour = new Date().getHours()
+  if (hour < 12) return 'Buenos días'
+  if (hour < 19) return 'Buenas tardes'
+  return 'Buenas noches'
+}
 
 export default async function OverviewPage() {
   const supabase = await createClient()
@@ -13,27 +52,104 @@ export default async function OverviewPage() {
   const business = await getBusinessForOwner(supabase, user!.id)
   if (!business) return null
 
-  const [analytics, listings, appointments] = await Promise.all([
+  const [analytics, listings, appointments, conversations, agents] = await Promise.all([
     getDashboardAnalytics(supabase, business.id),
     listListingsForBusiness(supabase, business.id),
     listAppointmentsForBusiness(supabase, business.id),
+    listConversationsForBusiness(supabase, business.id),
+    listAgentsForBusiness(supabase, business.id),
   ])
 
   const available = listings.filter((l) => l.status === 'available')
+  const liveAgents = agents.filter((a) => a.status === 'live')
+
+  const completedCalls = conversations.filter((c) => c.status === 'completed')
+  const avgDurationSeconds = completedCalls.length
+    ? Math.round(completedCalls.reduce((sum, c) => sum + c.duration_seconds, 0) / completedCalls.length)
+    : 0
+  const avgMinutes = Math.floor(avgDurationSeconds / 60)
+  const avgSeconds = avgDurationSeconds % 60
+
+  const bookedCount = conversations.filter((c) => c.outcome === 'booked_viewing').length
+  const conversionRate = conversations.length
+    ? Math.round((bookedCount / conversations.length) * 100)
+    : 0
+
+  // No hay un campo dedicado de "callback solicitado" en el esquema — se usa el
+  // outcome "escalated" (la llamada se marcó para seguimiento humano) como proxy.
+  const callbacksRequested = conversations.filter((c) => c.outcome === 'escalated').length
+
+  const days: string[] = []
+  for (let i = DAYS_BACK - 1; i >= 0; i--) {
+    days.push(dayKey(new Date(Date.now() - i * 86_400_000).toISOString()))
+  }
+  const callsByDay = new Map<string, number>()
+  const viewingsByDay = new Map<string, number>()
+  for (const c of conversations) {
+    const k = dayKey(c.started_at)
+    callsByDay.set(k, (callsByDay.get(k) ?? 0) + 1)
+  }
+  for (const a of appointments) {
+    const k = dayKey(a.scheduled_at)
+    viewingsByDay.set(k, (viewingsByDay.get(k) ?? 0) + 1)
+  }
+  const trend: OverviewTrendPoint[] = days.map((k) => ({
+    day: dayLabel(k),
+    calls: callsByDay.get(k) ?? 0,
+    viewings: viewingsByDay.get(k) ?? 0,
+  }))
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="font-display font-semibold text-2xl text-[var(--text-1)]">Inicio</h1>
-        <p className="text-sm text-[var(--text-3)] mt-1">Datos en vivo de {business.name}</p>
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="font-display font-semibold text-2xl text-[var(--text-1)]">
+            {greeting()}, {business.name}
+          </h1>
+          <p className="text-sm text-[var(--text-3)] mt-1">Rendimiento de la agencia de un vistazo</p>
+        </div>
+        <div className="flex items-center gap-2">
+          {liveAgents.length > 0 && (
+            <span className="badge bg-[var(--teal-50)] border-transparent text-[var(--teal-700)]">
+              <span className="w-1.5 h-1.5 rounded-full bg-[var(--teal-600)] animate-pulse" />
+              {liveAgents.length} {liveAgents.length === 1 ? 'AGENTE EN VIVO' : 'AGENTES EN VIVO'}
+            </span>
+          )}
+          <RefreshButton />
+        </div>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        <StatCard label="Propiedades disponibles" value={available.length} />
-        <StatCard label="Conversaciones hoy" value={analytics.conversations_today} />
-        <StatCard label="Conversaciones esta semana" value={analytics.conversations_this_week} />
-        <StatCard label="Citas hoy" value={analytics.appointments_today} />
-        <StatCard label="Citas esta semana" value={analytics.appointments_this_week} />
+        <StatCard icon={House} label="Propiedades activas" value={available.length} />
+        <StatCard icon={MessagesSquare} label="Conversaciones totales" value={conversations.length} />
+        <StatCard icon={CalendarCheck} label="Visitas agendadas" value={appointments.length} />
+        <StatCard icon={TrendingUp} label="Tasa de conversión" value={`${conversionRate}%`} />
+        <StatCard
+          icon={Clock}
+          label="Duración promedio"
+          value={`${avgMinutes}:${avgSeconds.toString().padStart(2, '0')}`}
+        />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <section className="card-surface p-4 lg:col-span-2">
+          <div className="mb-3">
+            <h2 className="font-display font-semibold text-[var(--text-1)]">Tendencia de conversaciones</h2>
+            <p className="text-xs text-[var(--text-3)]">Últimos 14 días · llamadas y visitas</p>
+          </div>
+          <OverviewTrendChart data={trend} />
+        </section>
+
+        <section className="card-surface p-4">
+          <h2 className="font-display font-semibold text-[var(--text-1)] mb-3">Actividad de hoy</h2>
+          <ul className="divide-y divide-[var(--border)]">
+            <ActivityRow icon={PhoneCall} label="Llamadas de hoy" value={analytics.conversations_today} />
+            <ActivityRow icon={TrendingUp} label="Esta semana" value={analytics.conversations_this_week} />
+            <ActivityRow icon={PhoneForwarded} label="Callbacks solicitados" value={callbacksRequested} />
+            <ActivityRow icon={Bot} label="Agentes activos" value={liveAgents.length} />
+            <ActivityRow icon={House} label="Propiedades disponibles" value={available.length} />
+          </ul>
+        </section>
       </div>
 
       <section className="card-surface p-5">
@@ -50,21 +166,47 @@ export default async function OverviewPage() {
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {listings.slice(0, 4).map((listing) => (
-            <div key={listing.id} className="card-surface p-3">
-              {listing.cover_photo_url && (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={listing.cover_photo_url}
-                  alt={listing.title}
-                  className="rounded-lg mb-2 aspect-video object-cover w-full"
-                />
-              )}
-              <p className="text-sm font-medium truncate">{listing.title}</p>
-              <p className="text-xs text-[var(--text-3)]">{listing.city ?? listing.area_name}</p>
-              <p className="text-sm font-semibold mt-1 text-[var(--teal-700)]">
-                ${listing.price.toLocaleString()}
-                {listing.listing_type === 'rent' ? '/mes' : ''}
-              </p>
+            <div key={listing.id} className="card-surface overflow-hidden">
+              <div className="relative aspect-video">
+                {listing.cover_photo_url ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={listing.cover_photo_url}
+                    alt={listing.title}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-[var(--bg-raised)]" />
+                )}
+                {listing.featured && (
+                  <span className="absolute top-2 left-2 badge bg-[var(--gold)] border-transparent text-white">
+                    Destacada
+                  </span>
+                )}
+                <span
+                  className={`absolute top-2 right-2 badge border-transparent text-white ${
+                    listing.status === 'available' ? 'bg-[var(--teal-700)]' : 'bg-[var(--text-4)]'
+                  }`}
+                >
+                  {listing.status === 'available' ? 'Disponible' : listing.status}
+                </span>
+              </div>
+              <div className="p-3">
+                <p className="text-sm font-medium truncate">{listing.title}</p>
+                <p className="text-xs text-[var(--text-3)] truncate">{listing.city ?? listing.area_name}</p>
+                <p className="text-sm font-semibold mt-1 text-[var(--teal-700)]">
+                  ${listing.price.toLocaleString()}
+                  {listingPriceSuffix(listing)}
+                </p>
+                <div className="flex items-center gap-3 mt-1.5 text-xs text-[var(--text-3)]">
+                  <span className="inline-flex items-center gap-1">
+                    <Bed className="w-3.5 h-3.5" /> {listing.bedrooms}
+                  </span>
+                  <span className="inline-flex items-center gap-1">
+                    <Bath className="w-3.5 h-3.5" /> {listing.bathrooms}
+                  </span>
+                </div>
+              </div>
             </div>
           ))}
           {listings.length === 0 && (
@@ -75,18 +217,31 @@ export default async function OverviewPage() {
 
       <section className="card-surface p-5">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="font-display font-semibold text-[var(--text-1)]">Próximas citas</h2>
+          <h2 className="font-display font-semibold text-[var(--text-1)]">Visitas recientes</h2>
           <Link href="/dashboard/viewings" className="btn-secondary">
             Ver todas
           </Link>
         </div>
         <ul className="divide-y divide-[var(--border)]">
           {appointments.slice(0, 5).map((appt) => (
-            <li key={appt.id} className="py-3 flex items-center justify-between text-sm">
-              <span className="text-[var(--text-1)]">{formatDateTime(appt.scheduled_at)}</span>
-              <span className="badge bg-[var(--teal-50)] border-transparent text-[var(--teal-800)] capitalize">
-                {STATUS_LABELS[appt.status] ?? appt.status}
-              </span>
+            <li key={appt.id} className="py-3 flex items-center justify-between gap-3 text-sm">
+              <div className="min-w-0">
+                <p className="text-[var(--text-1)] font-medium truncate">{appt.client?.name ?? 'Cliente sin nombre'}</p>
+                <p className="text-xs text-[var(--text-3)] truncate">
+                  {appt.client?.pre_approval_number ?? appt.client?.phone ?? '—'}
+                  {appt.client?.budget ? ` · Presupuesto: $${appt.client.budget.toLocaleString()}` : ''}
+                </p>
+              </div>
+              <div className="text-right shrink-0">
+                <p className="text-xs text-[var(--text-3)]">{formatDateTime(appt.scheduled_at)}</p>
+                <span
+                  className={`badge border-transparent mt-1 capitalize ${
+                    APPOINTMENT_STATUS_STYLES[appt.status] ?? 'bg-[var(--bg-raised)] text-[var(--text-3)]'
+                  }`}
+                >
+                  {APPOINTMENT_STATUS_LABELS[appt.status] ?? appt.status}
+                </span>
+              </div>
             </li>
           ))}
           {appointments.length === 0 && (
@@ -98,19 +253,42 @@ export default async function OverviewPage() {
   )
 }
 
-const STATUS_LABELS: Record<string, string> = {
-  pending_confirmation: 'Pendiente',
-  scheduled: 'Confirmada',
-  completed: 'Completada',
-  cancelled: 'Cancelada',
-  no_show: 'No asistió',
-}
-
-function StatCard({ label, value }: { label: string; value: number }) {
+function StatCard({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: React.ComponentType<{ className?: string }>
+  label: string
+  value: number | string
+}) {
   return (
     <div className="stat-card p-4">
-      <p className="text-xs text-[var(--text-3)]">{label}</p>
+      <div className="flex items-center justify-between">
+        <p className="text-xs text-[var(--text-3)]">{label}</p>
+        <Icon className="w-4 h-4 text-[var(--teal-600)]" />
+      </div>
       <p className="font-display text-2xl font-semibold mt-1 text-[var(--teal-700)]">{value}</p>
     </div>
+  )
+}
+
+function ActivityRow({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: React.ComponentType<{ className?: string }>
+  label: string
+  value: number
+}) {
+  return (
+    <li className="py-2.5 flex items-center justify-between text-sm">
+      <span className="inline-flex items-center gap-2 text-[var(--text-2)]">
+        <Icon className="w-4 h-4 text-[var(--text-3)]" />
+        {label}
+      </span>
+      <span className="font-semibold text-[var(--text-1)]">{value}</span>
+    </li>
   )
 }
