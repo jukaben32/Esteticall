@@ -46,6 +46,12 @@ export interface ConversationWithClient extends Conversation {
   client: Pick<Client, 'id' | 'name' | 'phone' | 'email'> | null
 }
 
+export interface AppointmentWithDetails extends Appointment {
+  client: Pick<Client, 'id' | 'name' | 'phone' | 'email' | 'budget' | 'pre_approval_number'> | null
+  service: Pick<BusinessService, 'id' | 'name' | 'price'> | null
+  listing: Pick<Listing, 'id' | 'title' | 'listing_code'> | null
+}
+
 // ─── Scheduling ───────────────────────────────────────────────────────────
 export interface AvailableSlot {
   date: string // YYYY-MM-DD

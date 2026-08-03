@@ -66,10 +66,15 @@ export type AiAgentInput = z.infer<typeof aiAgentSchema>
 
 export const appointmentSchema = z.object({
   listingId: z.string().uuid().optional(),
+  serviceId: z.string().uuid().optional(),
   clientId: z.string().uuid().optional(),
   clientName: z.string().min(1).optional(),
   clientPhone: z.string().optional(),
+  clientEmail: z.string().email().optional().or(z.literal('')),
+  budget: z.coerce.number().nonnegative().optional(),
+  preApprovalNumber: z.string().optional(),
   scheduledAt: z.string().datetime(),
+  status: z.enum(['scheduled', 'pending_confirmation', 'completed', 'cancelled', 'no_show']).default('pending_confirmation'),
   notes: z.string().optional(),
 })
 export type AppointmentInput = z.infer<typeof appointmentSchema>

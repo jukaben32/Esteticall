@@ -300,7 +300,7 @@ create table if not exists appointments (
   conversation_id uuid references conversations(id) on delete set null,
   scheduled_at    timestamptz not null,
   status          text not null default 'scheduled'
-    check (status in ('scheduled','completed','cancelled','no_show')),
+    check (status in ('scheduled','pending_confirmation','completed','cancelled','no_show')),
   notes           text,
   created_at      timestamptz not null default now(),
   updated_at      timestamptz not null default now()
@@ -545,3 +545,29 @@ alter table listings add column if not exists rental_period text
   check (rental_period in ('night', 'week', 'month'));
 alter table conversations add column if not exists sentiment text
   check (sentiment in ('positive', 'neutral', 'negative'));
+
+-- 21. APPOINTMENTS — reschedule/cancellation/payment tracking columns.
+-- These already existed on the live project (added out-of-band before this
+-- file tracked them) except for service_id; documenting them here so
+-- schema.sql stops drifting from reality. clients.pre_approval_number backs
+-- the "Pre-Approval #" field on the manual "New Viewing" form.
+alter table appointments add column if not exists rescheduled_from timestamptz;
+alter table appointments add column if not exists requested_scheduled_at timestamptz;
+alter table appointments add column if not exists reschedule_requested_at timestamptz;
+alter table appointments add column if not exists confirmed_by_agent_at timestamptz;
+alter table appointments add column if not exists cancelled_at timestamptz;
+alter table appointments add column if not exists cancellation_reason text;
+alter table appointments add column if not exists cancelled_by text
+  check (cancelled_by is null or cancelled_by in ('client', 'business', 'system'));
+alter table appointments add column if not exists payment_status text not null default 'not_required'
+  check (payment_status in ('not_required', 'pending', 'paid', 'cash', 'refunded'));
+alter table appointments add column if not exists payment_amount numeric(14,2);
+alter table appointments add column if not exists payment_currency text not null default 'usd';
+alter table appointments add column if not exists stripe_checkout_session_id text;
+alter table appointments add column if not exists stripe_payment_intent_id text;
+alter table appointments add column if not exists paid_at timestamptz;
+alter table appointments add column if not exists reminder_sent_at timestamptz;
+alter table appointments add column if not exists service_id uuid
+  references business_services(id) on delete set null;
+
+alter table clients add column if not exists pre_approval_number text;

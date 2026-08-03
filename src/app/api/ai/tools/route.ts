@@ -4,6 +4,7 @@ import { getAvailableSlots, createAppointment } from '@/services/appointments'
 import { findOrCreateClientByPhone } from '@/services/clients'
 import { getSubscription } from '@/services/businesses'
 import { appendMessage, recordConversationOutcome } from '@/services/conversations'
+import { sendAppointmentConfirmationEmail } from '@/services/email'
 import type { PlanId } from '@/types'
 
 // Single relay endpoint for every OpenAI Realtime function call. The browser
@@ -82,14 +83,16 @@ export async function POST(request: Request) {
         })
 
         let listingId: string | undefined
+        let listingTitle: string | undefined
         if (args.listingCode) {
           const { data: listing } = await supabase
             .from('listings')
-            .select('id')
+            .select('id, title')
             .eq('business_id', businessId)
             .eq('listing_code', args.listingCode)
             .maybeSingle()
           listingId = listing?.id
+          listingTitle = listing?.title
         }
 
         const appointment = await createAppointment(supabase, businessId, plan, {
@@ -100,6 +103,19 @@ export async function POST(request: Request) {
         })
 
         await recordConversationOutcome(supabase, conversationId, { clientId: client.id, outcome: 'booked_viewing' })
+
+        if (client.email) {
+          const { data: business } = await supabase.from('businesses').select('name').eq('id', businessId).maybeSingle()
+          if (business?.name) {
+            void sendAppointmentConfirmationEmail({
+              to: client.email,
+              clientName: client.name,
+              businessName: business.name,
+              scheduledAt: appointment.scheduled_at,
+              listingTitle,
+            })
+          }
+        }
 
         return NextResponse.json({ booked: true, appointment })
       }

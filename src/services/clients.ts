@@ -19,7 +19,14 @@ export async function listClientsForBusiness(supabase: DB, businessId: string): 
 export async function findOrCreateClientByPhone(
   supabase: DB,
   businessId: string,
-  input: { name?: string; phone?: string; email?: string; budget?: number; source?: Client['source'] }
+  input: {
+    name?: string
+    phone?: string
+    email?: string
+    budget?: number
+    preApprovalNumber?: string
+    source?: Client['source']
+  }
 ): Promise<Client> {
   if (input.phone) {
     const { data: existing, error } = await supabase
@@ -36,6 +43,7 @@ export async function findOrCreateClientByPhone(
           name: input.name ?? existing.name,
           email: input.email ?? existing.email,
           budget: input.budget ?? existing.budget,
+          pre_approval_number: input.preApprovalNumber ?? existing.pre_approval_number,
         })
         .eq('id', existing.id)
         .select('*')
@@ -53,6 +61,7 @@ export async function findOrCreateClientByPhone(
       phone: input.phone,
       email: input.email,
       budget: input.budget,
+      pre_approval_number: input.preApprovalNumber,
       source: input.source ?? 'ai_call',
     })
     .select('*')

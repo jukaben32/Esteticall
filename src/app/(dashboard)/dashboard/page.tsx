@@ -99,7 +99,8 @@ export default async function OverviewPage() {
 }
 
 const STATUS_LABELS: Record<string, string> = {
-  scheduled: 'Agendada',
+  pending_confirmation: 'Pendiente',
+  scheduled: 'Confirmada',
   completed: 'Completada',
   cancelled: 'Cancelada',
   no_show: 'No asistió',

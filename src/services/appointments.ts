@@ -1,19 +1,34 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '@/types/database'
-import type { Appointment, AvailableSlot } from '@/types'
+import type { Appointment, AppointmentWithDetails, Client, BusinessService, Listing } from '@/types'
 import { PLAN_LIMITS, isWithinLimit } from '@/constants'
-import type { PlanId } from '@/types'
+import type { PlanId, AvailableSlot } from '@/types'
 
 type DB = SupabaseClient<Database>
+
+type AppointmentJoinRow = Appointment & {
+  clients: Pick<Client, 'id' | 'name' | 'phone' | 'email' | 'budget' | 'pre_approval_number'> | null
+  business_services: Pick<BusinessService, 'id' | 'name' | 'price'> | null
+  listings: Pick<Listing, 'id' | 'title' | 'listing_code'> | null
+}
+
+function mapAppointmentRow(row: AppointmentJoinRow): AppointmentWithDetails {
+  return {
+    ...row,
+    client: row.clients ?? null,
+    service: row.business_services ?? null,
+    listing: row.listings ?? null,
+  }
+}
 
 export async function listAppointmentsForBusiness(
   supabase: DB,
   businessId: string,
   filters?: { status?: Appointment['status'] | 'all' }
-): Promise<Appointment[]> {
+): Promise<AppointmentWithDetails[]> {
   let query = supabase
     .from('appointments')
-    .select('*')
+    .select('*, clients(id, name, phone, email, budget, pre_approval_number), business_services(id, name, price), listings(id, title, listing_code)')
     .eq('business_id', businessId)
     .order('scheduled_at', { ascending: false })
 
@@ -23,7 +38,23 @@ export async function listAppointmentsForBusiness(
 
   const { data, error } = await query
   if (error) throw error
-  return data ?? []
+  return ((data ?? []) as unknown as AppointmentJoinRow[]).map(mapAppointmentRow)
+}
+
+export async function getAppointmentWithDetails(
+  supabase: DB,
+  businessId: string,
+  appointmentId: string
+): Promise<AppointmentWithDetails | null> {
+  const { data, error } = await supabase
+    .from('appointments')
+    .select('*, clients(id, name, phone, email, budget, pre_approval_number), business_services(id, name, price), listings(id, title, listing_code)')
+    .eq('business_id', businessId)
+    .eq('id', appointmentId)
+    .maybeSingle()
+  if (error) throw error
+  if (!data) return null
+  return mapAppointmentRow(data as unknown as AppointmentJoinRow)
 }
 
 export class BookingLimitError extends Error {
@@ -39,9 +70,11 @@ export async function createAppointment(
   plan: PlanId,
   input: {
     listingId?: string
+    serviceId?: string
     clientId?: string
     conversationId?: string
     scheduledAt: string
+    status?: Appointment['status']
     notes?: string
   }
 ): Promise<Appointment> {
@@ -66,9 +99,11 @@ export async function createAppointment(
     .insert({
       business_id: businessId,
       listing_id: input.listingId,
+      service_id: input.serviceId,
       client_id: input.clientId,
       conversation_id: input.conversationId,
       scheduled_at: input.scheduledAt,
+      status: input.status,
       notes: input.notes,
     })
     .select('*')
@@ -89,11 +124,37 @@ export async function updateAppointmentStatus(
   supabase: DB,
   businessId: string,
   appointmentId: string,
-  status: Appointment['status']
+  status: Appointment['status'],
+  opts?: { cancellationReason?: string; cancelledBy?: Appointment['cancelled_by'] }
+): Promise<Appointment> {
+  const patch: Record<string, unknown> = { status }
+  if (status === 'scheduled') patch.confirmed_by_agent_at = new Date().toISOString()
+  if (status === 'cancelled') {
+    patch.cancelled_at = new Date().toISOString()
+    patch.cancellation_reason = opts?.cancellationReason ?? null
+    patch.cancelled_by = opts?.cancelledBy ?? 'business'
+  }
+
+  const { data, error } = await supabase
+    .from('appointments')
+    .update(patch)
+    .eq('business_id', businessId)
+    .eq('id', appointmentId)
+    .select('*')
+    .single()
+  if (error) throw error
+  return data
+}
+
+export async function updateAppointment(
+  supabase: DB,
+  businessId: string,
+  appointmentId: string,
+  patch: Partial<Appointment>
 ): Promise<Appointment> {
   const { data, error } = await supabase
     .from('appointments')
-    .update({ status })
+    .update(patch)
     .eq('business_id', businessId)
     .eq('id', appointmentId)
     .select('*')
