@@ -391,6 +391,9 @@ export interface Database {
           name: string
           description: string | null
           price: number | null
+          price_type: 'fixed' | 'starting_at'
+          duration_minutes: number
+          catalog_key: string | null
           is_active: boolean
           sort_order: number
           created_at: string

@@ -30,6 +30,9 @@ export async function createService(
       name: input.name,
       description: input.description || null,
       price: input.price ?? null,
+      price_type: input.priceType,
+      duration_minutes: input.durationMinutes,
+      catalog_key: input.catalogKey || null,
       is_active: input.isActive,
       sort_order: input.sortOrder,
     })
@@ -37,6 +40,34 @@ export async function createService(
     .single()
   if (error) throw error
   return data
+}
+
+// Used by "Select all" in the catalog gallery — adds every not-yet-added
+// service in a specialty in one round trip instead of one insert per card.
+export async function createServicesBulk(
+  supabase: DB,
+  businessId: string,
+  inputs: BusinessServiceInput[]
+): Promise<BusinessService[]> {
+  if (inputs.length === 0) return []
+  const { data, error } = await supabase
+    .from('business_services')
+    .insert(
+      inputs.map((input) => ({
+        business_id: businessId,
+        name: input.name,
+        description: input.description || null,
+        price: input.price ?? null,
+        price_type: input.priceType,
+        duration_minutes: input.durationMinutes,
+        catalog_key: input.catalogKey || null,
+        is_active: input.isActive,
+        sort_order: input.sortOrder,
+      }))
+    )
+    .select('*')
+  if (error) throw error
+  return data ?? []
 }
 
 export async function updateService(

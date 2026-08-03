@@ -126,6 +126,9 @@ export const businessServiceSchema = z.object({
   name: z.string().min(2),
   description: z.string().optional(),
   price: z.coerce.number().nonnegative().optional(),
+  priceType: z.enum(['fixed', 'starting_at']).default('fixed'),
+  durationMinutes: z.coerce.number().int().positive().default(60),
+  catalogKey: z.string().optional(),
   isActive: z.boolean().default(true),
   sortOrder: z.coerce.number().int().default(0),
 })

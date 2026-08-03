@@ -252,6 +252,80 @@ export const AGENT_TEMPLATES: AgentTemplate[] = [
   },
 ]
 
+export interface CatalogService {
+  key: string
+  category: string
+  name: string
+  description: string
+  durationMinutes: number
+  priceType: 'fixed' | 'starting_at'
+  price: number
+}
+
+export const SERVICE_CATALOG_CATEGORIES = [
+  'Ventas Residenciales',
+  'Rentas de Propiedades',
+  'Bienes Raíces Comerciales',
+  'Administración de Propiedades',
+  'Inversión y Financiamiento',
+  'Propiedades de Lujo',
+  'Construcción Nueva',
+  'Cierre y Transacciones',
+] as const
+
+// Pre-built catalog matching the reference template's "32 services across 8
+// specialties" — clicking a card creates a business_services row tagged with
+// this `key` so it shows "Added to your catalog" instead of duplicating.
+export const CATALOG_SERVICES: CatalogService[] = [
+  // Ventas Residenciales (6)
+  { key: 'buyer_consultation', category: 'Ventas Residenciales', name: 'Consulta con Comprador', description: 'Sesión individual para entender necesidades, presupuesto y tiempos antes de iniciar la búsqueda.', durationMinutes: 60, priceType: 'fixed', price: 0 },
+  { key: 'property_viewing', category: 'Ventas Residenciales', name: 'Visita a Propiedad', description: 'Recorrido guiado de una propiedad listada con walkthrough completo y desglose de características.', durationMinutes: 60, priceType: 'fixed', price: 0 },
+  { key: 'market_analysis_cma', category: 'Ventas Residenciales', name: 'Análisis de Mercado (CMA)', description: 'Análisis comparativo de mercado para determinar el valor preciso de una propiedad según ventas recientes.', durationMinutes: 45, priceType: 'fixed', price: 0 },
+  { key: 'listing_appointment', category: 'Ventas Residenciales', name: 'Cita de Listado', description: 'Consulta en la propiedad para evaluarla, asesorar sobre precio y delinear el proceso de venta.', durationMinutes: 90, priceType: 'fixed', price: 0 },
+  { key: 'offer_negotiation', category: 'Ventas Residenciales', name: 'Sesión de Negociación de Oferta', description: 'Sesión dedicada a revisar, preparar y negociar ofertas de compra en representación del cliente.', durationMinutes: 60, priceType: 'fixed', price: 0 },
+  { key: 'contract_review', category: 'Ventas Residenciales', name: 'Revisión de Contrato', description: 'Revisión detallada del contrato de compra, contingencias y términos explicados en lenguaje claro.', durationMinutes: 45, priceType: 'fixed', price: 0 },
+
+  // Rentas de Propiedades (5)
+  { key: 'rental_property_showing', category: 'Rentas de Propiedades', name: 'Muestra de Propiedad en Renta', description: 'Muestra programada de unidades de renta disponibles con recorrido completo y orientación de aplicación.', durationMinutes: 45, priceType: 'fixed', price: 0 },
+  { key: 'tenant_screening', category: 'Rentas de Propiedades', name: 'Consulta de Selección de Inquilino', description: 'Revisión de requisitos de aplicación de renta, criterios de selección y tiempos del proceso.', durationMinutes: 30, priceType: 'fixed', price: 0 },
+  { key: 'lease_signing', category: 'Rentas de Propiedades', name: 'Cita de Firma de Contrato', description: 'Sesión presencial o virtual para revisar, explicar y ejecutar el contrato de arrendamiento.', durationMinutes: 60, priceType: 'fixed', price: 0 },
+  { key: 'move_in_inspection', category: 'Rentas de Propiedades', name: 'Inspección de Mudanza', description: 'Recorrido detallado de la propiedad en renta para documentar su condición y completar el checklist de entrada.', durationMinutes: 60, priceType: 'fixed', price: 0 },
+  { key: 'rental_portfolio_review', category: 'Rentas de Propiedades', name: 'Revisión de Portafolio de Rentas', description: 'Evaluación del portafolio de inversión en renta con análisis de vacancia y recomendaciones de optimización.', durationMinutes: 60, priceType: 'starting_at', price: 150 },
+
+  // Bienes Raíces Comerciales (4)
+  { key: 'commercial_property_viewing', category: 'Bienes Raíces Comerciales', name: 'Visita a Propiedad Comercial', description: 'Recorrido guiado del espacio comercial con zonificación, metraje y opciones de layout.', durationMinutes: 60, priceType: 'fixed', price: 0 },
+  { key: 'commercial_lease_consultation', category: 'Bienes Raíces Comerciales', name: 'Consulta de Arrendamiento Comercial', description: 'Revisión a fondo de términos de arrendamiento comercial, estructuras NNN, cargos CAM y mejoras del inquilino.', durationMinutes: 60, priceType: 'starting_at', price: 200 },
+  { key: 'investment_property_analysis', category: 'Bienes Raíces Comerciales', name: 'Análisis de Propiedad de Inversión', description: 'Cap rate, NOI y análisis de retorno sobre efectivo invertido para propiedades comerciales de inversión.', durationMinutes: 90, priceType: 'starting_at', price: 300 },
+  { key: 'business_relocation', category: 'Bienes Raíces Comerciales', name: 'Consulta de Reubicación de Negocio', description: 'Planeación estratégica para reubicar oficina o local, incluyendo evaluación de necesidades y selección de sitio.', durationMinutes: 60, priceType: 'fixed', price: 0 },
+
+  // Administración de Propiedades (4)
+  { key: 'property_management_onboarding', category: 'Administración de Propiedades', name: 'Incorporación de Administración', description: 'Consulta inicial para transferir responsabilidades de administración, configurar sistemas y delinear el reporte al propietario.', durationMinutes: 90, priceType: 'fixed', price: 0 },
+  { key: 'annual_property_review', category: 'Administración de Propiedades', name: 'Revisión Anual de Propiedad', description: 'Revisión integral del desempeño de la propiedad, tarifas de renta, historial de mantenimiento y metas del propietario.', durationMinutes: 60, priceType: 'fixed', price: 0 },
+  { key: 'maintenance_coordination', category: 'Administración de Propiedades', name: 'Coordinación de Mantenimiento', description: 'Llamada para coordinar reparaciones, proveedores y tiempos de mantenimiento con el propietario.', durationMinutes: 30, priceType: 'fixed', price: 0 },
+  { key: 'owner_financial_reporting', category: 'Administración de Propiedades', name: 'Reporte Financiero al Propietario', description: 'Sesión para revisar estados de cuenta, ingresos por renta y gastos del periodo con el propietario.', durationMinutes: 45, priceType: 'fixed', price: 0 },
+
+  // Inversión y Financiamiento (4)
+  { key: 'financing_prequalification', category: 'Inversión y Financiamiento', name: 'Llamada de Pre-calificación', description: 'Orientación inicial sobre opciones de financiamiento y pre-calificación antes de iniciar la búsqueda.', durationMinutes: 30, priceType: 'fixed', price: 0 },
+  { key: 'cash_flow_analysis', category: 'Inversión y Financiamiento', name: 'Análisis de Flujo de Caja', description: 'Proyección de ingresos y gastos para evaluar la rentabilidad de una propiedad de inversión.', durationMinutes: 60, priceType: 'fixed', price: 0 },
+  { key: 'refinance_consultation', category: 'Inversión y Financiamiento', name: 'Consulta de Refinanciamiento', description: 'Revisión de opciones de refinanciamiento para propietarios e inversionistas.', durationMinutes: 45, priceType: 'fixed', price: 0 },
+  { key: 'exchange_consultation', category: 'Inversión y Financiamiento', name: 'Consulta de Intercambio de Propiedades', description: 'Orientación sobre estrategias de intercambio para diferir impuestos en la venta de propiedades de inversión.', durationMinutes: 60, priceType: 'fixed', price: 0 },
+
+  // Propiedades de Lujo (3)
+  { key: 'private_showing', category: 'Propiedades de Lujo', name: 'Consulta de Exhibición Privada', description: 'Recorrido privado y exclusivo de una propiedad de lujo, con atención personalizada.', durationMinutes: 90, priceType: 'fixed', price: 0 },
+  { key: 'luxury_market_briefing', category: 'Propiedades de Lujo', name: 'Informe de Mercado de Lujo', description: 'Resumen del segmento premium: tendencias, comparables y posicionamiento de precio.', durationMinutes: 45, priceType: 'fixed', price: 0 },
+  { key: 'concierge_relocation', category: 'Propiedades de Lujo', name: 'Servicio de Reubicación Concierge', description: 'Acompañamiento integral para clientes que se reubican, desde la búsqueda hasta el cierre.', durationMinutes: 60, priceType: 'fixed', price: 0 },
+
+  // Construcción Nueva (3)
+  { key: 'new_construction_walkthrough', category: 'Construcción Nueva', name: 'Recorrido de Construcción Nueva', description: 'Visita guiada a un desarrollo de construcción nueva, con detalle de acabados y opciones disponibles.', durationMinutes: 60, priceType: 'fixed', price: 0 },
+  { key: 'builder_consultation', category: 'Construcción Nueva', name: 'Consulta con Constructora', description: 'Sesión para conectar al cliente con el equipo de la constructora y resolver dudas del proyecto.', durationMinutes: 45, priceType: 'fixed', price: 0 },
+  { key: 'custom_home_planning', category: 'Construcción Nueva', name: 'Sesión de Planeación de Casa a Medida', description: 'Consulta inicial para definir alcance, presupuesto y tiempos de un proyecto de casa a medida.', durationMinutes: 90, priceType: 'fixed', price: 0 },
+
+  // Cierre y Transacciones (3)
+  { key: 'closing_coordination', category: 'Cierre y Transacciones', name: 'Llamada de Coordinación de Cierre', description: 'Coordinación de fechas, documentos y requisitos pendientes antes del cierre de la transacción.', durationMinutes: 30, priceType: 'fixed', price: 0 },
+  { key: 'title_escrow_consultation', category: 'Cierre y Transacciones', name: 'Consulta de Título y Custodia', description: 'Explicación del proceso de título y cuenta en custodia (escrow) antes del cierre.', durationMinutes: 30, priceType: 'fixed', price: 0 },
+  { key: 'final_walkthrough', category: 'Cierre y Transacciones', name: 'Recorrido Final', description: 'Inspección final de la propiedad justo antes del cierre para confirmar su condición.', durationMinutes: 30, priceType: 'fixed', price: 0 },
+]
+
 export const OPENAI_REALTIME_MODEL = process.env.OPENAI_REALTIME_MODEL ?? 'gpt-realtime'
 
 export const APPOINTMENT_STATUSES = ['pending_confirmation', 'scheduled', 'completed', 'cancelled', 'no_show'] as const

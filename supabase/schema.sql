@@ -593,3 +593,16 @@ alter table agent_services enable row level security;
 
 create policy "Business owners can manage agent-service links"
   on agent_services for all using (is_business_owner(business_id));
+
+-- 23. BUSINESS SERVICES — duration, price type, and catalog tracking (matches
+-- the reference template's "Duration (minutes)" + "Price Type" fields on the
+-- service form, and its pre-built 32-service catalog across 8 specialties).
+-- catalog_key links a created service back to the static catalog entry it
+-- came from (src/constants/index.ts CATALOG_SERVICES) so the gallery can show
+-- "Added to your catalog" instead of creating duplicates.
+alter table business_services add column if not exists duration_minutes integer not null default 60;
+alter table business_services add column if not exists price_type text not null default 'fixed'
+  check (price_type in ('fixed', 'starting_at'));
+alter table business_services add column if not exists catalog_key text;
+
+create index if not exists idx_business_services_catalog_key on business_services (business_id, catalog_key);
