@@ -241,9 +241,13 @@ cards de propiedades con badges Destacada/Disponible y camas/baños, y lista de
 visitas recientes con cliente, presupuesto y estado. Todo contra datos reales de
 Supabase (`conversations`, `appointments`, `listings`, `ai_agents`), sin mocks.
 
-Nota: no existe en el esquema un campo dedicado de "callback solicitado" — se usa el
-outcome `escalated` de `conversations` como proxy; si se quiere un contador exacto,
-haría falta agregar una columna o un outcome específico.
+### 9. "Callbacks solicitados" — ✅ resuelto (3 ago 2026)
+El Overview ya contaba `outcome = 'escalated'`, pero ningún tool del agente IA lo
+disparaba nunca (siempre iba a dar 0). Se agregó la tool `request_callback` en
+`src/ai/tools.ts` (el agente la llama cuando el caller pide hablar con un humano) y
+su handler en `/api/ai/tools`: crea/actualiza el cliente, marca la conversación con
+`outcome: 'escalated'` y crea una notificación (`type: 'system'`) para el negocio. No
+hizo falta migración — `escalated` ya era un outcome válido en el esquema.
 
 ## VISIÓN A LARGO PLAZO (clave, no perder)
 
