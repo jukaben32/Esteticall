@@ -249,6 +249,25 @@ su handler en `/api/ai/tools`: crea/actualiza el cliente, marca la conversación
 `outcome: 'escalated'` y crea una notificación (`type: 'system'`) para el negocio. No
 hizo falta migración — `escalated` ya era un outcome válido en el esquema.
 
+### 10. Agentes IA reconstruidos para igualar el dashboard de referencia (3 ago 2026)
+`/dashboard/ai-agents` reescrito de punta a punta:
+- Panel "Agentes activos (N/límite)" con filas ricas (voz/personalidad/
+  sensibilidad, N servicios asignados) y acciones Probar / Activar-Pausar /
+  Duplicar / Editar / Eliminar.
+- Modal de crear/editar en 2 pasos: Configuración del agente → Asignar
+  servicios (checklist con filtro y "Seleccionar todos").
+- Galería de 6 plantillas (Alexis, Grace, Maxwell, Luna, Owen, Nora) con
+  filtro por categoría, Activar agente / Vista previa.
+- Página de detalle "Agent Studio" en `/dashboard/ai-agents/[agentId]` con
+  tabs Configurar / Probar en vivo (llamada WebRTC real).
+
+**Requiere migración pendiente**: se agregó la tabla `agent_services` (qué
+servicios puede hablar cada agente) y la columna `ai_agents.language` —
+migración 22 en `supabase/schema.sql`. **Hay que ejecutar el `schema.sql`
+completo en el SQL Editor de Supabase** (es idempotente, seguro re-correrlo
+entero) antes de que "Asignar servicios" e "Idioma" funcionen en producción;
+mientras tanto esas partes fallarán en el sitio en vivo.
+
 ## VISIÓN A LARGO PLAZO (clave, no perder)
 
 InmobilIACall no debe ser solo "SaaS de bienes raíces", sino una **base reutilizable
