@@ -48,7 +48,9 @@ function LoginForm() {
   return (
     <form onSubmit={handleSubmit} className="card-raised p-7 space-y-4">
       <div className="text-center mb-2">
-        <h1 className="font-display text-2xl font-semibold text-[var(--text-1)]">EstateCall</h1>
+        <h1 className="font-display text-2xl font-semibold text-[var(--text-1)]">
+          Inmobil<span className="text-[var(--teal-700)]">IA</span>Call
+        </h1>
         <p className="text-sm text-[var(--text-3)]">Accede a tu panel</p>
       </div>
       {error && <p className="text-sm text-red-600">{error}</p>}

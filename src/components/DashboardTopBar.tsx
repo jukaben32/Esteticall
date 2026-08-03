@@ -3,7 +3,7 @@
 import { useMemo } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Search, Bell } from 'lucide-react'
+import { Search, BellRing } from 'lucide-react'
 import { NAV_SECTIONS } from '@/components/DashboardSidebar'
 
 const PLAN_LABELS: Record<string, string> = {
@@ -23,17 +23,24 @@ export function DashboardTopBar({
 }) {
   const pathname = usePathname()
 
-  const sectionLabel = useMemo(() => {
+  const activeSection = useMemo(() => {
     const items = NAV_SECTIONS.flatMap((s) => s.items)
     const match = items.find((item) =>
       item.href === '/dashboard' ? pathname === item.href : pathname.startsWith(item.href)
     )
-    return match?.label ?? 'Inicio'
+    return match ?? items[0]
   }, [pathname])
+
+  const SectionIcon = activeSection.icon
 
   return (
     <div className="hidden lg:flex items-center justify-between mb-4 gap-4">
-      <h2 className="font-display font-semibold text-lg text-[var(--text-1)] shrink-0">{sectionLabel}</h2>
+      <div className="flex items-center gap-2.5 shrink-0">
+        <span className="grid place-items-center w-9 h-9 rounded-xl bg-[var(--teal-50)] text-[var(--teal-700)] border border-[var(--teal-100)]">
+          <SectionIcon className="w-[18px] h-[18px]" />
+        </span>
+        <h2 className="font-display font-semibold text-lg text-[var(--text-1)]">{activeSection.label}</h2>
+      </div>
 
       <div className="flex items-center gap-3">
         <div className="relative">
@@ -49,7 +56,7 @@ export function DashboardTopBar({
           className="relative p-2 rounded-lg text-[var(--text-3)] hover:bg-[var(--bg-raised)] hover:text-[var(--text-1)]"
           title="Notificaciones"
         >
-          <Bell className="w-[18px] h-[18px]" />
+          <BellRing className="w-[18px] h-[18px]" />
           {unreadCount > 0 && (
             <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 rounded-full bg-red-500 text-white text-[10px] font-semibold grid place-items-center">
               {unreadCount > 9 ? '9+' : unreadCount}

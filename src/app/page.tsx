@@ -29,10 +29,10 @@ export default function LandingPage() {
         <nav className="max-w-7xl mx-auto px-5 sm:px-8 h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2 shrink-0">
             <span className="grid place-items-center w-9 h-9 rounded-xl bg-[var(--teal-700)] text-white font-display font-bold text-lg">
-              E
+              I
             </span>
             <span className="font-display font-semibold text-lg text-[var(--text-1)] tracking-tight">
-              Estate<span className="text-[var(--teal-700)]">Call</span>
+              Inmobil<span className="text-[var(--teal-700)]">IA</span>Call
             </span>
           </Link>
 
@@ -91,7 +91,7 @@ export default function LandingPage() {
               Tu equipo de ventas <span className="italic text-[var(--teal-700)]">nunca duerme.</span>
             </h1>
             <p className="mt-6 text-lg text-[var(--text-2)] max-w-xl">
-              EstateCall llama, cualifica y agenda citas por ti con un agente de voz natural
+              InmobilIACall llama, cualifica y agenda citas por ti con un agente de voz natural
               disponible 24/7. Tú te enfocas en cerrar la venta; nosotros hacemos el seguimiento.
             </p>
 
@@ -368,13 +368,13 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-5 sm:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-[var(--text-3)]">
           <div className="flex items-center gap-2">
             <span className="grid place-items-center w-7 h-7 rounded-lg bg-[var(--teal-700)] text-white font-display font-bold">
-              E
+              I
             </span>
             <span className="font-display font-semibold text-[var(--text-1)]">
-              Estate<span className="text-[var(--teal-700)]">Call</span>
+              Inmobil<span className="text-[var(--teal-700)]">IA</span>Call
             </span>
           </div>
-          <p>© 2026 EstateCall. Hecho para inmobiliarias.</p>
+          <p>© 2026 InmobilIACall. Hecho para inmobiliarias.</p>
           <div className="flex gap-5">
             <a href="#features" className="hover:text-[var(--text-1)] transition-colors">Funciones</a>
             <a href="#pricing" className="hover:text-[var(--text-1)] transition-colors">Precios</a>

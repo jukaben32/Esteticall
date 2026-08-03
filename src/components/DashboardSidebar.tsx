@@ -4,19 +4,19 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import {
-  LayoutGrid,
-  Home,
-  Calendar,
-  Phone,
-  Users,
+  LayoutDashboard,
+  House,
+  CalendarCheck,
+  PhoneCall,
+  UsersRound,
   Bot,
   BarChart3,
   Briefcase,
   BookOpen,
-  MessageSquare,
+  MessagesSquare,
   Globe,
   CreditCard,
-  Bell,
+  BellRing,
   Clock,
   LogOut,
   Menu,
@@ -27,13 +27,13 @@ import { createClient } from '@/lib/supabase/client'
 export const NAV_SECTIONS = [
   {
     items: [
-      { href: '/dashboard', label: 'Inicio', icon: LayoutGrid },
+      { href: '/dashboard', label: 'Inicio', icon: LayoutDashboard },
       { href: '/dashboard/analytics', label: 'Analítica', icon: BarChart3 },
-      { href: '/dashboard/listings', label: 'Propiedades', icon: Home },
-      { href: '/dashboard/call-log', label: 'Llamadas', icon: Phone },
-      { href: '/dashboard/viewings', label: 'Citas', icon: Calendar },
+      { href: '/dashboard/listings', label: 'Propiedades', icon: House },
+      { href: '/dashboard/call-log', label: 'Llamadas', icon: PhoneCall },
+      { href: '/dashboard/viewings', label: 'Citas', icon: CalendarCheck },
       { href: '/dashboard/schedule', label: 'Horario', icon: Clock },
-      { href: '/dashboard/clients', label: 'Clientes', icon: Users },
+      { href: '/dashboard/clients', label: 'Clientes', icon: UsersRound },
     ],
   },
   {
@@ -42,7 +42,7 @@ export const NAV_SECTIONS = [
       { href: '/dashboard/ai-agents', label: 'Agentes IA', icon: Bot },
       { href: '/dashboard/services', label: 'Servicios', icon: Briefcase },
       { href: '/dashboard/knowledge', label: 'Conocimiento', icon: BookOpen },
-      { href: '/dashboard/widget', label: 'Widget', icon: MessageSquare },
+      { href: '/dashboard/widget', label: 'Widget', icon: MessagesSquare },
       { href: '/dashboard/website', label: 'Sitio Web', icon: Globe },
     ],
   },
@@ -50,7 +50,7 @@ export const NAV_SECTIONS = [
     title: 'Cuenta',
     items: [
       { href: '/dashboard/plan', label: 'Plan', icon: CreditCard },
-      { href: '/dashboard/notifications', label: 'Notificaciones', icon: Bell },
+      { href: '/dashboard/notifications', label: 'Notificaciones', icon: BellRing },
     ],
   },
 ]
@@ -77,10 +77,10 @@ export function DashboardSidebar({ businessName, planName }: { businessName: str
       <header className="lg:hidden h-14 shrink-0 flex items-center justify-between px-4 bg-[var(--teal-900)] text-[var(--bg-page)]">
         <div className="flex items-center gap-2">
           <span className="grid place-items-center w-8 h-8 rounded-lg bg-[var(--teal-700)] text-white font-display font-bold">
-            E
+            I
           </span>
           <span className="font-display font-semibold">
-            Estate<span className="text-[var(--teal-400)]">Call</span>
+            Inmobil<span className="text-[var(--teal-400)]">IA</span>Call
           </span>
         </div>
         <button
@@ -108,10 +108,10 @@ export function DashboardSidebar({ businessName, planName }: { businessName: str
         <div className="h-16 flex items-center justify-between gap-2 px-6 border-b border-white/10 shrink-0">
           <div className="flex items-center gap-2">
             <span className="grid place-items-center w-9 h-9 rounded-xl bg-[var(--teal-700)] text-white font-display font-bold text-lg">
-              E
+              I
             </span>
             <span className="font-display font-semibold text-lg">
-              Estate<span className="text-[var(--teal-400)]">Call</span>
+              Inmobil<span className="text-[var(--teal-400)]">IA</span>Call
             </span>
           </div>
           <button

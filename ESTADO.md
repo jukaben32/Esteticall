@@ -1,6 +1,8 @@
-# ESTATECALL — ESTADO DEL PROYECTO
+# INMOBILIACALL — ESTADO DEL PROYECTO
 
-> Última actualización: 1 agosto 2026. Producto funcionalmente completo y en
+> Última actualización: 2 agosto 2026. Rebranding de "EstateCall" a
+> "InmobilIACall" aplicado en landing, login/signup/onboarding, sidebar del
+> dashboard, metadata y `package.json`. Producto funcionalmente completo y en
 > producción (ver "PENDIENTES" — todo resuelto salvo rotar credenciales expuestas
 > en el chat).
 
@@ -166,7 +168,7 @@ el proceso con las keys de modo live desde dashboard.stripe.com (o pedírmelo).
 preview/development). Verificadas contra las APIs reales antes de cargarlas: el modelo
 `gpt-realtime` responde con la key de OpenAI, y se mandó un email de prueba con Resend
 usando el dominio verificado `mail.resendcegmas.com` como remitente
-(`RESEND_FROM_EMAIL=EstateCall <noreply@mail.resendcegmas.com>`).
+(`RESEND_FROM_EMAIL=InmobilIACall <noreply@mail.resendcegmas.com>`).
 
 Con esto el producto queda funcionalmente completo: auth, listings (con fotos), agentes
 IA con voz realtime, viewings, schedule, clients, services, knowledge, widget, website,
@@ -229,7 +231,7 @@ de pasarlas por acá.
 
 ## VISIÓN A LARGO PLAZO (clave, no perder)
 
-EstateCall no debe ser solo "SaaS de bienes raíces", sino una **base reutilizable
+InmobilIACall no debe ser solo "SaaS de bienes raíces", sino una **base reutilizable
 (white-label / multi-vertical)** adaptable a varias industrias:
 
 - Bienes raíces → agenda visitas
