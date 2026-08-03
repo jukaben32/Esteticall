@@ -3,8 +3,11 @@
 import { useState } from 'react'
 import { Eye, Pencil, Trash2, Copy, Check } from 'lucide-react'
 import type { AiAgent, WidgetWithAgent, Widget } from '@/types'
+import type { WidgetTemplate } from '@/constants'
 import { WidgetFormModal } from './WidgetFormModal'
 import { WidgetPreviewModal } from './WidgetPreviewModal'
+import { WidgetTemplatesGallery } from './WidgetTemplatesGallery'
+import { WidgetTemplatePreview } from './WidgetTemplatePreview'
 
 type SnippetTab = 'script' | 'react' | 'html'
 
@@ -67,7 +70,9 @@ export function WidgetsManager({
 }) {
   const [widgets, setWidgets] = useState(initialWidgets)
   const [modalWidget, setModalWidget] = useState<Widget | 'new' | null>(null)
+  const [templateFromModal, setTemplateFromModal] = useState<WidgetTemplate | null>(null)
   const [previewWidget, setPreviewWidget] = useState<Widget | null>(null)
+  const [previewTemplate, setPreviewTemplate] = useState<WidgetTemplate | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   function handleSaved(widget: Widget) {
@@ -78,6 +83,19 @@ export function WidgetsManager({
       return exists ? prev.map((w) => (w.id === widget.id ? withAgent : w)) : [withAgent, ...prev]
     })
     setModalWidget(null)
+    setTemplateFromModal(null)
+  }
+
+  // Opens the Create Widget modal pre-filled with the template's persona
+  // (color, greeting, theme, position). If an AI agent with the same name
+  // is already active for this business (e.g. created from the matching
+  // AI Agent Template on the Agents page), it's auto-selected too — same
+  // "pick the agent, adjust color/branding, create" flow shown in the
+  // reference video.
+  function handleActivateTemplate(template: WidgetTemplate) {
+    setPreviewTemplate(null)
+    setTemplateFromModal(template)
+    setModalWidget('new')
   }
 
   async function handleDelete(widget: Widget) {
@@ -126,12 +144,22 @@ export function WidgetsManager({
         </div>
       </section>
 
+      <WidgetTemplatesGallery
+        activeWidgetNames={widgets.map((w) => w.name)}
+        onActivate={handleActivateTemplate}
+        onPreview={setPreviewTemplate}
+      />
+
       {modalWidget && (
         <WidgetFormModal
           businessId={businessId}
           widget={modalWidget === 'new' ? undefined : modalWidget}
+          template={modalWidget === 'new' ? templateFromModal ?? undefined : undefined}
           agents={agents}
-          onClose={() => setModalWidget(null)}
+          onClose={() => {
+            setModalWidget(null)
+            setTemplateFromModal(null)
+          }}
           onSaved={handleSaved}
         />
       )}
@@ -142,6 +170,15 @@ export function WidgetsManager({
           widget={previewWidget}
           agents={agents}
           onClose={() => setPreviewWidget(null)}
+        />
+      )}
+
+      {previewTemplate && (
+        <WidgetTemplatePreview
+          businessId={businessId}
+          template={previewTemplate}
+          onClose={() => setPreviewTemplate(null)}
+          onActivate={() => handleActivateTemplate(previewTemplate)}
         />
       )}
     </div>

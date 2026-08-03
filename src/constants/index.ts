@@ -252,6 +252,130 @@ export const AGENT_TEMPLATES: AgentTemplate[] = [
   },
 ]
 
+// --- Widget Templates -------------------------------------------------
+// Quick-start presets shown at the bottom of Dashboard → Widget. Each one
+// mirrors an AGENT_TEMPLATES persona (same name/voice) but carries the
+// widget-specific config (color, position, theme) needed to create an
+// embeddable widget in one click. Kept in English + English category
+// labels to match the (English) Widget page UI, unlike AGENT_TEMPLATES
+// which is Spanish for the (Spanish) Agentes IA page.
+export interface WidgetTemplate {
+  id: string
+  name: string
+  role: string
+  badge: string
+  category: string
+  features: string[]
+  bestFor: string
+  toneLabel: string
+  greetingMessage: string
+  primaryColor: string
+  position: 'bottom-right' | 'bottom-left'
+  theme: 'light' | 'dark'
+}
+
+export const WIDGET_TEMPLATE_CATEGORIES = [
+  'Home Buying & Selling',
+  'Buyer Experience & Follow-Up',
+  'Luxury & Premium Properties',
+  'Residential & Commercial Rentals',
+  'Seller Representation & Listings',
+  'Commercial & Investment Properties',
+] as const
+
+export const WIDGET_TEMPLATES: WidgetTemplate[] = [
+  {
+    id: 'alexis',
+    name: 'Alexis',
+    role: 'Residential Sales Agent',
+    badge: 'Most Popular',
+    category: 'Home Buying & Selling',
+    features: ['Property viewing booking', 'Buyer consultation scheduling', 'Listing inquiries'],
+    bestFor: 'Residential agencies, Buyer representation',
+    toneLabel: 'Sage · Professional',
+    greetingMessage: "Hi! Thanks for stopping by — I'm Alexis. What kind of property are you looking for today?",
+    primaryColor: '#166534',
+    position: 'bottom-right',
+    theme: 'light',
+  },
+  {
+    id: 'grace',
+    name: 'Grace',
+    role: 'Client Relations Coordinator',
+    badge: 'Client Favorite',
+    category: 'Buyer Experience & Follow-Up',
+    features: ['Warm client support', 'Follow-up scheduling', 'Neighborhood guidance'],
+    bestFor: 'Buyer agencies, Relocation specialists',
+    toneLabel: 'Shimmer · Friendly',
+    greetingMessage: "Hi there! I'm Grace, your concierge. I'm here to make finding your next home as easy as possible.",
+    primaryColor: '#db2777',
+    position: 'bottom-right',
+    theme: 'light',
+  },
+  {
+    id: 'maxwell',
+    name: 'Maxwell',
+    role: 'Luxury Property Specialist',
+    badge: 'High-End Agencies',
+    category: 'Luxury & Premium Properties',
+    features: ['Exclusive showing consultations', 'Private client service', 'Investment briefings'],
+    bestFor: 'Luxury agencies, Estate specialists',
+    toneLabel: 'Onyx · Formal',
+    greetingMessage: 'Good afternoon, thank you for reaching out. This is Maxwell — it would be my pleasure to assist you.',
+    primaryColor: '#1e3a8a',
+    position: 'bottom-right',
+    theme: 'dark',
+  },
+  {
+    id: 'luna',
+    name: 'Luna',
+    role: 'Rental Intake Coordinator',
+    badge: 'Rental Focused',
+    category: 'Residential & Commercial Rentals',
+    features: ['Rental showing scheduling', 'Application guidance', 'Lease inquiries'],
+    bestFor: 'Property management firms, Rental agencies',
+    toneLabel: 'Shimmer · Friendly',
+    greetingMessage: "Hi! I'm Luna. I can help you book a showing or answer questions about our available rentals.",
+    primaryColor: '#0d9488',
+    position: 'bottom-right',
+    theme: 'light',
+  },
+  {
+    id: 'owen',
+    name: 'Owen',
+    role: 'Listing Specialist',
+    badge: 'For Sellers',
+    category: 'Seller Representation & Listings',
+    features: ['Seller consultations', 'Valuation updates', 'Photo session scheduling'],
+    bestFor: 'Listing agents, Seller representation teams',
+    toneLabel: 'Echo · Professional',
+    greetingMessage: "Hi, I'm Owen. Thinking about selling your property? I'm happy to walk you through the process.",
+    primaryColor: '#2563eb',
+    position: 'bottom-right',
+    theme: 'light',
+  },
+  {
+    id: 'nora',
+    name: 'Nora',
+    role: 'Commercial Investment Advisor',
+    badge: 'Commercial & Investment',
+    category: 'Commercial & Investment Properties',
+    features: ['Investment property analysis', 'Cap rate & ROI', 'Commercial inquiries'],
+    bestFor: 'Commercial firms, Institutional investors',
+    toneLabel: 'Ash · Formal',
+    greetingMessage: "Hello, I'm Nora, commercial investment advisor. What type of property are you interested in?",
+    primaryColor: '#7c3aed',
+    position: 'bottom-right',
+    theme: 'light',
+  },
+]
+
+// "Maxwell – Luxury Property Specialist Widget" — matches the naming shown
+// in the reference video when a widget is created from an agent template.
+export function widgetTemplateName(template: WidgetTemplate): string {
+  return `${template.name} – ${template.role} Widget`
+}
+
 export interface CatalogService {
   key: string
   category: string

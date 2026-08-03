@@ -292,18 +292,39 @@ Create/Edit Widget (Live Preview en vivo, nombre, agente, posición, color +
 swatches, mensaje de saludo, tema claro/oscuro, toggle "Widget is active") y
 modal Widget Preview (mockup "Your website here" + botón flotante).
 
-**Esto NO está visible todavía en producción.** Lo que Juan ve ahora mismo en
-el sitio en vivo es la versión vieja (`WidgetConfigForm.tsx`, un solo widget
-con checkbox/color/mensaje/orígenes). Faltan dos cosas para que se vea el
-widget nuevo:
-1. **Migración pendiente**: correr `supabase/01_multi_widgets.sql` en el SQL
-   Editor de Supabase — agrega a `widgets` las columnas `name`, `agent_id`,
-   `position`, `theme`, `impressions`, `interactions` y quita el `unique` de
-   `business_id` (para permitir varios widgets por negocio). Sin esto, la
-   página nueva daría error en producción aunque esté deployada.
-2. **Confirmar deploy en Vercel**: verificar en el dashboard de Vercel que el
-   último commit de `main` (rebuild del Widget) ya se deployó; si no,
-   redeployar manualmente.
+**Confirmado visible en producción (3 ago 2026, capturas de Juan).** La
+migración `01_multi_widgets.sql` ya se corrió y el deploy en Vercel ya sirve
+esta versión — Juan ve "Embedded Widgets" con el widget activo y el snippet
+copiable, igual que el dashboard de referencia.
+
+### 13. Widget Templates — galería de plantillas (3 ago 2026)
+Al video de referencia le faltaba replicar en `/dashboard/widget` la sección
+inferior "AI Agent Templates" que sí existe en Agentes IA (punto 10). Se
+agregó su equivalente para Widget:
+
+- `WIDGET_TEMPLATES` + `WIDGET_TEMPLATE_CATEGORIES` en `src/constants/index.ts`
+  — 6 plantillas (Alexis, Grace, Maxwell, Luna, Owen, Nora, mismas personas
+  que `AGENT_TEMPLATES` pero en inglés, con color/posición/tema/saludo
+  propios) agrupadas en las mismas 6 categorías que se ven en el video
+  ("Home Buying & Selling", "Luxury & Premium Properties", etc.).
+- `WidgetTemplatesGallery.tsx` — grid de tarjetas con badge, rol, features,
+  "Best for", swatch de color, filtro por categoría y botones "Activate
+  Widget" / "Preview", debajo de la lista de "Embedded Widgets".
+- `WidgetTemplatePreview.tsx` — modal de vista previa con el botón flotante
+  en vivo (mismo componente `FloatingWidgetLauncher` que usa el widget real)
+  antes de crear nada.
+- `WidgetFormModal.tsx` ahora acepta un `template` opcional: al hacer clic en
+  "Activate Widget" se abre el modal de Crear Widget prellenado (nombre
+  `"{Agente} – {Rol} Widget"`, color, saludo, tema, posición) y, si ya existe
+  un agente activo con el mismo nombre (p. ej. activado antes desde la
+  galería de Agentes IA), lo selecciona automáticamente — mismo flujo
+  "ya lo creamos, lo uso automáticamente" del video. El usuario revisa y
+  confirma con "Create Widget", igual que antes.
+
+Todo funcional y dinámico: cero datos hardcodeados en pantalla, todo sale de
+`WIDGET_TEMPLATES` y de los `agents`/`widgets` reales del negocio. No requirió
+migración ni cambios de esquema — reutiliza `POST /api/widget` ya existente.
+`npx tsc --noEmit` y `npm run build` verificados sin errores antes de subir.
 
 ## VISIÓN A LARGO PLAZO (clave, no perder)
 

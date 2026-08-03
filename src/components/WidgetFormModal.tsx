@@ -3,6 +3,8 @@
 import { useState } from 'react'
 import { X } from 'lucide-react'
 import type { AiAgent, Widget } from '@/types'
+import type { WidgetTemplate } from '@/constants'
+import { widgetTemplateName } from '@/constants'
 import { FloatingWidgetLauncher } from './FloatingWidgetLauncher'
 
 const COLOR_SWATCHES = ['#166534', '#7c3aed', '#2563eb', '#0d9488', '#dc2626', '#db2777', '#1e3a8a', '#111827']
@@ -17,7 +19,18 @@ interface WidgetFormValue {
   isEnabled: boolean
 }
 
-function defaultsFromWidget(widget?: Widget): WidgetFormValue {
+function defaultsFromWidget(widget?: Widget, template?: WidgetTemplate, matchedAgentId?: string | null): WidgetFormValue {
+  if (template) {
+    return {
+      name: widgetTemplateName(template),
+      agentId: matchedAgentId ?? null,
+      position: template.position,
+      primaryColor: template.primaryColor,
+      greetingMessage: template.greetingMessage,
+      theme: template.theme,
+      isEnabled: true,
+    }
+  }
   if (!widget) {
     return {
       name: 'Main Widget',
@@ -43,18 +56,25 @@ function defaultsFromWidget(widget?: Widget): WidgetFormValue {
 export function WidgetFormModal({
   businessId,
   widget,
+  template,
   agents,
   onClose,
   onSaved,
 }: {
   businessId: string
   widget?: Widget
+  template?: WidgetTemplate
   agents: AiAgent[]
   onClose: () => void
   onSaved: (widget: Widget) => void
 }) {
   const isEdit = Boolean(widget)
-  const [form, setForm] = useState<WidgetFormValue>(defaultsFromWidget(widget))
+  // If an AI agent with the same name as the template already exists
+  // (e.g. activated earlier from the AI Agent Templates gallery), pick it
+  // automatically — same "we already created this one, so I'll use it"
+  // flow as the reference video.
+  const matchedAgentId = template ? agents.find((a) => a.name === template.name)?.id ?? null : null
+  const [form, setForm] = useState<WidgetFormValue>(defaultsFromWidget(widget, template, matchedAgentId))
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
 
@@ -117,7 +137,7 @@ export function WidgetFormModal({
       <div className="card-raised w-full max-w-lg my-8">
         <div className="flex items-center justify-between p-5 pb-0">
           <h2 className="font-display font-semibold text-lg text-[var(--text-1)]">
-            {isEdit ? 'Edit Widget' : 'Create Widget'}
+            {isEdit ? 'Edit Widget' : template ? `Create Widget · ${template.name}` : 'Create Widget'}
           </h2>
           <button onClick={onClose} aria-label="Close" className="text-[var(--text-3)] hover:text-[var(--text-1)]">
             <X className="w-4 h-4" />
@@ -163,6 +183,12 @@ export function WidgetFormModal({
                 </option>
               ))}
             </select>
+            {template && !form.agentId && (
+              <p className="text-[11px] text-[var(--gold)] mt-1">
+                No &quot;{template.name}&quot; agent found yet — activate the matching template on the AI Agents
+                page first, or pick any agent above.
+              </p>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-3">
