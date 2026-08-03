@@ -268,6 +268,19 @@ completo en el SQL Editor de Supabase** (es idempotente, seguro re-correrlo
 entero) antes de que "Asignar servicios" e "Idioma" funcionen en producción;
 mientras tanto esas partes fallarán en el sitio en vivo.
 
+### 11. Servicios reconstruidos para igualar el dashboard de referencia (3 ago 2026)
+`/dashboard/services` reescrito: panel "Servicios de la agencia" con filas
+reordenables por arrastre (drag handle), duración + precio, editar/eliminar,
+toggle activo/inactivo, y "Servicio personalizado"; debajo, un catálogo
+colapsable de 32 servicios pre-armados en 8 especialidades con buscador,
+filtro por especialidad, alta individual o por lote ("Seleccionar todos").
+
+**Requiere migración pendiente** (misma mecánica que la 22): se agregaron las
+columnas `duration_minutes`, `price_type` y `catalog_key` a `business_services`
+— migración 23 en `supabase/schema.sql`. Hay que volver a correr el
+`schema.sql` completo en el SQL Editor de Supabase antes de que duración,
+tipo de precio y el catálogo funcionen en producción.
+
 ## VISIÓN A LARGO PLAZO (clave, no perder)
 
 InmobilIACall no debe ser solo "SaaS de bienes raíces", sino una **base reutilizable
