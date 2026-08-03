@@ -5,7 +5,7 @@ import { listWidgetsForBusiness, createWidget } from '@/services/widgets'
 import { widgetSchema } from '@/validations'
 
 // Dashboard-owned config (auth required). Distinct from the public
-// /api/widget/[businessId]/config route the embed script polls.
+// /api/widget/public/[businessId]/config route the embed script polls.
 async function requireBusiness() {
   const supabase = await createClient()
   const {
@@ -37,9 +37,9 @@ export async function POST(request: Request) {
   try {
     const widget = await createWidget(ctx.supabase, ctx.business.id, parsed.data)
     return NextResponse.json({ widget }, { status: 201 })
-  } catch (err: any) {
+  } catch (err) {
     // Unique (business_id, agent_id) violation — that agent already has a widget.
-    if (err?.code === '23505') {
+    if (err && typeof err === 'object' && 'code' in err && err.code === '23505') {
       return NextResponse.json(
         { error: 'This agent already has a widget. Edit it instead of creating a new one.' },
         { status: 409 }

@@ -22,7 +22,7 @@ export function VoiceWidget({ businessId }: { businessId: string }) {
   const { status, transcript, conversationId, error } = useVoiceStore()
 
   useEffect(() => {
-    fetch(`/api/widget/${businessId}/config`)
+    fetch(`/api/widget/public/${businessId}/config`)
       .then((res) => {
         if (!res.ok) throw new Error('El widget no está disponible. Actívalo y guárdalo en Dashboard → Widget.')
         return res.json()

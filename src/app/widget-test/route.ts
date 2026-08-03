@@ -10,7 +10,7 @@ export async function GET(request: Request) {
   }
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
-  const res = await fetch(`${appUrl}/api/widget/${businessId}/config`, { cache: 'no-store' })
+  const res = await fetch(`${appUrl}/api/widget/public/${businessId}/config`, { cache: 'no-store' })
 
   return NextResponse.json({ ok: res.ok, status: res.status })
 }

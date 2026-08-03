@@ -28,8 +28,8 @@ export async function PATCH(request: Request, { params }: { params: { widgetId: 
   try {
     const widget = await updateWidget(ctx.supabase, ctx.business.id, params.widgetId, parsed.data)
     return NextResponse.json({ widget })
-  } catch (err: any) {
-    if (err?.code === '23505') {
+  } catch (err) {
+    if (err && typeof err === 'object' && 'code' in err && err.code === '23505') {
       return NextResponse.json(
         { error: 'This agent already has a widget. Edit that one instead.' },
         { status: 409 }

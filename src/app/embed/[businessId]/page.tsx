@@ -19,7 +19,7 @@ export default function EmbedWidgetPage() {
 
   useEffect(() => {
     const qs = agentIdParam ? `?agentId=${encodeURIComponent(agentIdParam)}` : ''
-    fetch(`/api/widget/${businessId}/config${qs}`)
+    fetch(`/api/widget/public/${businessId}/config${qs}`)
       .then((res) => {
         if (!res.ok) throw new Error('Widget not available')
         return res.json()

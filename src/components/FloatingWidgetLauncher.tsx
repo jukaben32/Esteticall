@@ -57,7 +57,7 @@ export function FloatingWidgetLauncher({
     if (!config.agentId) return
     startCall({ agentId: config.agentId, onToolCall: handleToolCall })
     if (config.widgetId) {
-      fetch(`/api/widget/${businessId}/interaction`, {
+      fetch(`/api/widget/public/${businessId}/interaction`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ widgetId: config.widgetId }),

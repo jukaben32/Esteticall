@@ -12,7 +12,8 @@ export async function listWidgetsForBusiness(supabase: DB, businessId: string): 
     .eq('business_id', businessId)
     .order('created_at', { ascending: false })
   if (error) throw error
-  return (data ?? []).map((row: any) => {
+  type WidgetJoinRow = Widget & { ai_agents: { name: string } | null }
+  return ((data ?? []) as unknown as WidgetJoinRow[]).map((row) => {
     const { ai_agents, ...widget } = row
     return { ...widget, agent_name: ai_agents?.name ?? null }
   })
@@ -117,12 +118,18 @@ export async function deleteWidget(supabase: DB, businessId: string, widgetId: s
 // third-party page — one row-per-pageview, so this is a raw increment rather
 // than a read-modify-write to avoid clobbering concurrent hits.
 export async function incrementWidgetImpressions(supabase: DB, widgetId: string): Promise<void> {
-  const { error } = await supabase.rpc('increment_widget_counter', { widget_id: widgetId, column_name: 'impressions' })
+  const { error } = await supabase.rpc('increment_widget_counter' as never, {
+    widget_id: widgetId,
+    column_name: 'impressions',
+  } as never)
   if (error) throw error
 }
 
 export async function incrementWidgetInteractions(supabase: DB, widgetId: string): Promise<void> {
-  const { error } = await supabase.rpc('increment_widget_counter', { widget_id: widgetId, column_name: 'interactions' })
+  const { error } = await supabase.rpc('increment_widget_counter' as never, {
+    widget_id: widgetId,
+    column_name: 'interactions',
+  } as never)
   if (error) throw error
 }
 
