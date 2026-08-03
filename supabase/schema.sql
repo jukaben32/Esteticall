@@ -606,3 +606,13 @@ alter table business_services add column if not exists price_type text not null 
 alter table business_services add column if not exists catalog_key text;
 
 create index if not exists idx_business_services_catalog_key on business_services (business_id, catalog_key);
+
+-- 24. KNOWLEDGE BASE — category + catalog tracking (matches the reference
+-- template's FAQ category tags and its pre-built 40-question FAQ library
+-- across 9 topics). catalog_key links a document back to the static
+-- template it came from (src/data/faqTemplates.ts) so the library can show
+-- "Ya está en tu base de conocimiento" instead of creating duplicates.
+alter table knowledge_documents add column if not exists category text;
+alter table knowledge_documents add column if not exists catalog_key text;
+
+create index if not exists idx_knowledge_documents_catalog_key on knowledge_documents (business_id, catalog_key);

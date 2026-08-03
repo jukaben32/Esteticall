@@ -30,6 +30,8 @@ export async function createKnowledgeDocument(
       title: input.title,
       content: input.content,
       source_url: input.sourceUrl || null,
+      category: input.category || null,
+      catalog_key: input.catalogKey || null,
     })
     .select('*')
     .single()

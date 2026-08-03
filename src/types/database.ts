@@ -286,6 +286,8 @@ export interface Database {
           title: string
           content: string
           source_url: string | null
+          category: string | null
+          catalog_key: string | null
           created_at: string
           updated_at: string
         }

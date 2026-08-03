@@ -17,7 +17,9 @@ export default async function KnowledgePage() {
     <div className="card-surface p-5">
       <div className="mb-4">
         <h1 className="font-display font-semibold text-xl text-[var(--text-1)]">Base de conocimiento</h1>
-        <p className="text-sm text-[var(--text-3)]">{documents.length} documentos que tu agente IA puede usar para responder</p>
+        <p className="text-sm text-[var(--text-3)]">
+          {documents.length} {documents.length === 1 ? 'pregunta entrenando' : 'preguntas entrenando'} a tu agente IA
+        </p>
       </div>
       <KnowledgeManager initialDocuments={documents} />
     </div>
