@@ -1,11 +1,9 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { getBusinessForOwner } from '@/services/businesses'
-import { listWidgetsForBusiness, createWidget } from '@/services/widgets'
-import { widgetSchema } from '@/validations'
+import { updateWidget, deleteWidget } from '@/services/widgets'
+import { widgetUpdateSchema } from '@/validations'
 
-// Dashboard-owned config (auth required). Distinct from the public
-// /api/widget/[businessId]/config route the embed script polls.
 async function requireBusiness() {
   const supabase = await createClient()
   const {
@@ -17,34 +15,34 @@ async function requireBusiness() {
   return { supabase, business }
 }
 
-export async function GET() {
-  const ctx = await requireBusiness()
-  if ('error' in ctx) return NextResponse.json({ error: ctx.error }, { status: 401 })
-  const widgets = await listWidgetsForBusiness(ctx.supabase, ctx.business.id)
-  return NextResponse.json({ widgets })
-}
-
-export async function POST(request: Request) {
+export async function PATCH(request: Request, { params }: { params: { widgetId: string } }) {
   const ctx = await requireBusiness()
   if ('error' in ctx) return NextResponse.json({ error: ctx.error }, { status: 401 })
 
   const body = await request.json()
-  const parsed = widgetSchema.safeParse(body)
+  const parsed = widgetUpdateSchema.safeParse(body)
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.issues[0]?.message }, { status: 400 })
   }
 
   try {
-    const widget = await createWidget(ctx.supabase, ctx.business.id, parsed.data)
-    return NextResponse.json({ widget }, { status: 201 })
+    const widget = await updateWidget(ctx.supabase, ctx.business.id, params.widgetId, parsed.data)
+    return NextResponse.json({ widget })
   } catch (err: any) {
-    // Unique (business_id, agent_id) violation — that agent already has a widget.
     if (err?.code === '23505') {
       return NextResponse.json(
-        { error: 'This agent already has a widget. Edit it instead of creating a new one.' },
+        { error: 'This agent already has a widget. Edit that one instead.' },
         { status: 409 }
       )
     }
     throw err
   }
+}
+
+export async function DELETE(_request: Request, { params }: { params: { widgetId: string } }) {
+  const ctx = await requireBusiness()
+  if ('error' in ctx) return NextResponse.json({ error: ctx.error }, { status: 401 })
+
+  await deleteWidget(ctx.supabase, ctx.business.id, params.widgetId)
+  return NextResponse.json({ ok: true })
 }

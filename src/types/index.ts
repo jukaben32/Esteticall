@@ -12,6 +12,7 @@ export type Appointment = Tables<'appointments'>
 export type BusinessAvailability = Tables<'business_availability'>
 export type KnowledgeDocument = Tables<'knowledge_documents'>
 export type Widget = Tables<'widgets'>
+export type WidgetWithAgent = Widget & { agent_name: string | null }
 export type Website = Tables<'websites'>
 export type Notification = Tables<'notifications'>
 export type SupportTicket = Tables<'support_tickets'>

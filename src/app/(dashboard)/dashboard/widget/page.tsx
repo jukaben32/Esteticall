@@ -1,7 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { getBusinessForOwner } from '@/services/businesses'
-import { getWidgetForBusiness } from '@/services/widgets'
-import { WidgetConfigForm } from '@/components/WidgetConfigForm'
+import { listWidgetsForBusiness } from '@/services/widgets'
+import { listAgentsForBusiness } from '@/services/aiAgents'
+import { WidgetsManager } from '@/components/WidgetsManager'
 
 export default async function WidgetPage() {
   const supabase = await createClient()
@@ -11,16 +12,24 @@ export default async function WidgetPage() {
   const business = await getBusinessForOwner(supabase, user!.id)
   if (!business) return null
 
-  const widget = await getWidgetForBusiness(supabase, business.id)
+  const [widgets, agents] = await Promise.all([
+    listWidgetsForBusiness(supabase, business.id),
+    listAgentsForBusiness(supabase, business.id),
+  ])
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
 
   return (
     <div>
       <div className="mb-4">
         <h1 className="font-display font-semibold text-xl text-[var(--text-1)]">Widget</h1>
-        <p className="text-sm text-[var(--text-3)]">Configura y embebe tu asistente de voz IA.</p>
+        <p className="text-sm text-[var(--text-3)]">Embebe tu asistente de voz IA en tu sitio web.</p>
       </div>
-      <WidgetConfigForm businessId={business.id} initialWidget={widget} appUrl={appUrl} />
+      <WidgetsManager
+        businessId={business.id}
+        initialWidgets={widgets}
+        agents={agents}
+        appUrl={appUrl}
+      />
     </div>
   )
 }

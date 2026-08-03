@@ -82,15 +82,22 @@ export const appointmentSchema = z.object({
 export type AppointmentInput = z.infer<typeof appointmentSchema>
 
 export const widgetSchema = z.object({
+  name: z.string().min(2).max(80).default('Main Widget'),
+  agentId: z.string().uuid().nullable().default(null),
+  position: z.enum(['bottom-right', 'bottom-left']).default('bottom-right'),
+  theme: z.enum(['light', 'dark']).default('light'),
   isEnabled: z.boolean().default(true),
   primaryColor: z
     .string()
     .regex(/^#[0-9a-fA-F]{6}$/)
-    .default('#2563eb'),
+    .default('#166534'),
   greetingMessage: z.string().min(5),
   allowedOrigins: z.array(z.string().url()).default([]),
 })
 export type WidgetInput = z.infer<typeof widgetSchema>
+
+export const widgetUpdateSchema = widgetSchema.partial()
+export type WidgetUpdateInput = z.infer<typeof widgetUpdateSchema>
 
 export const websiteSchema = z.object({
   isPublished: z.boolean().default(false),

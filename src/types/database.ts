@@ -303,10 +303,16 @@ export interface Database {
         Row: {
           id: string
           business_id: string
+          agent_id: string | null
+          name: string
+          position: 'bottom-right' | 'bottom-left'
+          theme: 'light' | 'dark'
           is_enabled: boolean
           primary_color: string
           greeting_message: string
           allowed_origins: string[]
+          impressions: number
+          interactions: number
           created_at: string
           updated_at: string
         }
