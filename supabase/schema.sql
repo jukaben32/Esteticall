@@ -571,3 +571,25 @@ alter table appointments add column if not exists service_id uuid
   references business_services(id) on delete set null;
 
 alter table clients add column if not exists pre_approval_number text;
+
+-- 22. AI AGENTS — language field (matches the reference template's "Language"
+-- field on the agent settings form) + AGENT SERVICES (join table: which
+-- services each individual agent is scoped to discuss — different from
+-- agent_listings, which scopes listings. Mirrors that same additive pattern.)
+alter table ai_agents add column if not exists language text not null default 'en';
+
+create table if not exists agent_services (
+  agent_id     uuid not null references ai_agents(id) on delete cascade,
+  service_id   uuid not null references business_services(id) on delete cascade,
+  business_id  uuid not null references businesses(id) on delete cascade,
+  created_at   timestamptz not null default now(),
+  primary key (agent_id, service_id)
+);
+
+create index if not exists idx_agent_services_business_id on agent_services (business_id);
+create index if not exists idx_agent_services_service_id on agent_services (service_id);
+
+alter table agent_services enable row level security;
+
+create policy "Business owners can manage agent-service links"
+  on agent_services for all using (is_business_owner(business_id));

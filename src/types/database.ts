@@ -65,6 +65,7 @@ export interface Database {
           system_prompt: string
           status: 'draft' | 'live' | 'paused'
           calls_handled: number
+          language: string
           created_at: string
           updated_at: string
         }
@@ -145,6 +146,21 @@ export interface Database {
           business_id: string
         }
         Update: Partial<Database['public']['Tables']['agent_listings']['Row']>
+        Relationships: []
+      }
+      agent_services: {
+        Row: {
+          agent_id: string
+          service_id: string
+          business_id: string
+          created_at: string
+        }
+        Insert: Partial<Database['public']['Tables']['agent_services']['Row']> & {
+          agent_id: string
+          service_id: string
+          business_id: string
+        }
+        Update: Partial<Database['public']['Tables']['agent_services']['Row']>
         Relationships: []
       }
       clients: {

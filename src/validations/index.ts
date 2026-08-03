@@ -58,9 +58,11 @@ export const aiAgentSchema = z.object({
   voice: z.string().default('alloy'),
   personality: z.string().default('friendly'),
   sensitivity: z.coerce.number().min(0).max(1).default(0.5),
+  language: z.string().default('en'),
   greetingMessage: z.string().min(5),
   systemPrompt: z.string().optional(),
   status: z.enum(['draft', 'live', 'paused']).default('draft'),
+  serviceIds: z.array(z.string().uuid()).optional(),
 })
 export type AiAgentInput = z.infer<typeof aiAgentSchema>
 

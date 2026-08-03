@@ -4,6 +4,7 @@ import type { AiAgent } from '@/types'
 import type { AiAgentInput } from '@/validations'
 import { PLAN_LIMITS, isWithinLimit } from '@/constants'
 import type { PlanId } from '@/types'
+import { setAgentServices, listServiceIdsForAgent } from './agentServices'
 
 type DB = SupabaseClient<Database>
 
@@ -65,6 +66,7 @@ export async function createAgent(
       voice: input.voice,
       personality: input.personality,
       sensitivity: input.sensitivity,
+      language: input.language,
       greeting_message: input.greetingMessage,
       system_prompt: input.systemPrompt ?? '',
       status: input.status,
@@ -72,6 +74,11 @@ export async function createAgent(
     .select('*')
     .single()
   if (error) throw error
+
+  if (input.serviceIds) {
+    await setAgentServices(supabase, businessId, data.id, input.serviceIds)
+  }
+
   return data
 }
 
@@ -99,6 +106,33 @@ export async function deleteAgent(supabase: DB, businessId: string, agentId: str
     .eq('business_id', businessId)
     .eq('id', agentId)
   if (error) throw error
+}
+
+// "Duplicate" icon action in the agents list — copies settings + assigned
+// services into a new draft agent, respecting the plan's agent limit.
+export async function duplicateAgent(
+  supabase: DB,
+  businessId: string,
+  plan: PlanId,
+  agentId: string
+): Promise<AiAgent> {
+  const source = await getAgentById(supabase, businessId, agentId)
+  if (!source) throw new Error('Agent not found')
+
+  const serviceIds = await listServiceIdsForAgent(supabase, agentId)
+
+  return createAgent(supabase, businessId, plan, {
+    name: `${source.name} (copia)`,
+    specialty: source.specialty,
+    voice: source.voice,
+    personality: source.personality,
+    sensitivity: source.sensitivity,
+    language: source.language,
+    greetingMessage: source.greeting_message,
+    systemPrompt: source.system_prompt,
+    status: 'draft',
+    serviceIds,
+  })
 }
 
 export async function incrementCallsHandled(supabase: DB, agentId: string) {
