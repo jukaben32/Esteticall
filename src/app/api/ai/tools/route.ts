@@ -133,6 +133,28 @@ export async function POST(request: Request) {
         return NextResponse.json({ captured: true, clientId: client.id })
       }
 
+      case 'request_callback': {
+        const client = await findOrCreateClientByPhone(supabase, businessId, {
+          name: args.clientName,
+          phone: args.clientPhone,
+          source: 'ai_call',
+        })
+
+        // 'escalated' is the outcome the dashboard's "Callbacks solicitados" stat
+        // counts — see recordConversationOutcome / OUTCOME_RANK.
+        await recordConversationOutcome(supabase, conversationId, { clientId: client.id, outcome: 'escalated' })
+
+        const bodyParts = [client.phone ? `Tel: ${client.phone}` : null, args.reason ?? null, args.preferredTime ? `Prefiere: ${args.preferredTime}` : null]
+        await supabase.from('notifications').insert({
+          business_id: businessId,
+          type: 'system',
+          title: `Callback solicitado — ${client.name}`,
+          body: bodyParts.filter(Boolean).join(' · ') || null,
+        })
+
+        return NextResponse.json({ requested: true, clientId: client.id })
+      }
+
       default:
         return NextResponse.json({ error: `Unknown tool: ${name}` }, { status: 400 })
     }

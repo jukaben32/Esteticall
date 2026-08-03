@@ -73,6 +73,24 @@ export const REALTIME_TOOLS: RealtimeTool[] = [
       required: ['clientName', 'clientPhone'],
     },
   },
+  {
+    type: 'function',
+    name: 'request_callback',
+    description:
+      'Use this when the caller asks to be called back by a human agent instead of continuing with you — e.g. they ' +
+      'want to speak to a person, have a question you cannot answer, or a viewing/booking issue you cannot resolve. ' +
+      'Requires their name and phone number. This notifies the business immediately; it does not book a viewing.',
+    parameters: {
+      type: 'object',
+      properties: {
+        clientName: { type: 'string' },
+        clientPhone: { type: 'string' },
+        reason: { type: 'string', description: 'Brief reason for the callback, in the caller\'s own words' },
+        preferredTime: { type: 'string', description: 'When they would like to be called back, if mentioned' },
+      },
+      required: ['clientName', 'clientPhone'],
+    },
+  },
 ]
 
 export function buildSystemPrompt(opts: {
@@ -106,6 +124,8 @@ export function buildSystemPrompt(opts: {
     'When the caller wants to see a property, use check_availability to find a real open slot before proposing a time,',
     'then confirm their name and phone number before calling book_viewing. If they are not ready to book, still call',
     'capture_lead once you have their name and phone number so the business can follow up.',
+    'If the caller asks to speak with a human, or has a request you cannot handle, call request_callback with their',
+    'name and phone number instead of guessing or ending the call unresolved.',
     'Never invent listing details, prices, or availability that the tools did not return.',
   ]
     .filter(Boolean)
