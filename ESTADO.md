@@ -281,6 +281,30 @@ columnas `duration_minutes`, `price_type` y `catalog_key` a `business_services`
 `schema.sql` completo en el SQL Editor de Supabase antes de que duración,
 tipo de precio y el catálogo funcionen en producción.
 
+### 12. Widget reconstruido para igualar el dashboard de referencia (3 ago 2026)
+`/dashboard/widget` reescrito de punta a punta (`WidgetsManager.tsx`,
+`WidgetFormModal.tsx`, `WidgetPreviewModal.tsx`) para pasar de "un widget por
+negocio" a una lista de widgets embebibles, cada uno atado a un agente IA
+específico, igual que el dashboard de referencia: card "Embedded Widgets" con
+lista de widgets (estado Active/Inactive, posición, agente, interacciones/
+impresiones, tabs `<script>` / React JSX / Full HTML con botón Copy), modal
+Create/Edit Widget (Live Preview en vivo, nombre, agente, posición, color +
+swatches, mensaje de saludo, tema claro/oscuro, toggle "Widget is active") y
+modal Widget Preview (mockup "Your website here" + botón flotante).
+
+**Esto NO está visible todavía en producción.** Lo que Juan ve ahora mismo en
+el sitio en vivo es la versión vieja (`WidgetConfigForm.tsx`, un solo widget
+con checkbox/color/mensaje/orígenes). Faltan dos cosas para que se vea el
+widget nuevo:
+1. **Migración pendiente**: correr `supabase/01_multi_widgets.sql` en el SQL
+   Editor de Supabase — agrega a `widgets` las columnas `name`, `agent_id`,
+   `position`, `theme`, `impressions`, `interactions` y quita el `unique` de
+   `business_id` (para permitir varios widgets por negocio). Sin esto, la
+   página nueva daría error en producción aunque esté deployada.
+2. **Confirmar deploy en Vercel**: verificar en el dashboard de Vercel que el
+   último commit de `main` (rebuild del Widget) ya se deployó; si no,
+   redeployar manualmente.
+
 ## VISIÓN A LARGO PLAZO (clave, no perder)
 
 InmobilIACall no debe ser solo "SaaS de bienes raíces", sino una **base reutilizable
