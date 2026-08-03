@@ -132,7 +132,10 @@ export function WidgetFormModal({
             <p className="text-[11px] text-[var(--text-3)] mb-2">Updates as you change colour and position</p>
             <div className="relative h-28 rounded-lg border border-[var(--border)] bg-[var(--bg-subtle)] overflow-hidden">
               <FloatingWidgetLauncher businessId={businessId} config={previewConfig} mode="inline" />
-              <span className="absolute top-2 left-2 text-[10px] font-mono text-[var(--text-3)]">{form.primaryColor}</span>
+            </div>
+            <div className="flex items-center gap-1.5 mt-1.5">
+              <span className="w-2 h-2 rounded-full" style={{ backgroundColor: form.primaryColor }} />
+              <span className="text-[11px] font-mono text-[var(--text-3)]">{form.primaryColor}</span>
             </div>
           </div>
 
@@ -231,9 +234,23 @@ export function WidgetFormModal({
             </div>
           </div>
 
-          <label className="flex items-center gap-2 text-sm">
-            <input type="checkbox" checked={form.isEnabled} onChange={(e) => patch({ isEnabled: e.target.checked })} />
-            Widget is active
+          <label className="flex items-center gap-2.5 text-sm cursor-pointer select-none">
+            <button
+              type="button"
+              role="switch"
+              aria-checked={form.isEnabled}
+              onClick={() => patch({ isEnabled: !form.isEnabled })}
+              className={`relative w-9 h-5 rounded-full shrink-0 transition-colors ${
+                form.isEnabled ? 'bg-[var(--teal-600)]' : 'bg-[var(--border)]'
+              }`}
+            >
+              <span
+                className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${
+                  form.isEnabled ? 'translate-x-4' : 'translate-x-0'
+                }`}
+              />
+            </button>
+            <span className="text-[var(--text-1)]">Widget is active</span>
           </label>
         </div>
 

@@ -46,7 +46,7 @@ export function WidgetPreviewModal({
           <div className="mt-4 card-surface p-3">
             <p className="font-medium text-sm text-[var(--text-1)]">{widget.name}</p>
             <p className="text-xs text-[var(--text-3)]">
-              {widget.position} · {widget.id.slice(0, 8)}
+              {widget.position} · {widget.primary_color}
             </p>
             <p className="text-xs italic text-[var(--text-3)] mt-1">&quot;{widget.greeting_message}&quot;</p>
           </div>
