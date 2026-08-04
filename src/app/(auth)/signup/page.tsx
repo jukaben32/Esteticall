@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Eye, EyeOff, Rocket } from 'lucide-react'
+import { Eye, EyeOff, Rocket, MailCheck, ArrowLeft } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { createBusiness } from '@/services/businesses'
 import { signupSchema } from '@/validations'
@@ -23,6 +23,10 @@ export default function SignupPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  // Set once signUp() succeeds but Supabase requires email confirmation
+  // before a session exists — matches the reference video's "we got the
+  // email sending confirmation, click Back to Sign Up" screen.
+  const [pendingEmail, setPendingEmail] = useState<string | null>(null)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -39,19 +43,41 @@ export default function SignupPage() {
     const { data, error: authError } = await supabase.auth.signUp({
       email: parsed.data.email,
       password: parsed.data.password,
+      options: {
+        data: { business_name: parsed.data.businessName },
+        emailRedirectTo: `${window.location.origin}/login`,
+      },
     })
 
-    if (authError || !data.user) {
+    if (authError) {
       setLoading(false)
-      setError(authError?.message ?? 'No se pudo crear la cuenta')
+      setError(authError.message)
+      return
+    }
+
+    // An existing, already-confirmed account signing up again comes back
+    // with a user but an empty identities array and no error.
+    if (data.user && data.user.identities && data.user.identities.length === 0) {
+      setLoading(false)
+      setError('Ya existe una cuenta con este correo. Intenta iniciar sesión.')
+      return
+    }
+
+    // No session yet → Supabase is waiting on email confirmation. Business
+    // creation needs an authenticated session (RLS), so it happens later —
+    // either automatically after the user confirms + logs in for the first
+    // time and /dashboard finds no business, sending them to /onboarding.
+    if (!data.session) {
+      setLoading(false)
+      setPendingEmail(parsed.data.email)
       return
     }
 
     try {
       await createBusiness(supabase, {
-        ownerId: data.user.id,
+        ownerId: data.user!.id,
         name: parsed.data.businessName,
-        slug: `${slugify(parsed.data.businessName)}-${data.user.id.slice(0, 6)}`,
+        slug: `${slugify(parsed.data.businessName)}-${data.user!.id.slice(0, 6)}`,
       })
     } catch (err) {
       setLoading(false)
@@ -62,6 +88,37 @@ export default function SignupPage() {
     setLoading(false)
     router.push('/dashboard')
     router.refresh()
+  }
+
+  if (pendingEmail) {
+    return (
+      <div className="card-raised p-7 space-y-4 text-center">
+        <div className="mx-auto grid place-items-center w-14 h-14 rounded-full bg-[var(--teal-50)]">
+          <MailCheck className="w-7 h-7 text-[var(--teal-700)]" />
+        </div>
+        <div>
+          <h1 className="font-display text-xl font-semibold text-[var(--text-1)]">Revisa tu correo</h1>
+          <p className="text-sm text-[var(--text-3)] mt-1">
+            Te enviamos un enlace de confirmación a <span className="font-medium text-[var(--text-1)]">{pendingEmail}</span>.
+            Ábrelo para verificar tu cuenta y luego inicia sesión.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => {
+            setPendingEmail(null)
+            setPassword('')
+          }}
+          className="btn-secondary w-full py-2.5 justify-center"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Volver a registro
+        </button>
+        <a href="/login" className="block text-sm text-[var(--teal-700)] font-medium">
+          Ya confirmé mi correo, iniciar sesión
+        </a>
+      </div>
+    )
   }
 
   return (
