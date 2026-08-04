@@ -752,3 +752,18 @@ create policy "Public can view FAQs of published websites"
     exists (select 1 from websites where websites.business_id = website_faqs.business_id and websites.is_published)
   );
 
+
+-- 30. BUSINESSES — website + split city/state/zip (matches the reference
+-- template's Business Profile form, where "address" is broken into Street
+-- Address / City / State / ZIP Code) + appointment-payment Stripe keys
+-- (matches the reference template's Settings → Stripe Payments tab: the
+-- business's OWN Stripe account, used so their clients can pay viewing fees
+-- online — separate from business_subscriptions.stripe_customer_id, which is
+-- the platform owner's Stripe account billing this business for its plan).
+alter table businesses add column if not exists website text;
+alter table businesses add column if not exists city text;
+alter table businesses add column if not exists state text;
+alter table businesses add column if not exists zip_code text;
+alter table businesses add column if not exists stripe_publishable_key text;
+alter table businesses add column if not exists stripe_secret_key text;
+alter table businesses add column if not exists stripe_connected boolean not null default false;

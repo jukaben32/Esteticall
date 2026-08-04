@@ -370,6 +370,45 @@ aparece al Guardar, vía el 409 que ya devuelve la API).
 
 `npx tsc --noEmit` y `npm run build` verificados sin errores antes de subir.
 
+### 15. Support + Settings — nuevas secciones (4 ago 2026)
+Al dashboard le faltaban dos secciones que sí existen en el dashboard de referencia
+("EstateCall"): Support y Settings. Ambas ya estaban previstas en el esquema
+(`support_tickets`/`support_messages` existían desde antes, sin RLS pendiente) pero
+nunca tuvieron página ni API.
+
+- **`/dashboard/support`** (`SupportTicketsPanel.tsx`): panel de dos columnas —
+  lista de tickets de clientes a la izquierda (nombre, estado, último mensaje) y
+  a la derecha el hilo de mensajes + caja de respuesta, con estado vacío "Selecciona
+  un ticket" igual al de referencia. Responder mueve el ticket de `open` a
+  `in_progress` automáticamente; el estado también se puede cambiar a mano
+  (Abierto/En progreso/Resuelto/Cerrado). Nuevo servicio `src/services/support.ts`
+  y rutas `GET /api/support-tickets`, `GET/PATCH /api/support-tickets/[ticketId]`,
+  `POST /api/support-tickets/[ticketId]/messages`.
+- **`/dashboard/settings`** (`SettingsTabs.tsx`): 3 pestañas iguales a la
+  referencia — **Perfil del negocio** (`BusinessProfileForm.tsx`: nombre, teléfono,
+  email, sitio web, dirección/ciudad/estado/código postal, zona horaria),
+  **Horario de atención** (`BusinessHoursEditor.tsx`: toggle por día + hora de
+  inicio/fin + duración de turno + resumen "Abierto N días", guardado por lote
+  contra el mismo `/api/availability` que ya usaba `/dashboard/schedule`) y
+  **Pagos con Stripe** (`StripePaymentsForm.tsx`: llave publicable/secreta de la
+  cuenta de Stripe propia del negocio para que sus clientes paguen visitas en
+  línea — distinta de la cuenta de Stripe de la plataforma que cobra la
+  suscripción del plan). Nuevas rutas `PUT /api/settings/profile` y
+  `PUT /api/settings/stripe`.
+- Sidebar (`DashboardSidebar.tsx`) ahora incluye "Soporte" y "Configuración" en
+  la sección Cuenta.
+
+**Requiere migración pendiente** (misma mecánica que la 22-24): migración 30 en
+`supabase/schema.sql` agrega a `businesses` las columnas `website`, `city`,
+`state`, `zip_code`, `stripe_publishable_key`, `stripe_secret_key`,
+`stripe_connected`. Hay que volver a correr el `schema.sql` completo en el SQL
+Editor de Supabase antes de que el Perfil del negocio y Pagos con Stripe
+funcionen en producción — mientras tanto esas partes fallarán en el sitio en vivo
+(Soporte y Horario de atención ya funcionan porque sus tablas/columnas ya
+existían).
+
+`npx tsc --noEmit` y `npm run build` verificados sin errores antes de entregar.
+
 ## VISIÓN A LARGO PLAZO (clave, no perder)
 
 InmobilIACall no debe ser solo "SaaS de bienes raíces", sino una **base reutilizable

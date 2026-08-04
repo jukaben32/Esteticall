@@ -15,16 +15,32 @@ export type LoginInput = z.infer<typeof loginSchema>
 
 export const businessProfileSchema = z.object({
   name: z.string().min(2),
-  slug: z
-    .string()
-    .min(2)
-    .regex(/^[a-z0-9-]+$/, 'Lowercase letters, numbers and dashes only'),
-  phone: z.string().optional(),
+  phone: z.string().optional().or(z.literal('')),
   contactEmail: z.string().email().optional().or(z.literal('')),
-  address: z.string().optional(),
+  website: z.string().url().optional().or(z.literal('')),
+  address: z.string().optional().or(z.literal('')),
+  city: z.string().optional().or(z.literal('')),
+  state: z.string().optional().or(z.literal('')),
+  zipCode: z.string().optional().or(z.literal('')),
   timezone: z.string().default('UTC'),
 })
 export type BusinessProfileInput = z.infer<typeof businessProfileSchema>
+
+export const stripeSettingsSchema = z.object({
+  publishableKey: z.string().optional().or(z.literal('')),
+  secretKey: z.string().optional().or(z.literal('')),
+})
+export type StripeSettingsInput = z.infer<typeof stripeSettingsSchema>
+
+export const supportMessageSchema = z.object({
+  body: z.string().min(1, 'Message cannot be empty'),
+})
+export type SupportMessageInput = z.infer<typeof supportMessageSchema>
+
+export const supportTicketStatusSchema = z.object({
+  status: z.enum(['open', 'in_progress', 'resolved', 'closed']),
+})
+export type SupportTicketStatusInput = z.infer<typeof supportTicketStatusSchema>
 
 export const listingSchema = z.object({
   title: z.string().min(3),

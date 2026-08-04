@@ -21,6 +21,8 @@ import {
   LogOut,
   Menu,
   X,
+  LifeBuoy,
+  Settings,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
@@ -51,6 +53,8 @@ export const NAV_SECTIONS = [
     items: [
       { href: '/dashboard/plan', label: 'Plan', icon: CreditCard },
       { href: '/dashboard/notifications', label: 'Notificaciones', icon: BellRing },
+      { href: '/dashboard/support', label: 'Soporte', icon: LifeBuoy },
+      { href: '/dashboard/settings', label: 'Configuración', icon: Settings },
     ],
   },
 ]

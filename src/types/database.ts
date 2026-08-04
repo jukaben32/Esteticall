@@ -18,6 +18,13 @@ export interface Database {
           phone: string | null
           contact_email: string | null
           address: string | null
+          website: string | null
+          city: string | null
+          state: string | null
+          zip_code: string | null
+          stripe_publishable_key: string | null
+          stripe_secret_key: string | null
+          stripe_connected: boolean
           timezone: string
           onboarding_step: 'created' | 'profile' | 'agent' | 'billing' | 'done'
           created_at: string

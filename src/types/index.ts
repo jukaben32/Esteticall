@@ -29,6 +29,10 @@ export interface WebsiteContent {
 export type Notification = Tables<'notifications'>
 export type SupportTicket = Tables<'support_tickets'>
 export type SupportMessage = Tables<'support_messages'>
+export type SupportTicketWithClient = SupportTicket & {
+  client: Pick<Client, 'id' | 'name' | 'phone' | 'email'> | null
+  last_message: string | null
+}
 export type BusinessService = Tables<'business_services'>
 export type AgentService = Tables<'agent_services'>
 
