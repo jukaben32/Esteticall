@@ -14,6 +14,18 @@ export type KnowledgeDocument = Tables<'knowledge_documents'>
 export type Widget = Tables<'widgets'>
 export type WidgetWithAgent = Widget & { agent_name: string | null }
 export type Website = Tables<'websites'>
+export type WebsiteTeamMember = Tables<'website_team_members'>
+export type WebsiteTestimonial = Tables<'website_testimonials'>
+export type WebsiteSpecialty = Tables<'website_specialties'>
+export type WebsiteFaq = Tables<'website_faqs'>
+export interface WebsiteContent {
+  website: Website
+  teamMembers: WebsiteTeamMember[]
+  testimonials: WebsiteTestimonial[]
+  specialties: WebsiteSpecialty[]
+  faqs: WebsiteFaq[]
+  featuredServices: BusinessService[]
+}
 export type Notification = Tables<'notifications'>
 export type SupportTicket = Tables<'support_tickets'>
 export type SupportMessage = Tables<'support_messages'>

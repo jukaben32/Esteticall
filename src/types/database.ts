@@ -331,6 +331,30 @@ export interface Database {
           about: string | null
           theme: string
           custom_domain: string | null
+          template: 'clarity' | 'pulse' | 'serenity'
+          primary_color: string
+          secondary_color: string
+          font: 'inter' | 'playfair' | 'poppins'
+          ai_agent_id: string | null
+          logo_url: string | null
+          site_title: string | null
+          site_description: string | null
+          hero_subheadline: string | null
+          hero_image_url: string | null
+          cta_primary_text: string
+          cta_secondary_text: string
+          years_experience: number | null
+          clients_served: number | null
+          satisfaction_pct: number | null
+          about_title: string
+          featured_service_ids: string[]
+          footer_tagline: string | null
+          footer_copyright: string | null
+          contact_phone: string | null
+          contact_email: string | null
+          contact_address: string | null
+          contact_hours: string | null
+          contact_maps_url: string | null
           created_at: string
           updated_at: string
         }
@@ -338,6 +362,71 @@ export interface Database {
           business_id: string
         }
         Update: Partial<Database['public']['Tables']['websites']['Row']>
+        Relationships: []
+      }
+      website_team_members: {
+        Row: {
+          id: string
+          business_id: string
+          name: string
+          role: string
+          bio: string | null
+          photo_url: string | null
+          sort_order: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: Partial<Database['public']['Tables']['website_team_members']['Row']> & {
+          business_id: string
+        }
+        Update: Partial<Database['public']['Tables']['website_team_members']['Row']>
+        Relationships: []
+      }
+      website_testimonials: {
+        Row: {
+          id: string
+          business_id: string
+          quote: string
+          author_name: string
+          author_role: string | null
+          rating: number
+          sort_order: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: Partial<Database['public']['Tables']['website_testimonials']['Row']> & {
+          business_id: string
+        }
+        Update: Partial<Database['public']['Tables']['website_testimonials']['Row']>
+        Relationships: []
+      }
+      website_specialties: {
+        Row: {
+          id: string
+          business_id: string
+          label: string
+          sort_order: number
+          created_at: string
+        }
+        Insert: Partial<Database['public']['Tables']['website_specialties']['Row']> & {
+          business_id: string
+        }
+        Update: Partial<Database['public']['Tables']['website_specialties']['Row']>
+        Relationships: []
+      }
+      website_faqs: {
+        Row: {
+          id: string
+          business_id: string
+          question: string
+          answer: string
+          sort_order: number
+          created_at: string
+        }
+        Insert: Partial<Database['public']['Tables']['website_faqs']['Row']> & {
+          business_id: string
+        }
+        Update: Partial<Database['public']['Tables']['website_faqs']['Row']>
         Relationships: []
       }
       notifications: {

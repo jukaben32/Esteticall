@@ -1,6 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { getBusinessForOwner } from '@/services/businesses'
-import { getWebsiteForBusiness } from '@/services/websites'
+import { getWebsiteContentForBusiness } from '@/services/websites'
+import { listAgentsForBusiness } from '@/services/aiAgents'
+import { listServicesForBusiness } from '@/services/businessServices'
 import { WebsiteEditor } from '@/components/WebsiteEditor'
 
 export default async function WebsitePage() {
@@ -11,17 +13,11 @@ export default async function WebsitePage() {
   const business = await getBusinessForOwner(supabase, user!.id)
   if (!business) return null
 
-  const website = await getWebsiteForBusiness(supabase, business.id)
+  const [content, agents, services] = await Promise.all([
+    getWebsiteContentForBusiness(supabase, business.id),
+    listAgentsForBusiness(supabase, business.id),
+    listServicesForBusiness(supabase, business.id),
+  ])
 
-  return (
-    <div>
-      <div className="mb-4">
-        <h1 className="font-display font-semibold text-xl text-[var(--text-1)]">Sitio Web</h1>
-        <p className="text-sm text-[var(--text-3)]">
-          Tu sitio público en /sites/{business.slug} — las propiedades publicadas aparecen automáticamente.
-        </p>
-      </div>
-      <WebsiteEditor business={business} initialWebsite={website} />
-    </div>
-  )
+  return <WebsiteEditor business={business} initialContent={content} agents={agents} services={services} />
 }

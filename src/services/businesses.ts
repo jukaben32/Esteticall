@@ -21,6 +21,12 @@ export async function getBusinessBySlug(supabase: DB, slug: string): Promise<Bus
   return data
 }
 
+export async function getBusinessById(supabase: DB, businessId: string): Promise<Business | null> {
+  const { data, error } = await supabase.from('businesses').select('*').eq('id', businessId).maybeSingle()
+  if (error) throw error
+  return data
+}
+
 export async function getSubscription(
   supabase: DB,
   businessId: string

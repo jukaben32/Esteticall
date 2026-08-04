@@ -326,6 +326,50 @@ Todo funcional y dinámico: cero datos hardcodeados en pantalla, todo sale de
 migración ni cambios de esquema — reutiliza `POST /api/widget` ya existente.
 `npx tsc --noEmit` y `npm run build` verificados sin errores antes de subir.
 
+### 14. Website Builder reconstruido + reserva pública dentro del widget (3 ago 2026)
+Descubrimiento clave: el **backend del Website Builder ya estaba completo**
+(tablas `websites` + `website_team_members/testimonials/specialties/faqs`,
+`services/websites.ts` con `getWebsiteContentForBusiness`/`saveWebsiteContent`,
+`PUT /api/website`, zod schemas). Lo que faltaba era la UI. También estaban
+listas — pero sin UI que las usara — las rutas públicas de reserva
+(`/api/widget/public/[businessId]/{services,slots,book}`) y la página
+`/portal/[appointmentId]`.
+
+**De paso, se corrigió un bug real**: `sendNewAppointmentOwnerEmail` y
+`sendPublicBookingConfirmationEmail` estaban declaradas dos veces en
+`src/services/email.ts` (rompía el build). Se eliminó el duplicado que no
+coincidía con lo que usa `book/route.ts`.
+
+Construido en esta sesión:
+- `WebsiteEditor.tsx` — reescrito por completo: panel DESIGN (3 plantillas
+  Clarity/Pulse/Serenity, color primario/secundario, fuente Inter/Playfair/
+  Poppins, Site URL, selector de Agente IA) + acordeón CONTENT (Branding,
+  Hero Section, About, Services —checkbox sobre `business_services`—, Team
+  Members, Testimonials, Partners & Lenders/specialties, FAQ, Contact Info,
+  Footer), todo CRUD dinámico. Save / Publish / Unpublish / View Live.
+  **Simplificación consciente**: imágenes (logo, hero, foto de equipo) son
+  campos de URL, no upload de archivo — no existía infraestructura de
+  storage genérica para reutilizar y no quise inventar un bucket nuevo sin
+  confirmarlo con Juan.
+- `WebsiteTemplateRenderer.tsx` — renderer compartido de las 3 plantillas
+  (nav, hero con tarjetas flotantes "AI Voice Care"/"A+"/testimonio, Our
+  Specialties, Services, About, Team, Testimonials, FAQ, Contact + mapa
+  embebido, Footer). Se usa tanto en el live preview del builder como en el
+  sitio público — un solo lugar de verdad.
+- `/sites/[slug]/page.tsx` — reescrito: `getPublishedWebsiteContent` +
+  `WebsiteTemplateRenderer` + `FloatingWidgetLauncher` en modo embed.
+- `WidgetBookingPanel.tsx` (nuevo) + tab "Book" agregado a
+  `FloatingWidgetLauncher.tsx` junto al tab existente "Call AI": Select a
+  Service → Pick a Date → Pick a Time → Your Details → confirmación
+  "Viewing Requested", contra las rutas públicas ya existentes.
+
+**Pendiente si Juan quiere subir el nivel más adelante**: upload real de
+imágenes (logo/hero/team) en vez de pegar URL; chequeo de disponibilidad de
+slug en vivo mientras se escribe (hoy el error de slug duplicado solo
+aparece al Guardar, vía el 409 que ya devuelve la API).
+
+`npx tsc --noEmit` y `npm run build` verificados sin errores antes de subir.
+
 ## VISIÓN A LARGO PLAZO (clave, no perder)
 
 InmobilIACall no debe ser solo "SaaS de bienes raíces", sino una **base reutilizable

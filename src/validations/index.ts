@@ -104,8 +104,107 @@ export const websiteSchema = z.object({
   headline: z.string().optional(),
   about: z.string().optional(),
   theme: z.enum(['light', 'dark']).default('light'),
+  template: z.enum(['clarity', 'pulse', 'serenity']).default('clarity'),
+  primaryColor: z.string().default('#166534'),
+  secondaryColor: z.string().default('#16a34a'),
+  font: z.enum(['inter', 'playfair', 'poppins']).default('inter'),
+  aiAgentId: z.string().uuid().nullable().optional(),
+  logoUrl: z.string().optional(),
+  siteTitle: z.string().optional(),
+  siteDescription: z.string().optional(),
+  heroSubheadline: z.string().optional(),
+  heroImageUrl: z.string().optional(),
+  ctaPrimaryText: z.string().default('Book a Viewing'),
+  ctaSecondaryText: z.string().default('Call Now'),
+  yearsExperience: z.coerce.number().int().nonnegative().nullable().optional(),
+  clientsServed: z.coerce.number().int().nonnegative().nullable().optional(),
+  satisfactionPct: z.coerce.number().int().min(0).max(100).nullable().optional(),
+  aboutTitle: z.string().default('About Us'),
+  featuredServiceIds: z.array(z.string().uuid()).default([]),
+  footerTagline: z.string().optional(),
+  footerCopyright: z.string().optional(),
+  contactPhone: z.string().optional(),
+  contactEmail: z.string().optional(),
+  contactAddress: z.string().optional(),
+  contactHours: z.string().optional(),
+  contactMapsUrl: z.string().optional(),
 })
 export type WebsiteInput = z.infer<typeof websiteSchema>
+
+export const websiteSlugSchema = z.object({
+  slug: z
+    .string()
+    .min(3, 'Use at least 3 characters')
+    .max(60)
+    .regex(/^[a-z0-9-]+$/, 'Only lowercase letters, numbers, and hyphens'),
+})
+export type WebsiteSlugInput = z.infer<typeof websiteSlugSchema>
+
+export const websiteTeamMemberSchema = z.object({
+  id: z.string().uuid().optional(),
+  name: z.string().default(''),
+  role: z.string().default(''),
+  bio: z.string().optional(),
+  photoUrl: z.string().optional(),
+  sortOrder: z.coerce.number().int().default(0),
+})
+export type WebsiteTeamMemberInput = z.infer<typeof websiteTeamMemberSchema>
+
+export const websiteTestimonialSchema = z.object({
+  id: z.string().uuid().optional(),
+  quote: z.string().default(''),
+  authorName: z.string().default(''),
+  authorRole: z.string().optional(),
+  rating: z.coerce.number().int().min(1).max(5).default(5),
+  sortOrder: z.coerce.number().int().default(0),
+})
+export type WebsiteTestimonialInput = z.infer<typeof websiteTestimonialSchema>
+
+export const websiteSpecialtySchema = z.object({
+  id: z.string().uuid().optional(),
+  label: z.string().default(''),
+  sortOrder: z.coerce.number().int().default(0),
+})
+export type WebsiteSpecialtyInput = z.infer<typeof websiteSpecialtySchema>
+
+export const websiteFaqSchema = z.object({
+  id: z.string().uuid().optional(),
+  question: z.string().default(''),
+  answer: z.string().default(''),
+  sortOrder: z.coerce.number().int().default(0),
+})
+export type WebsiteFaqInput = z.infer<typeof websiteFaqSchema>
+
+export const saveWebsiteContentSchema = z.object({
+  website: websiteSchema,
+  teamMembers: z.array(websiteTeamMemberSchema).default([]),
+  testimonials: z.array(websiteTestimonialSchema).default([]),
+  specialties: z.array(websiteSpecialtySchema).default([]),
+  faqs: z.array(websiteFaqSchema).default([]),
+})
+export type SaveWebsiteContentApiInput = z.infer<typeof saveWebsiteContentSchema>
+
+export const websiteSiteUrlSchema = z.object({
+  slug: z
+    .string()
+    .min(3, 'Use at least 3 characters')
+    .max(60)
+    .regex(/^[a-z0-9-]+$/, 'Only lowercase letters, numbers, and hyphens'),
+})
+export type WebsiteSiteUrlInput = z.infer<typeof websiteSiteUrlSchema>
+
+// Public booking flow — the "Book" tab of the floating widget on the public
+// site (no auth: any site visitor can hit this, scoped by businessId only).
+export const publicBookingSchema = z.object({
+  serviceId: z.string().uuid().nullable().optional(),
+  scheduledAt: z.string().min(1, 'Pick a time'),
+  clientName: z.string().min(1, 'Name is required'),
+  clientEmail: z.string().email('Invalid email'),
+  clientPhone: z.string().optional(),
+  budget: z.string().optional(),
+  notes: z.string().optional(),
+})
+export type PublicBookingInput = z.infer<typeof publicBookingSchema>
 
 export const supportTicketSchema = z.object({
   subject: z.string().min(3).default('Support Request'),

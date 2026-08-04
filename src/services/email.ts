@@ -108,3 +108,86 @@ export async function sendNewLeadEmail(opts: {
     `,
   })
 }
+
+// Sent to the business owner (businesses.contact_email) the moment a visitor
+// books through the public website's "Book" widget tab — mirrors the
+// reference video's "New Appointment Booked" email.
+export async function sendNewAppointmentOwnerEmail(opts: {
+  to: string
+  businessName: string
+  clientName: string
+  clientPhone?: string
+  clientEmail?: string
+  serviceName?: string
+  scheduledAt: string
+}) {
+  return sendEmail({
+    to: opts.to,
+    subject: `New appointment booked — ${opts.clientName}`,
+    html: `
+      <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
+        <div style="background:#166534;color:#fff;padding:20px;border-radius:12px 12px 0 0;">
+          <p style="margin:0;font-size:18px;font-weight:600;">📅 New Appointment Booked</p>
+          <p style="margin:4px 0 0;opacity:0.85;">${opts.businessName}</p>
+        </div>
+        <div style="border:1px solid #e5e7eb;border-top:none;border-radius:0 0 12px 12px;padding:20px;">
+          <p>A new appointment has been booked. Here are the details:</p>
+          <table style="width:100%;font-size:14px;border-collapse:collapse;">
+            <tr><td style="padding:6px 0;color:#6b7280;">Client</td><td style="padding:6px 0;font-weight:600;">${opts.clientName}</td></tr>
+            <tr><td style="padding:6px 0;color:#6b7280;">Date &amp; Time</td><td style="padding:6px 0;font-weight:600;">${formatEmailDateTime(opts.scheduledAt)}</td></tr>
+            ${opts.serviceName ? `<tr><td style="padding:6px 0;color:#6b7280;">Service</td><td style="padding:6px 0;font-weight:600;">${opts.serviceName}</td></tr>` : ''}
+            ${opts.clientPhone ? `<tr><td style="padding:6px 0;color:#6b7280;">Phone</td><td style="padding:6px 0;font-weight:600;">${opts.clientPhone}</td></tr>` : ''}
+            ${opts.clientEmail ? `<tr><td style="padding:6px 0;color:#6b7280;">Email</td><td style="padding:6px 0;font-weight:600;">${opts.clientEmail}</td></tr>` : ''}
+          </table>
+          <p style="margin-top:20px;"><a href="${process.env.NEXT_PUBLIC_APP_URL ?? ''}/dashboard/schedule" style="background:#166534;color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none;font-weight:600;">View in Dashboard →</a></p>
+        </div>
+      </div>
+    `,
+  })
+}
+
+// Sent to the client right after a public-site booking. Points to the
+// unauthenticated /portal/[appointmentId] page so the client can revisit
+// their booking details without an account — matches the reference video's
+// "Viewing Confirmed" email + "View in Client Portal" button.
+export async function sendPublicBookingConfirmationEmail(opts: {
+  to: string
+  clientName: string
+  businessName: string
+  serviceName?: string
+  scheduledAt: string
+  budget?: string
+  businessAddress?: string
+  businessPhone?: string
+  businessContactEmail?: string
+  appointmentId: string
+}) {
+  const portalUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? ''}/portal/${opts.appointmentId}`
+  return sendEmail({
+    to: opts.to,
+    subject: `Viewing Confirmed — ${opts.businessName}`,
+    html: `
+      <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
+        <div style="background:#166534;color:#fff;padding:20px;border-radius:12px 12px 0 0;">
+          <p style="margin:0;font-size:18px;font-weight:600;">✓ Viewing Confirmed</p>
+          <p style="margin:4px 0 0;opacity:0.85;">${opts.businessName}</p>
+        </div>
+        <div style="border:1px solid #e5e7eb;border-top:none;border-radius:0 0 12px 12px;padding:20px;">
+          <p>Hi ${opts.clientName},</p>
+          <p>Your ${opts.serviceName ?? 'viewing'} has been successfully booked. Here are your details:</p>
+          <table style="width:100%;font-size:14px;border-collapse:collapse;">
+            <tr><td style="padding:6px 0;color:#6b7280;">Date &amp; Time</td><td style="padding:6px 0;font-weight:600;">${formatEmailDateTime(opts.scheduledAt)}</td></tr>
+            ${opts.serviceName ? `<tr><td style="padding:6px 0;color:#6b7280;">Property / Service</td><td style="padding:6px 0;font-weight:600;">${opts.serviceName}</td></tr>` : ''}
+            ${opts.budget ? `<tr><td style="padding:6px 0;color:#6b7280;">Budget Range</td><td style="padding:6px 0;font-weight:600;">${opts.budget}</td></tr>` : ''}
+            ${opts.businessAddress ? `<tr><td style="padding:6px 0;color:#6b7280;">Agency Location</td><td style="padding:6px 0;font-weight:600;">${opts.businessAddress}</td></tr>` : ''}
+            <tr><td style="padding:6px 0;color:#6b7280;">Contact</td><td style="padding:6px 0;font-weight:600;">${opts.businessPhone ?? ''} ${opts.businessContactEmail ? `· ${opts.businessContactEmail}` : ''}</td></tr>
+          </table>
+          <p style="margin:16px 0;color:#6b7280;font-size:13px;">If you need to reschedule or cancel, please contact us at least 24 hours in advance. You can also manage your viewings through our client portal.</p>
+          <p><a href="${portalUrl}" style="background:#166534;color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none;font-weight:600;">View in Client Portal →</a></p>
+        </div>
+      </div>
+    `,
+  })
+}
+
+

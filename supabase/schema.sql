@@ -616,3 +616,139 @@ alter table knowledge_documents add column if not exists category text;
 alter table knowledge_documents add column if not exists catalog_key text;
 
 create index if not exists idx_knowledge_documents_catalog_key on knowledge_documents (business_id, catalog_key);
+
+-- 25. WEBSITES — full site-builder rebuild (matches the reference template's
+-- Website Builder: template picker, primary/secondary color, font, AI agent
+-- assignment, branding, hero section stats/CTAs, footer, and a website-level
+-- contact block distinct from the business's internal phone/email/address).
+-- "Site URL" itself is NOT duplicated here — it's businesses.slug, already
+-- unique and already what /sites/[slug] routes on.
+alter table websites add column if not exists template text not null default 'clarity'
+  check (template in ('clarity', 'pulse', 'serenity'));
+alter table websites add column if not exists primary_color text not null default '#166534';
+alter table websites add column if not exists secondary_color text not null default '#16a34a';
+alter table websites add column if not exists font text not null default 'inter'
+  check (font in ('inter', 'playfair', 'poppins'));
+alter table websites add column if not exists ai_agent_id uuid references ai_agents(id) on delete set null;
+
+-- Branding
+alter table websites add column if not exists logo_url text;
+alter table websites add column if not exists site_title text;
+alter table websites add column if not exists site_description text;
+
+-- Hero section (reuses existing `headline` as the hero headline; `about` as
+-- the About Section body — both already existed, so not duplicated).
+alter table websites add column if not exists hero_subheadline text;
+alter table websites add column if not exists hero_image_url text;
+alter table websites add column if not exists cta_primary_text text not null default 'Book a Viewing';
+alter table websites add column if not exists cta_secondary_text text not null default 'Call Now';
+alter table websites add column if not exists years_experience integer;
+alter table websites add column if not exists clients_served integer;
+alter table websites add column if not exists satisfaction_pct integer;
+alter table websites add column if not exists about_title text not null default 'About Us';
+
+-- Services featured on the public site — references the business's own
+-- catalog (business_services, already built in Dashboard → Services)
+-- instead of duplicating service data on the website.
+alter table websites add column if not exists featured_service_ids uuid[] not null default '{}';
+
+-- Footer
+alter table websites add column if not exists footer_tagline text;
+alter table websites add column if not exists footer_copyright text;
+
+-- Website-level contact block (independent of businesses.phone/contact_email
+-- so the public site can show different copy than internal records).
+alter table websites add column if not exists contact_phone text;
+alter table websites add column if not exists contact_email text;
+alter table websites add column if not exists contact_address text;
+alter table websites add column if not exists contact_hours text;
+alter table websites add column if not exists contact_maps_url text;
+
+-- 26. WEBSITE TEAM MEMBERS (matches the reference template's "Team Members"
+-- content section: Name, Role/Title, Bio, Photo, reorderable, Add/Remove).
+create table if not exists website_team_members (
+  id          uuid primary key default gen_random_uuid(),
+  business_id uuid not null references businesses(id) on delete cascade,
+  name        text not null default '',
+  role        text not null default '',
+  bio         text,
+  photo_url   text,
+  sort_order  integer not null default 0,
+  created_at  timestamptz not null default now(),
+  updated_at  timestamptz not null default now()
+);
+create index if not exists idx_website_team_members_business_id on website_team_members (business_id);
+create trigger update_website_team_members_updated_at
+  before update on website_team_members
+  for each row execute function update_updated_at_column();
+alter table website_team_members enable row level security;
+create policy "Business owners can manage their team members"
+  on website_team_members for all using (is_business_owner(business_id));
+create policy "Public can view team members of published websites"
+  on website_team_members for select using (
+    exists (select 1 from websites where websites.business_id = website_team_members.business_id and websites.is_published)
+  );
+
+-- 27. WEBSITE TESTIMONIALS
+create table if not exists website_testimonials (
+  id          uuid primary key default gen_random_uuid(),
+  business_id uuid not null references businesses(id) on delete cascade,
+  quote       text not null default '',
+  author_name text not null default '',
+  author_role text,
+  rating      integer not null default 5 check (rating between 1 and 5),
+  sort_order  integer not null default 0,
+  created_at  timestamptz not null default now(),
+  updated_at  timestamptz not null default now()
+);
+create index if not exists idx_website_testimonials_business_id on website_testimonials (business_id);
+create trigger update_website_testimonials_updated_at
+  before update on website_testimonials
+  for each row execute function update_updated_at_column();
+alter table website_testimonials enable row level security;
+create policy "Business owners can manage their testimonials"
+  on website_testimonials for all using (is_business_owner(business_id));
+create policy "Public can view testimonials of published websites"
+  on website_testimonials for select using (
+    exists (select 1 from websites where websites.business_id = website_testimonials.business_id and websites.is_published)
+  );
+
+-- 28. WEBSITE SPECIALTIES — the reference template calls this panel
+-- "Partners & Lenders" but the items it holds (Residential Sales, Commercial
+-- Leasing, Property Management...) and its "+ Add Insurance" button are
+-- generic template leftovers; what it actually powers on the public site is
+-- the "Our Specialties" / "What We Offer" grid — named accordingly here.
+create table if not exists website_specialties (
+  id          uuid primary key default gen_random_uuid(),
+  business_id uuid not null references businesses(id) on delete cascade,
+  label       text not null default '',
+  sort_order  integer not null default 0,
+  created_at  timestamptz not null default now()
+);
+create index if not exists idx_website_specialties_business_id on website_specialties (business_id);
+alter table website_specialties enable row level security;
+create policy "Business owners can manage their specialties"
+  on website_specialties for all using (is_business_owner(business_id));
+create policy "Public can view specialties of published websites"
+  on website_specialties for select using (
+    exists (select 1 from websites where websites.business_id = website_specialties.business_id and websites.is_published)
+  );
+
+-- 29. WEBSITE FAQS
+create table if not exists website_faqs (
+  id          uuid primary key default gen_random_uuid(),
+  business_id uuid not null references businesses(id) on delete cascade,
+  question    text not null default '',
+  answer      text not null default '',
+  sort_order  integer not null default 0,
+  created_at  timestamptz not null default now()
+);
+create index if not exists idx_website_faqs_business_id on website_faqs (business_id);
+alter table website_faqs enable row level security;
+create policy "Business owners can manage their website FAQs"
+  on website_faqs for all using (is_business_owner(business_id));
+create policy "Public can view FAQs of published websites"
+  on website_faqs for select using (
+    exists (select 1 from websites where websites.business_id = website_faqs.business_id and websites.is_published)
+  );
+

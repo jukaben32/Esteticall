@@ -1,9 +1,10 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Phone, PhoneOff, X } from 'lucide-react'
+import { Phone, PhoneOff, X, Calendar } from 'lucide-react'
 import { useRealtimeVoice } from '@/hooks/useRealtimeVoice'
 import { useVoiceStore } from '@/store/voice'
+import { WidgetBookingPanel } from './WidgetBookingPanel'
 
 export interface WidgetVisualConfig {
   widgetId?: string
@@ -36,6 +37,7 @@ export function FloatingWidgetLauncher({
   defaultOpen?: boolean
 }) {
   const [open, setOpen] = useState(defaultOpen)
+  const [tab, setTab] = useState<'call' | 'book'>('call')
   const { startCall, endCall } = useRealtimeVoice()
   const { status, transcript, conversationId, error } = useVoiceStore()
 
@@ -83,43 +85,71 @@ export function FloatingWidgetLauncher({
               <X className="w-4 h-4" />
             </button>
           </div>
-          <div className="p-4 space-y-3">
-            <p className={`text-sm italic ${isDark ? 'text-neutral-300' : 'text-neutral-600'}`}>
-              &quot;{config.greetingMessage}&quot;
-            </p>
+          {/* Call AI / Book tabs — matches the reference video's widget panel */}
+          <div className={`flex border-b ${isDark ? 'border-neutral-700' : 'border-neutral-200'}`}>
+            <button
+              onClick={() => setTab('call')}
+              className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-xs font-medium ${
+                tab === 'call' ? '' : isDark ? 'text-neutral-400' : 'text-neutral-500'
+              }`}
+              style={tab === 'call' ? { color: config.primaryColor, borderBottom: `2px solid ${config.primaryColor}` } : undefined}
+            >
+              <Phone className="w-3.5 h-3.5" /> Call AI
+            </button>
+            <button
+              onClick={() => setTab('book')}
+              className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-xs font-medium ${
+                tab === 'book' ? '' : isDark ? 'text-neutral-400' : 'text-neutral-500'
+              }`}
+              style={tab === 'book' ? { color: config.primaryColor, borderBottom: `2px solid ${config.primaryColor}` } : undefined}
+            >
+              <Calendar className="w-3.5 h-3.5" /> Book
+            </button>
+          </div>
 
-            {!config.agentId ? (
-              <p className={`text-xs ${isDark ? 'text-neutral-400' : 'text-neutral-500'}`}>
-                No hay un agente activo asignado a este widget todavía.
-              </p>
-            ) : status === 'active' ? (
-              <button
-                onClick={endCall}
-                className="w-full flex items-center justify-center gap-2 rounded-lg py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700"
-              >
-                <PhoneOff className="w-4 h-4" /> Terminar llamada
-              </button>
-            ) : status === 'connecting' ? (
-              <p className="text-sm text-center py-2">Conectando…</p>
-            ) : (
-              <button
-                onClick={handleStart}
-                className="w-full flex items-center justify-center gap-2 rounded-lg py-2 text-sm font-medium text-white"
-                style={{ backgroundColor: config.primaryColor }}
-              >
-                <Phone className="w-4 h-4" /> Iniciar llamada
-              </button>
-            )}
-            {status === 'error' && error && <p className="text-xs text-red-500">{error}</p>}
+          <div className="p-4">
+            {tab === 'call' ? (
+              <div className="space-y-3">
+                <p className={`text-sm italic ${isDark ? 'text-neutral-300' : 'text-neutral-600'}`}>
+                  &quot;{config.greetingMessage}&quot;
+                </p>
 
-            {transcript.length > 0 && (
-              <div className={`max-h-32 overflow-y-auto text-xs space-y-1 border-t pt-2 ${isDark ? 'border-neutral-700' : 'border-neutral-200'}`}>
-                {transcript.map((t, i) => (
-                  <p key={i}>
-                    <strong>{t.role === 'agent' ? (config.agentName ?? 'Agente') : 'Tú'}:</strong> {t.text}
+                {!config.agentId ? (
+                  <p className={`text-xs ${isDark ? 'text-neutral-400' : 'text-neutral-500'}`}>
+                    No hay un agente activo asignado a este widget todavía.
                   </p>
-                ))}
+                ) : status === 'active' ? (
+                  <button
+                    onClick={endCall}
+                    className="w-full flex items-center justify-center gap-2 rounded-lg py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700"
+                  >
+                    <PhoneOff className="w-4 h-4" /> Terminar llamada
+                  </button>
+                ) : status === 'connecting' ? (
+                  <p className="text-sm text-center py-2">Conectando…</p>
+                ) : (
+                  <button
+                    onClick={handleStart}
+                    className="w-full flex items-center justify-center gap-2 rounded-lg py-2 text-sm font-medium text-white"
+                    style={{ backgroundColor: config.primaryColor }}
+                  >
+                    <Phone className="w-4 h-4" /> Iniciar llamada
+                  </button>
+                )}
+                {status === 'error' && error && <p className="text-xs text-red-500">{error}</p>}
+
+                {transcript.length > 0 && (
+                  <div className={`max-h-32 overflow-y-auto text-xs space-y-1 border-t pt-2 ${isDark ? 'border-neutral-700' : 'border-neutral-200'}`}>
+                    {transcript.map((t, i) => (
+                      <p key={i}>
+                        <strong>{t.role === 'agent' ? (config.agentName ?? 'Agente') : 'Tú'}:</strong> {t.text}
+                      </p>
+                    ))}
+                  </div>
+                )}
               </div>
+            ) : (
+              <WidgetBookingPanel businessId={businessId} primaryColor={config.primaryColor} isDark={isDark} />
             )}
           </div>
         </div>

@@ -57,6 +57,29 @@ export async function getAppointmentWithDetails(
   return mapAppointmentRow(data as unknown as AppointmentJoinRow)
 }
 
+// Public lookup by id only (no businessId, no auth) — the appointment UUID
+// itself is the bearer token, same pattern as the "View in Client Portal"
+// email link in the reference video. Only used from /portal/[appointmentId]
+// via the admin client.
+export async function getAppointmentPublic(
+  supabase: DB,
+  appointmentId: string
+): Promise<(AppointmentWithDetails & { business: { name: string; phone: string | null; contact_email: string | null; address: string | null } | null }) | null> {
+  const { data, error } = await supabase
+    .from('appointments')
+    .select(
+      '*, clients(id, name, phone, email, budget, pre_approval_number), business_services(id, name, price), listings(id, title, listing_code), businesses(name, phone, contact_email, address)'
+    )
+    .eq('id', appointmentId)
+    .maybeSingle()
+  if (error) throw error
+  if (!data) return null
+  const { businesses, ...row } = data as unknown as AppointmentJoinRow & {
+    businesses: { name: string; phone: string | null; contact_email: string | null; address: string | null } | null
+  }
+  return { ...mapAppointmentRow(row as AppointmentJoinRow), business: businesses }
+}
+
 export class BookingLimitError extends Error {
   constructor(limit: number) {
     super(`Your plan allows a maximum of ${limit} bookings this month. Upgrade to book more.`)
