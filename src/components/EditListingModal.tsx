@@ -179,7 +179,7 @@ export function EditListingModal({ listing, agents, onSaved, onClose }: EditList
       <form
         onSubmit={handleSave}
         onClick={(e) => e.stopPropagation()}
-        className="card-raised w-full max-w-2xl my-6 p-5 space-y-4"
+        className="card-raised w-full max-w-2xl my-6 p-5 space-y-4 sm:max-h-[calc(100vh-3rem)] sm:overflow-y-auto"
       >
         <div className="flex items-center justify-between">
           <h2 className="font-display font-semibold text-lg text-[var(--text-1)]">Editar propiedad</h2>
