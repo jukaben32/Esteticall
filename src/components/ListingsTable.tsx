@@ -174,8 +174,7 @@ export function ListingsTable({
               <div className="flex items-center gap-1">
                 <Link
                   href={`/dashboard/listings/${listing.id}`}
-                  target="_blank"
-                  title="Abrir detalle en pestaña nueva"
+                  title="Ver detalle"
                   className="p-1.5 rounded-lg text-[var(--text-3)] hover:bg-[var(--bg-raised)] hover:text-[var(--text-1)]"
                 >
                   <ExternalLink className="w-4 h-4" />
