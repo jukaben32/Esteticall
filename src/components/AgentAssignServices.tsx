@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import type { BusinessService } from '@/types'
+import { formatServicePrice } from '@/lib/serviceFormat'
 
 export function AgentAssignServices({
   services,
@@ -74,11 +75,9 @@ export function AgentAssignServices({
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between gap-2">
                   <p className="text-sm font-medium text-[var(--text-1)] truncate">{service.name}</p>
-                  {service.price != null && (
-                    <span className="text-xs font-semibold text-[var(--teal-700)] shrink-0">
-                      ${service.price.toLocaleString()}
-                    </span>
-                  )}
+                  <span className="text-xs font-semibold text-[var(--teal-700)] shrink-0">
+                    {formatServicePrice(service)}
+                  </span>
                 </div>
                 {service.description && (
                   <p className="text-xs text-[var(--text-3)] mt-0.5 line-clamp-2">{service.description}</p>

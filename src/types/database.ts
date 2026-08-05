@@ -495,7 +495,8 @@ export interface Database {
           name: string
           description: string | null
           price: number | null
-          price_type: 'fixed' | 'starting_at'
+          price_max: number | null
+          price_type: 'fixed' | 'starting_at' | 'price_range' | 'call_for_price'
           duration_minutes: number
           catalog_key: string | null
           is_active: boolean

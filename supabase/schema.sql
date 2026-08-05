@@ -600,9 +600,13 @@ create policy "Business owners can manage agent-service links"
 -- catalog_key links a created service back to the static catalog entry it
 -- came from (src/constants/index.ts CATALOG_SERVICES) so the gallery can show
 -- "Added to your catalog" instead of creating duplicates.
+-- price_type has 4 options, matching the reference template's "Price Type"
+-- dropdown: fixed, starting_at, price_range (uses price + price_max), and
+-- call_for_price (price/price_max stay null; UI shows "Call for Price").
 alter table business_services add column if not exists duration_minutes integer not null default 60;
 alter table business_services add column if not exists price_type text not null default 'fixed'
-  check (price_type in ('fixed', 'starting_at'));
+  check (price_type in ('fixed', 'starting_at', 'price_range', 'call_for_price'));
+alter table business_services add column if not exists price_max numeric;
 alter table business_services add column if not exists catalog_key text;
 
 create index if not exists idx_business_services_catalog_key on business_services (business_id, catalog_key);

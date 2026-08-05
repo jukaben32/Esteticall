@@ -3,13 +3,15 @@
 import { useState } from 'react'
 import { X } from 'lucide-react'
 import type { BusinessService } from '@/types'
+import { SERVICE_PRICE_TYPE_OPTIONS, type ServicePriceType } from '@/lib/serviceFormat'
 
 export interface ServiceFormValue {
   name: string
   description: string
   durationMinutes: number
-  priceType: 'fixed' | 'starting_at'
+  priceType: ServicePriceType
   price: string
+  priceMax: string
   isActive: boolean
 }
 
@@ -21,6 +23,7 @@ function defaultsFromService(service?: BusinessService, prefill?: Partial<Servic
       durationMinutes: service.duration_minutes,
       priceType: service.price_type,
       price: service.price != null ? String(service.price) : '',
+      priceMax: service.price_max != null ? String(service.price_max) : '',
       isActive: service.is_active,
     }
   }
@@ -30,6 +33,7 @@ function defaultsFromService(service?: BusinessService, prefill?: Partial<Servic
     durationMinutes: 60,
     priceType: 'fixed',
     price: '',
+    priceMax: '',
     isActive: true,
     ...prefill,
   }
@@ -65,12 +69,19 @@ export function ServiceEditModal({
     setSaving(true)
     setError(null)
     try {
+      // "Call for Price" carries no numeric price; "Price Range" carries both
+      // price (min) and priceMax; the other two only ever use price.
+      const price = form.priceType === 'call_for_price' || form.price === '' ? undefined : Number(form.price)
+      const priceMax =
+        form.priceType === 'price_range' && form.priceMax !== '' ? Number(form.priceMax) : undefined
+
       const payload = {
         name: form.name,
         description: form.description || undefined,
         durationMinutes: form.durationMinutes,
         priceType: form.priceType,
-        price: form.price === '' ? undefined : Number(form.price),
+        price,
+        priceMax,
         isActive: form.isActive,
         ...(isEdit ? {} : { catalogKey }),
       }
@@ -85,6 +96,7 @@ export function ServiceEditModal({
                 duration_minutes: payload.durationMinutes,
                 price_type: payload.priceType,
                 price: payload.price ?? null,
+                price_max: payload.priceMax ?? null,
                 is_active: payload.isActive,
               }
             : payload
@@ -155,27 +167,65 @@ export function ServiceEditModal({
               <label className="text-xs font-medium text-[var(--text-2)] block mb-1">Tipo de precio</label>
               <select
                 value={form.priceType}
-                onChange={(e) => patch({ priceType: e.target.value as 'fixed' | 'starting_at' })}
+                onChange={(e) => patch({ priceType: e.target.value as ServicePriceType })}
                 className="input-field"
               >
-                <option value="fixed">Precio fijo</option>
-                <option value="starting_at">Desde</option>
+                {SERVICE_PRICE_TYPE_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
               </select>
             </div>
           </div>
 
-          <div>
-            <label className="text-xs font-medium text-[var(--text-2)] block mb-1">Precio ($)</label>
-            <input
-              type="number"
-              min={0}
-              step="0.01"
-              value={form.price}
-              onChange={(e) => patch({ price: e.target.value })}
-              className="input-field"
-              placeholder="0.00"
-            />
-          </div>
+          {form.priceType === 'call_for_price' ? (
+            <p className="text-xs text-[var(--text-3)] bg-[var(--bg-raised)] rounded-lg px-3 py-2">
+              El agente de IA indicará que deben contactarte para conocer el precio de este servicio.
+            </p>
+          ) : form.priceType === 'price_range' ? (
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-xs font-medium text-[var(--text-2)] block mb-1">Precio mínimo ($)</label>
+                <input
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  value={form.price}
+                  onChange={(e) => patch({ price: e.target.value })}
+                  className="input-field"
+                  placeholder="0.00"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-medium text-[var(--text-2)] block mb-1">Precio máximo ($)</label>
+                <input
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  value={form.priceMax}
+                  onChange={(e) => patch({ priceMax: e.target.value })}
+                  className="input-field"
+                  placeholder="0.00"
+                />
+              </div>
+            </div>
+          ) : (
+            <div>
+              <label className="text-xs font-medium text-[var(--text-2)] block mb-1">
+                {form.priceType === 'starting_at' ? 'Precio desde ($)' : 'Precio ($)'}
+              </label>
+              <input
+                type="number"
+                min={0}
+                step="0.01"
+                value={form.price}
+                onChange={(e) => patch({ price: e.target.value })}
+                className="input-field"
+                placeholder="0.00"
+              />
+            </div>
+          )}
 
           <label className="flex items-center gap-2 cursor-pointer">
             <input

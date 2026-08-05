@@ -1,4 +1,5 @@
 import type { WebsiteContent } from '@/types'
+import { formatServicePrice } from '@/lib/serviceFormat'
 
 const TEMPLATE_STYLES: Record<
   string,
@@ -204,12 +205,9 @@ export function WebsiteTemplateRenderer({
                     {s.description}
                   </p>
                 )}
-                {s.price != null && (
-                  <p className="text-sm mt-2 font-medium" style={{ color: website.primary_color }}>
-                    ${s.price}
-                    {s.price_type === 'starting_at' ? '+' : ''}
-                  </p>
-                )}
+                <p className="text-sm mt-2 font-medium" style={{ color: website.primary_color }}>
+                  {formatServicePrice(s)}
+                </p>
               </div>
             ))}
           </div>

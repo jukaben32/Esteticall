@@ -15,6 +15,7 @@ export async function GET(_request: Request, { params }: { params: { businessId:
       name: s.name,
       description: s.description,
       price: s.price,
+      priceMax: s.price_max,
       priceType: s.price_type,
       durationMinutes: s.duration_minutes,
     })),

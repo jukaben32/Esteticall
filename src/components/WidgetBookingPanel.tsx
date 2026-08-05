@@ -7,6 +7,7 @@ interface PublicService {
   id: string
   name: string
   price: number | null
+  priceMax: number | null
   priceType: string | null
   durationMinutes: number | null
 }
@@ -15,6 +16,19 @@ interface PublicSlot {
   date: string // YYYY-MM-DD
   time: string // HH:MM
   datetime: string // ISO
+}
+
+// This widget is public/client-facing and stays in English regardless of the
+// dashboard's locale, so it formats price display itself rather than pulling
+// in the Spanish-language dashboard helper.
+function formatPublicServicePrice(s: Pick<PublicService, 'price' | 'priceMax' | 'priceType'>): string {
+  if (s.priceType === 'call_for_price' || s.price == null) return 'Call for price'
+  const price = `$${s.price.toLocaleString()}`
+  if (s.priceType === 'price_range') {
+    return s.priceMax != null ? `${price} - $${s.priceMax.toLocaleString()}` : price
+  }
+  if (s.priceType === 'starting_at') return `From ${price}`
+  return price
 }
 
 type Step = 'service' | 'date' | 'time' | 'details' | 'confirmed'
@@ -164,7 +178,8 @@ export function WidgetBookingPanel({
                 <p className="font-medium">{s.name}</p>
                 <p className={`text-xs ${subtleText}`}>
                   {s.durationMinutes ? `${s.durationMinutes} min` : ''}
-                  {s.price ? ` · $${s.price}` : ''}
+                  {' · '}
+                  {formatPublicServicePrice(s)}
                 </p>
               </button>
             ))}

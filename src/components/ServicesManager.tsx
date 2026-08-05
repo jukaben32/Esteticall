@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { GripVertical, Pencil, Trash2, Sparkles, CheckCircle2 } from 'lucide-react'
 import type { BusinessService } from '@/types'
 import type { CatalogService } from '@/constants'
+import { formatServicePrice } from '@/lib/serviceFormat'
 import { ServiceEditModal } from './ServiceEditModal'
 import { ServiceCatalogGallery } from './ServiceCatalogGallery'
 
@@ -145,10 +146,7 @@ export function ServicesManager({ initialServices }: { initialServices: Business
                 <div className="flex items-center gap-2 flex-wrap">
                   <p className="font-medium text-[var(--text-1)]">{service.name}</p>
                   <span className="text-xs text-[var(--text-3)]">
-                    {service.duration_minutes} min ·{' '}
-                    {service.price != null
-                      ? `${service.price_type === 'starting_at' ? 'Desde ' : ''}$${service.price.toLocaleString()}`
-                      : 'Consultar precio'}
+                    {service.duration_minutes} min · {formatServicePrice(service)}
                   </span>
                 </div>
                 {service.description && <p className="text-xs text-[var(--text-3)] mt-0.5">{service.description}</p>}
