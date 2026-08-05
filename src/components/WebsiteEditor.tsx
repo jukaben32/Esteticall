@@ -834,7 +834,12 @@ export function WebsiteEditor({
           Preview · {TEMPLATES.find((t) => t.id === form.template)?.name} template
         </p>
         <div className="rounded-xl border border-[var(--border)] overflow-y-auto max-h-[80vh]">
-          <WebsiteTemplateRenderer businessName={business.name} businessPhone={business.phone} content={previewContent} />
+          <WebsiteTemplateRenderer
+            businessName={business.name}
+            businessPhone={business.phone}
+            content={previewContent}
+            isEditorPreview
+          />
         </div>
       </div>
     </div>
