@@ -213,6 +213,7 @@ export type WebsiteSiteUrlInput = z.infer<typeof websiteSiteUrlSchema>
 // site (no auth: any site visitor can hit this, scoped by businessId only).
 export const publicBookingSchema = z.object({
   serviceId: z.string().uuid().nullable().optional(),
+  listingId: z.string().uuid().nullable().optional(),
   scheduledAt: z.string().min(1, 'Pick a time'),
   clientName: z.string().min(1, 'Name is required'),
   clientEmail: z.string().email('Invalid email'),

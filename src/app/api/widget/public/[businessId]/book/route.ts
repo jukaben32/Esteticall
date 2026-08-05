@@ -47,6 +47,7 @@ export async function POST(request: Request, { params }: { params: { businessId:
   try {
     const appointment = await createAppointment(supabase, business.id, plan, {
       serviceId: input.serviceId ?? undefined,
+      listingId: input.listingId ?? undefined,
       clientId: client.id,
       scheduledAt: input.scheduledAt,
       status: 'scheduled',
