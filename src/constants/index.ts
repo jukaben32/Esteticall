@@ -126,11 +126,15 @@ export const AGENT_LANGUAGES = [
   { value: 'es', label: 'Español' },
 ] as const
 
+export type AgentTemplateAccent = 'emerald' | 'gold' | 'ink' | 'sage' | 'moss' | 'forest' | 'bronze'
+
 export interface AgentTemplate {
   id: string
   name: string
   role: string
   badge: string
+  icon: 'home' | 'heart' | 'star' | 'building2' | 'clipboard-list' | 'building' | 'bar-chart-3'
+  accent: AgentTemplateAccent
   category: string
   features: string[]
   bestFor: string
@@ -140,6 +144,64 @@ export interface AgentTemplate {
   sensitivity: number
   greetingMessage: string
   systemPrompt: string
+}
+
+// Estilos por acento — todos derivados de la paleta de marca esmeralda/marfil
+// (nunca colores fuera de marca), usados para diferenciar visualmente cada
+// plantilla de agente igual que el dashboard de referencia, sin salir del brand.
+export const AGENT_TEMPLATE_ACCENT_STYLES: Record<
+  AgentTemplateAccent,
+  { iconBg: string; iconText: string; badgeBg: string; badgeText: string; roleText: string; buttonBg: string; buttonBgHover: string; dot: string }
+> = {
+  emerald: {
+    iconBg: 'var(--teal-700)', iconText: '#ffffff',
+    badgeBg: 'var(--teal-50)', badgeText: 'var(--teal-700)',
+    roleText: 'var(--teal-700)',
+    buttonBg: 'var(--teal-700)', buttonBgHover: 'var(--teal-800)',
+    dot: 'var(--teal-700)',
+  },
+  gold: {
+    iconBg: 'var(--gold)', iconText: '#ffffff',
+    badgeBg: 'rgba(182,138,62,0.14)', badgeText: 'var(--gold)',
+    roleText: 'var(--gold)',
+    buttonBg: 'var(--gold)', buttonBgHover: '#8F6A2E',
+    dot: 'var(--gold)',
+  },
+  ink: {
+    iconBg: 'var(--teal-900)', iconText: '#ffffff',
+    badgeBg: 'rgba(14,32,25,0.08)', badgeText: 'var(--teal-900)',
+    roleText: 'var(--teal-900)',
+    buttonBg: 'var(--teal-900)', buttonBgHover: '#000000',
+    dot: 'var(--teal-900)',
+  },
+  sage: {
+    iconBg: 'var(--teal-500)', iconText: '#ffffff',
+    badgeBg: 'rgba(21,151,104,0.14)', badgeText: 'var(--teal-500)',
+    roleText: 'var(--teal-500)',
+    buttonBg: 'var(--teal-500)', buttonBgHover: 'var(--teal-700)',
+    dot: 'var(--teal-500)',
+  },
+  moss: {
+    iconBg: 'var(--teal-400)', iconText: '#ffffff',
+    badgeBg: 'rgba(61,185,138,0.16)', badgeText: 'var(--teal-800)',
+    roleText: 'var(--teal-600)',
+    buttonBg: 'var(--teal-400)', buttonBgHover: 'var(--teal-500)',
+    dot: 'var(--teal-400)',
+  },
+  forest: {
+    iconBg: 'var(--teal-800)', iconText: '#ffffff',
+    badgeBg: 'rgba(10,92,66,0.12)', badgeText: 'var(--teal-800)',
+    roleText: 'var(--teal-800)',
+    buttonBg: 'var(--teal-800)', buttonBgHover: 'var(--teal-900)',
+    dot: 'var(--teal-800)',
+  },
+  bronze: {
+    iconBg: '#8F6A2E', iconText: '#ffffff',
+    badgeBg: 'rgba(143,106,46,0.14)', badgeText: '#8F6A2E',
+    roleText: '#8F6A2E',
+    buttonBg: '#8F6A2E', buttonBgHover: '#6E5222',
+    dot: '#8F6A2E',
+  },
 }
 
 export const AGENT_TEMPLATE_CATEGORIES = [
@@ -157,6 +219,8 @@ export const AGENT_TEMPLATES: AgentTemplate[] = [
     name: 'Alexis',
     role: 'Agente de Ventas Residencial',
     badge: 'Más popular',
+    icon: 'home',
+    accent: 'emerald',
     category: 'Compra y venta residencial',
     features: ['Agendar visitas a propiedades', 'Agendar consultas con compradores', 'Consultas sobre listados'],
     bestFor: 'Agencias residenciales, representación de compradores',
@@ -173,6 +237,8 @@ export const AGENT_TEMPLATES: AgentTemplate[] = [
     name: 'Grace',
     role: 'Coordinadora de Relaciones con Clientes',
     badge: 'Favorito de clientes',
+    icon: 'heart',
+    accent: 'gold',
     category: 'Experiencia y seguimiento de compradores',
     features: ['Soporte cálido al cliente', 'Seguimiento post-visita', 'Orientación de zona'],
     bestFor: 'Agencias de compradores, especialistas en reubicación',
@@ -190,6 +256,8 @@ export const AGENT_TEMPLATES: AgentTemplate[] = [
     name: 'Maxwell',
     role: 'Especialista en Propiedades de Lujo',
     badge: 'Agencias premium',
+    icon: 'star',
+    accent: 'ink',
     category: 'Propiedades de lujo y premium',
     features: ['Consultas privadas de exhibición', 'Servicio privado al cliente', 'Resúmenes de inversión'],
     bestFor: 'Agencias de lujo, especialistas en bienes raíces premium',
@@ -205,8 +273,10 @@ export const AGENT_TEMPLATES: AgentTemplate[] = [
   {
     id: 'luna',
     name: 'Luna',
-    role: 'Coordinadora de Rentas',
+    role: 'Coordinadora de Recepción de Rentas',
     badge: 'Enfoque en rentas',
+    icon: 'building2',
+    accent: 'sage',
     category: 'Rentas residenciales y comerciales',
     features: ['Agendar visitas de renta', 'Guía de aplicación', 'Consultas de contrato'],
     bestFor: 'Administradoras de propiedades, agencias de renta',
@@ -219,36 +289,58 @@ export const AGENT_TEMPLATES: AgentTemplate[] = [
       'Eres Luna, coordinadora de rentas amigable y eficiente. Ayudas a los interesados a agendar visitas y explicas el proceso de aplicación con claridad.',
   },
   {
-    id: 'owen',
-    name: 'Owen',
-    role: 'Especialista en Listados',
-    badge: 'Para vendedores',
+    id: 'aria',
+    name: 'Aria',
+    role: 'Coordinadora de Nuevos Listados',
+    badge: 'Enfoque en vendedores',
+    icon: 'clipboard-list',
+    accent: 'moss',
     category: 'Representación de vendedores y listados',
-    features: ['Consultas de vendedores', 'Actualizaciones de valuación', 'Programar sesión de fotos'],
-    bestFor: 'Agentes listadores, equipos de representación de vendedores',
+    features: ['Citas de listado', 'Análisis de mercado (CMA)', 'Preguntas frecuentes de vendedores'],
+    bestFor: 'Agentes listadores, representación de vendedores',
+    voice: 'coral',
+    personality: 'friendly',
+    personalityLabel: 'Amigable',
+    sensitivity: 0.5,
+    greetingMessage: '¡Hola! Soy Aria. Si estás pensando en vender tu propiedad, te ayudo a coordinar los siguientes pasos.',
+    systemPrompt:
+      'Eres Aria, coordinadora de nuevos listados enfocada en vendedores. Agendas citas de listado, explicas el análisis de mercado y resuelves dudas frecuentes con claridad.',
+  },
+  {
+    id: 'victor',
+    name: 'Victor',
+    role: 'Asesor de Bienes Raíces Comerciales',
+    badge: 'Enfoque comercial',
+    icon: 'building',
+    accent: 'forest',
+    category: 'Propiedades comerciales y de inversión',
+    features: ['Muestras comerciales', 'Manejo de consultas de inversión', 'Consultas de arrendamiento'],
+    bestFor: 'Corredoras comerciales, firmas de inversión',
     voice: 'echo',
     personality: 'professional',
     personalityLabel: 'Profesional',
-    sensitivity: 0.5,
-    greetingMessage: '¡Hola! Soy Owen. Si estás pensando en vender tu propiedad, con gusto te oriento en el proceso.',
+    sensitivity: 0.3,
+    greetingMessage: 'Buenas, soy Victor, asesor de bienes raíces comerciales. ¿En qué tipo de propiedad está interesado?',
     systemPrompt:
-      'Eres Owen, especialista en listados enfocado en vendedores. Explicas el proceso de venta con claridad y agendas consultas de valuación.',
+      'Eres Victor, asesor comercial enfocado y analítico. Manejas muestras de propiedades comerciales, consultas de inversión y arrendamiento con precisión.',
   },
   {
-    id: 'nora',
-    name: 'Nora',
-    role: 'Asesora de Inversión Comercial',
-    badge: 'Comercial e inversión',
+    id: 'nova',
+    name: 'Nova',
+    role: 'Coordinadora de Inversión Inmobiliaria',
+    badge: 'Enfoque en inversionistas',
+    icon: 'bar-chart-3',
+    accent: 'bronze',
     category: 'Propiedades comerciales y de inversión',
-    features: ['Análisis de propiedades de inversión', 'Cap rate y retorno', 'Consultas comerciales'],
-    bestFor: 'Firmas comerciales, inversionistas institucionales',
+    features: ['Consultas de inversión', 'Sesiones de estrategia de portafolio', 'Solicitudes de informe de mercado'],
+    bestFor: 'Agencias de propiedades de inversión, firmas de patrimonio',
     voice: 'ash',
     personality: 'professional',
     personalityLabel: 'Formal',
     sensitivity: 0.2,
-    greetingMessage: 'Buenas, soy Nora, asesora de inversión comercial. ¿En qué tipo de propiedad está interesado?',
+    greetingMessage: 'Buenas, soy Nova, coordinadora de inversión inmobiliaria. ¿En qué puedo ayudarte hoy?',
     systemPrompt:
-      'Eres Nora, asesora comercial precisa y analítica. Explicas cap rate, NOI y retorno de inversión con datos concretos, nunca inventados.',
+      'Eres Nova, coordinadora de inversión precisa y analítica. Explicas cap rate, NOI y retorno de inversión con datos concretos, nunca inventados.',
   },
 ]
 
