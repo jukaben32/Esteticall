@@ -45,17 +45,7 @@ export function AgentStudio({
       const res = await fetch(`/api/agents/${agent.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: form.name,
-          specialty: form.specialty,
-          voice: form.voice,
-          personality: form.personality,
-          sensitivity: form.sensitivity,
-          language: form.language,
-          greeting_message: form.greetingMessage,
-          system_prompt: form.systemPrompt,
-          serviceIds,
-        }),
+        body: JSON.stringify({ ...form, serviceIds }),
       })
       if (!res.ok) {
         const body = await res.json().catch(() => ({}))
@@ -127,7 +117,7 @@ export function AgentStudio({
           </div>
         </div>
       ) : (
-        <AgentLiveTest agentId={agent.id} agentName={agent.name} />
+        <AgentLiveTest agent={agent} businessId={agent.business_id} />
       )}
     </div>
   )
