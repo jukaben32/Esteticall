@@ -77,6 +77,7 @@ export function PropertyDetailView({
     : listing.cover_photo_url
       ? [{ id: 'cover', url: listing.cover_photo_url, is_cover: true }]
       : []
+  const hasGalleryPhotos = galleryPhotos.length > 0
 
   const widgetConfig: WidgetVisualConfig = {
     name: assignedAgentFull?.name ?? 'Asistente IA',
@@ -158,7 +159,7 @@ export function PropertyDetailView({
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className="lg:col-span-2 space-y-4">
-          <div className="card-surface p-4">
+          <div className="card-surface overflow-hidden">
             <input
               ref={fileInputRef}
               type="file"
@@ -171,23 +172,27 @@ export function PropertyDetailView({
                 e.target.value = ''
               }}
             />
-            {galleryPhotos.length > 0 ? (
-              <div>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 h-72">
+            {hasGalleryPhotos ? (
+              <div className="p-3">
+                <div
+                  className={`grid gap-3 ${galleryPhotos.length > 1 ? 'grid-cols-1 sm:grid-cols-3' : 'grid-cols-1'}`}
+                >
                   <button
                     type="button"
                     onClick={() => setShowAllPhotos(true)}
-                    className="sm:col-span-2 h-full"
+                    className={`h-[20rem] sm:h-[24rem] rounded-2xl overflow-hidden ring-1 ring-black/5 ${
+                      galleryPhotos.length > 1 ? 'sm:col-span-2' : ''
+                    }`}
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={galleryPhotos[Math.min(activePhoto, galleryPhotos.length - 1)]?.url}
                       alt={listing.title}
-                      className="w-full h-full object-cover rounded-xl border border-[var(--border)]"
+                      className="w-full h-full object-cover"
                     />
                   </button>
                   {galleryPhotos.length > 1 && (
-                    <div className="grid grid-cols-2 gap-2 h-full">
+                    <div className="grid grid-cols-2 gap-3 h-[20rem] sm:h-[24rem]">
                       {galleryPhotos.slice(1, 5).map((p, i) => {
                         const isLastVisible = i === 3 && galleryPhotos.length > 5
                         return (
@@ -195,7 +200,7 @@ export function PropertyDetailView({
                             type="button"
                             key={p.id}
                             onClick={() => (isLastVisible ? setShowAllPhotos(true) : setActivePhoto(i + 1))}
-                            className="relative rounded-lg overflow-hidden border border-[var(--border)]"
+                            className="relative rounded-2xl overflow-hidden ring-1 ring-black/5"
                           >
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img src={p.url} alt="" className="w-full h-full object-cover" />
@@ -210,37 +215,36 @@ export function PropertyDetailView({
                     </div>
                   )}
                 </div>
-                <div className="flex items-center justify-between mt-3 flex-wrap gap-2">
-                  <p className="text-xs text-[var(--text-3)]">
-                    {galleryPhotos.length} foto{galleryPhotos.length === 1 ? '' : 's'} · La primera foto es la portada
-                  </p>
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => fileInputRef.current?.click()}
-                      disabled={photoBusy}
-                      className="btn-secondary text-xs px-3 py-1.5"
-                    >
-                      <Plus className="w-3.5 h-3.5" /> {photoBusy ? 'Subiendo…' : 'Agregar fotos'}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setShowAllPhotos(true)}
-                      className="btn-secondary text-xs px-3 py-1.5"
-                    >
-                      <Images className="w-3.5 h-3.5" /> Ver todas
-                    </button>
-                  </div>
-                </div>
               </div>
             ) : (
-              <div className="w-full h-72 rounded-xl border border-dashed border-[var(--border)] grid place-items-center gap-2 text-[var(--text-4)] text-sm">
-                Sin fotos todavía
-                <button type="button" onClick={() => fileInputRef.current?.click()} className="btn-secondary text-xs px-3 py-1.5">
-                  <Plus className="w-3.5 h-3.5" /> Agregar fotos
-                </button>
+              <div className="p-3">
+                <div className="w-full h-[20rem] sm:h-[24rem] rounded-2xl border border-dashed border-[var(--border)] bg-[var(--bg-raised)]/35 grid place-items-center">
+                  <Images className="w-10 h-10 text-[var(--text-4)]" />
+                </div>
               </div>
             )}
+          </div>
+          <div className="flex items-center justify-between mt-3 flex-wrap gap-2">
+            <p className="text-xs text-[var(--text-3)]">
+              {galleryPhotos.length} foto{galleryPhotos.length === 1 ? '' : 's'} · La primera foto es la portada
+            </p>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={photoBusy}
+                className="btn-secondary text-xs px-3 py-1.5"
+              >
+                <Plus className="w-3.5 h-3.5" /> {photoBusy ? 'Subiendo…' : 'Agregar fotos'}
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowAllPhotos(true)}
+                className="btn-secondary text-xs px-3 py-1.5"
+              >
+                <Images className="w-3.5 h-3.5" /> Ver todas
+              </button>
+            </div>
           </div>
 
           <div className="card-surface p-4">
