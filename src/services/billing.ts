@@ -2,7 +2,7 @@ import Stripe from 'stripe'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '@/types/database'
 import type { PlanId, BusinessSubscription } from '@/types'
-import { PLAN_LIMITS, WEBSITE_BUILDER_PRICE_USD } from '@/constants'
+import { PLAN_LIMITS, WEBSITE_BUILDER_PRICE_USD, WEBSITE_BUILDER_FEATURES } from '@/constants'
 
 type DB = SupabaseClient<Database>
 
@@ -18,12 +18,13 @@ async function findOrCreatePrice(
   stripe: Stripe,
   productKey: string,
   productName: string,
-  unitAmountUsd: number
+  unitAmountUsd: number,
+  description?: string
 ): Promise<string> {
   const products = await stripe.products.search({ query: `metadata['key']:'${productKey}'` })
   let product = products.data[0]
   if (!product) {
-    product = await stripe.products.create({ name: productName, metadata: { key: productKey } })
+    product = await stripe.products.create({ name: productName, description, metadata: { key: productKey } })
   }
 
   const prices = await stripe.prices.list({ product: product.id, active: true })
@@ -76,7 +77,8 @@ export async function createWebsiteBuilderCheckoutSession(opts: {
     stripe,
     'addon_website_builder',
     'Website Builder Add-on',
-    WEBSITE_BUILDER_PRICE_USD
+    WEBSITE_BUILDER_PRICE_USD,
+    WEBSITE_BUILDER_FEATURES.map((f) => `• ${f}`).join('\n')
   )
 
   return stripe.checkout.sessions.create({

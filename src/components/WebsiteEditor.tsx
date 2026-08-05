@@ -1,8 +1,10 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { ChevronDown, Plus, Trash2, ExternalLink, Pencil } from 'lucide-react'
+import { useSearchParams } from 'next/navigation'
+import { ChevronDown, Plus, Trash2, ExternalLink, Pencil, Lock, Check } from 'lucide-react'
 import type { Business, AiAgent, BusinessService, WebsiteContent } from '@/types'
+import { WEBSITE_BUILDER_PRICE_USD, WEBSITE_BUILDER_FEATURES } from '@/constants'
 import { WebsiteTemplateRenderer } from './WebsiteTemplateRenderer'
 
 const TEMPLATES = [
@@ -136,14 +138,18 @@ export function WebsiteEditor({
   initialContent,
   agents,
   services,
+  websiteBuilderEnabled,
 }: {
   business: Business
   initialContent: WebsiteContent
   agents: AiAgent[]
   services: BusinessService[]
+  websiteBuilderEnabled: boolean
 }) {
   const [form, setForm] = useState<FormState>(toForm(initialContent))
   const [slug, setSlug] = useState(business.slug)
+  const [checkingOut, setCheckingOut] = useState(false)
+  const checkoutStatus = useSearchParams().get('checkout')
   const [teamMembers, setTeamMembers] = useState<TeamMemberForm[]>(
     initialContent.teamMembers.map((m, i) => ({
       id: m.id,
@@ -328,6 +334,35 @@ export function WebsiteEditor({
     setOpenSection((cur) => (cur === id ? null : id))
   }
 
+  // Publishing requires the paid Website Builder add-on ($29/mo). If the
+  // business hasn't subscribed yet, send them to Stripe Checkout instead of
+  // publishing directly — the webhook flips website_builder_enabled on
+  // success and the next Publish click goes straight through.
+  async function startWebsiteBuilderCheckout() {
+    setCheckingOut(true)
+    setError(null)
+    const res = await fetch('/api/billing/checkout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ addon: 'website_builder' }),
+    })
+    const data = await res.json()
+    if (data.url) {
+      window.location.href = data.url
+    } else {
+      setCheckingOut(false)
+      setError(data.error ?? 'No se pudo iniciar el pago')
+    }
+  }
+
+  function handlePublishClick() {
+    if (websiteBuilderEnabled) {
+      save(true)
+    } else {
+      startWebsiteBuilderCheckout()
+    }
+  }
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-[380px_1fr] gap-4">
       {/* Left: Design + Content */}
@@ -336,6 +371,17 @@ export function WebsiteEditor({
           <p className="font-display font-semibold text-[var(--text-1)]">Website Builder</p>
           <p className="text-xs text-[var(--text-3)]">Build your agency website</p>
         </div>
+
+        {checkoutStatus === 'success' && (
+          <p className="text-xs rounded-lg p-2.5 bg-[var(--teal-50)] text-[var(--teal-800)]">
+            Payment successful! Click <strong>Publish</strong> below to make your site live.
+          </p>
+        )}
+        {checkoutStatus === 'cancelled' && (
+          <p className="text-xs rounded-lg p-2.5 bg-[var(--bg-raised)] text-[var(--text-3)]">
+            Checkout was cancelled — no charge was made.
+          </p>
+        )}
 
         <div className="flex items-center justify-between text-xs">
           <span className="text-[var(--text-3)]">
@@ -351,8 +397,9 @@ export function WebsiteEditor({
               Unpublish
             </button>
           ) : (
-            <button onClick={() => save(true)} className="btn-primary !text-xs">
-              Publish
+            <button onClick={handlePublishClick} disabled={checkingOut} className="btn-primary !text-xs">
+              {!websiteBuilderEnabled && <Lock className="w-3.5 h-3.5" />}
+              {checkingOut ? 'Redirecting…' : 'Publish'}
             </button>
           )}
           <a href={siteUrl} target="_blank" rel="noreferrer" className="btn-secondary !text-xs">
@@ -360,6 +407,22 @@ export function WebsiteEditor({
           </a>
         </div>
         {error && <p className="text-xs text-red-500">{error}</p>}
+
+        {!websiteBuilderEnabled && !form.isPublished && (
+          <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-raised)] p-3">
+            <p className="text-xs font-semibold text-[var(--text-1)] mb-1.5">
+              Publishing requires the Website Builder add-on — ${WEBSITE_BUILDER_PRICE_USD}/mo
+            </p>
+            <ul className="space-y-1">
+              {WEBSITE_BUILDER_FEATURES.map((f) => (
+                <li key={f} className="flex items-start gap-1.5 text-xs text-[var(--text-3)]">
+                  <Check className="w-3.5 h-3.5 mt-0.5 shrink-0 text-[var(--teal-700)]" />
+                  {f}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
 
         {/* DESIGN */}
         <div>

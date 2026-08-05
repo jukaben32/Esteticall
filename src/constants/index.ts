@@ -28,6 +28,14 @@ export const WEBSITE_BUILDER_PRICE_USD = Number(
   process.env.NEXT_PUBLIC_WEBSITE_BUILDER_PRICE_USD ?? 29
 )
 
+export const WEBSITE_BUILDER_FEATURES = [
+  '3 professional website templates',
+  'Full content & brand editor',
+  'AI voice widget embedded',
+  'Published at your custom URL',
+  'Renew anytime — cancel anytime',
+] as const
+
 // 0 means "unlimited" in the env contract.
 export function isWithinLimit(used: number, limit: number): boolean {
   return limit === 0 || used < limit

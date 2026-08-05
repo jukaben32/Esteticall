@@ -21,8 +21,8 @@ export async function POST(request: Request) {
       ? await createWebsiteBuilderCheckoutSession({
           businessId: business.id,
           ownerEmail: user.email!,
-          successUrl: `${appUrl}/dashboard/plan?checkout=success`,
-          cancelUrl: `${appUrl}/dashboard/plan?checkout=cancelled`,
+          successUrl: `${appUrl}/dashboard/website?checkout=success`,
+          cancelUrl: `${appUrl}/dashboard/website?checkout=cancelled`,
         })
       : await createCheckoutSession({
           businessId: business.id,
