@@ -511,7 +511,7 @@ export function PropertyDetailView({
         </div>
       )}
 
-      <FloatingWidgetLauncher businessId={listing.business_id} config={widgetConfig} mode="embed" defaultOpen />
+      <FloatingWidgetLauncher businessId={listing.business_id} config={widgetConfig} mode="embed" />
     </div>
   )
 }
