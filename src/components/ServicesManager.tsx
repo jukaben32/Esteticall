@@ -1,11 +1,13 @@
 'use client'
 
 import { useState } from 'react'
-import { GripVertical, Pencil, Trash2, Sparkles } from 'lucide-react'
+import { GripVertical, Pencil, Trash2, Sparkles, CheckCircle2 } from 'lucide-react'
 import type { BusinessService } from '@/types'
 import type { CatalogService } from '@/constants'
 import { ServiceEditModal } from './ServiceEditModal'
 import { ServiceCatalogGallery } from './ServiceCatalogGallery'
+
+type ToastMsg = { id: number; message: string }
 
 export function ServicesManager({ initialServices }: { initialServices: BusinessService[] }) {
   const [services, setServices] = useState(
@@ -15,6 +17,13 @@ export function ServicesManager({ initialServices }: { initialServices: Business
   const [editing, setEditing] = useState<BusinessService | undefined>(undefined)
   const [dragIndex, setDragIndex] = useState<number | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [toasts, setToasts] = useState<ToastMsg[]>([])
+
+  function pushToast(message: string) {
+    const id = Date.now() + Math.random()
+    setToasts((prev) => [...prev, { id, message }])
+    setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), 2500)
+  }
 
   const addedCatalogKeys = new Set(services.map((s) => s.catalog_key).filter(Boolean) as string[])
 
@@ -51,30 +60,9 @@ export function ServicesManager({ initialServices }: { initialServices: Business
   async function remove(serviceId: string) {
     if (!confirm('¿Eliminar este servicio? Ya no estará disponible para tus agentes.')) return
     const res = await fetch(`/api/services/${serviceId}`, { method: 'DELETE' })
-    if (res.ok) setServices((prev) => prev.filter((s) => s.id !== serviceId))
-  }
-
-  async function addFromCatalog(item: CatalogService) {
-    const res = await fetch('/api/services', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        name: item.name,
-        description: item.description,
-        durationMinutes: item.durationMinutes,
-        priceType: item.priceType,
-        price: item.price,
-        catalogKey: item.key,
-        isActive: true,
-        sortOrder: services.length,
-      }),
-    })
     if (res.ok) {
-      const { service } = await res.json()
-      setServices((prev) => [...prev, service])
-    } else {
-      const body = await res.json().catch(() => ({}))
-      setError(body.error ?? 'No se pudo agregar el servicio')
+      setServices((prev) => prev.filter((s) => s.id !== serviceId))
+      pushToast('Servicio eliminado')
     }
   }
 
@@ -98,6 +86,7 @@ export function ServicesManager({ initialServices }: { initialServices: Business
     if (res.ok) {
       const { services: created } = await res.json()
       setServices((prev) => [...prev, ...created])
+      pushToast(created.length === 1 ? '1 servicio agregado' : `${created.length} servicios agregados`)
     } else {
       const body = await res.json().catch(() => ({}))
       setError(body.error ?? 'No se pudieron agregar los servicios')
@@ -200,13 +189,25 @@ export function ServicesManager({ initialServices }: { initialServices: Business
 
       <ServiceCatalogGallery
         addedCatalogKeys={addedCatalogKeys}
-        onAddOne={addFromCatalog}
         onAddMany={addManyFromCatalog}
       />
 
       {modalOpen && (
         <ServiceEditModal service={editing} onClose={() => setModalOpen(false)} onSaved={handleSaved} />
       )}
+
+      {/* Toasts */}
+      <div className="fixed bottom-5 right-5 z-[60] space-y-2">
+        {toasts.map((t) => (
+          <div
+            key={t.id}
+            className="flex items-center gap-2 bg-[var(--teal-800)] text-white text-sm px-3.5 py-2.5 rounded-lg shadow-lg"
+          >
+            <CheckCircle2 className="w-4 h-4 shrink-0" />
+            {t.message}
+          </div>
+        ))}
+      </div>
     </div>
   )
 }
