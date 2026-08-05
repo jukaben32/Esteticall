@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import { Eye } from 'lucide-react'
-import type { AppointmentWithDetails, BusinessService } from '@/types'
+import type { AppointmentWithDetails, BusinessService, Listing } from '@/types'
 import { APPOINTMENT_STATUSES } from '@/constants'
 import { formatDateTime } from '@/lib/formatDate'
 import {
@@ -84,9 +84,11 @@ function ViewingDetailsModal({ appt, onClose }: { appt: AppointmentWithDetails; 
 export function ViewingsManager({
   initialAppointments,
   services,
+  listings,
 }: {
   initialAppointments: AppointmentWithDetails[]
   services: BusinessService[]
+  listings: Pick<Listing, 'id' | 'title' | 'listing_code' | 'status'>[]
 }) {
   const [appointments, setAppointments] = useState(initialAppointments)
   const [status, setStatus] = useState<string>('all')
@@ -158,7 +160,8 @@ export function ViewingsManager({
                   .join(' · ') || '—'}
               </p>
               <p className="text-xs text-[var(--text-4)]">
-                {appt.service?.name ?? 'Sin servicio asignado'} · {formatDateTime(appt.scheduled_at)}
+                {appt.service?.name ?? 'Sin servicio asignado'}
+                {appt.listing ? ` · ${appt.listing.title}` : ' · Sin propiedad asignada'} · {formatDateTime(appt.scheduled_at)}
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
@@ -194,6 +197,7 @@ export function ViewingsManager({
       {showForm && (
         <NewViewingModal
           services={services}
+          listings={listings}
           onCreated={(appointment) => {
             setAppointments((prev) => [appointment, ...prev])
             setShowForm(false)
