@@ -1,3 +1,4 @@
+import { CreditCard } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { getBusinessForOwner, getSubscription } from '@/services/businesses'
 import { PlanBilling } from '@/components/PlanBilling'
@@ -14,9 +15,14 @@ export default async function PlanPage() {
 
   return (
     <div>
-      <div className="mb-4">
-        <h1 className="font-display font-semibold text-xl text-[var(--text-1)]">Plan y Facturación</h1>
-        <p className="text-sm text-[var(--text-3)]">Administra tu suscripción y método de pago.</p>
+      <div className="mb-4 flex items-center gap-2">
+        <span className="w-8 h-8 rounded-full bg-[var(--teal-50)] text-[var(--teal-700)] grid place-items-center shrink-0">
+          <CreditCard className="w-4 h-4" />
+        </span>
+        <div>
+          <h1 className="font-display font-semibold text-xl text-[var(--text-1)]">Plan y Facturación</h1>
+          <p className="text-sm text-[var(--text-3)]">Administra tu suscripción y método de pago.</p>
+        </div>
       </div>
       <PlanBilling subscription={subscription} />
     </div>

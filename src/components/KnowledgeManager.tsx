@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { Pencil, Trash2, ChevronDown, Plus, Sparkles, Search, Check, X, CheckCircle2 } from 'lucide-react'
+import { Pencil, Trash2, ChevronDown, Plus, Sparkles, Search, Check, X, CheckCircle2, BookOpen } from 'lucide-react'
 import type { KnowledgeDocument } from '@/types'
 import { FAQ_CATEGORIES, FAQ_TEMPLATES, type FaqTemplate } from '@/data/faqTemplates'
 
@@ -307,10 +307,15 @@ export function KnowledgeManager({ initialDocuments }: { initialDocuments: Knowl
           )
         })}
         {documents.length === 0 && (
-          <p className="text-sm text-[var(--text-3)] card-surface p-4">
-            Todavía no hay conocimiento cargado — agrega preguntas frecuentes desde las plantillas de abajo o crea una
-            personalizada.
-          </p>
+          <div className="card-surface p-6 flex flex-col items-center justify-center gap-2 text-center">
+            <span className="w-10 h-10 rounded-full bg-[var(--bg-subtle)] text-[var(--text-4)] grid place-items-center">
+              <BookOpen className="w-5 h-5" />
+            </span>
+            <p className="text-sm text-[var(--text-3)]">
+              Todavía no hay conocimiento cargado — agrega preguntas frecuentes desde las plantillas de abajo o crea una
+              personalizada.
+            </p>
+          </div>
         )}
       </div>
 

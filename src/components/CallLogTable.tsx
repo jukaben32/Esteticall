@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { ChevronRight } from 'lucide-react'
+import { ChevronRight, PhoneCall, PhoneOff, X, MessageSquareText } from 'lucide-react'
 import type { ConversationWithClient, ConversationMessage } from '@/types'
 import { formatDateTime } from '@/lib/formatDate'
 
@@ -73,15 +73,20 @@ function CallDetailsModal({ conv, onClose }: { conv: ConversationWithClient; onC
     <div className="fixed inset-0 z-50 bg-black/40 flex items-start justify-center p-3 overflow-y-auto" onClick={onClose}>
       <div onClick={(e) => e.stopPropagation()} className="card-raised w-full max-w-lg my-6 p-5 space-y-4">
         <div className="flex items-start justify-between gap-3">
-          <div>
-            <h2 className="font-display font-semibold text-lg text-[var(--text-1)]">Detalles de la llamada</h2>
-            <p className="text-xs text-[var(--text-3)] mt-0.5">
-              {formatDateTime(conv.started_at)} · {conv.client?.name ?? 'Cliente sin identificar'} ·{' '}
-              {conv.status === 'completed' ? formatDuration(conv.duration_seconds) : 'Duración desconocida'}
-            </p>
+          <div className="flex items-center gap-2.5">
+            <span className="w-9 h-9 rounded-full bg-[var(--teal-50)] text-[var(--teal-700)] grid place-items-center shrink-0">
+              <PhoneCall className="w-4 h-4" />
+            </span>
+            <div>
+              <h2 className="font-display font-semibold text-lg text-[var(--text-1)]">Detalles de la llamada</h2>
+              <p className="text-xs text-[var(--text-3)] mt-0.5">
+                {formatDateTime(conv.started_at)} · {conv.client?.name ?? 'Cliente sin identificar'} ·{' '}
+                {conv.status === 'completed' ? formatDuration(conv.duration_seconds) : 'Duración desconocida'}
+              </p>
+            </div>
           </div>
-          <button onClick={onClose} className="text-[var(--text-3)] text-xl leading-none shrink-0">
-            &times;
+          <button onClick={onClose} aria-label="Cerrar" className="text-[var(--text-3)] hover:text-[var(--text-1)] shrink-0">
+            <X className="w-4 h-4" />
           </button>
         </div>
 
@@ -117,10 +122,17 @@ function CallDetailsModal({ conv, onClose }: { conv: ConversationWithClient; onC
         </div>
 
         <div>
-          <p className="text-[10px] uppercase tracking-wide text-[var(--text-3)] mb-2">Transcripción</p>
+          <p className="text-[10px] font-bold uppercase tracking-wide text-[var(--teal-700)] mb-2 flex items-center gap-1.5">
+            <MessageSquareText className="w-3.5 h-3.5" /> Transcripción
+          </p>
           {loading && <p className="text-sm text-[var(--text-3)]">Cargando transcripción…</p>}
           {!loading && messages.length === 0 && (
-            <p className="text-sm text-[var(--text-3)]">Esta llamada no tiene transcripción registrada.</p>
+            <div className="flex flex-col items-center justify-center gap-2 py-6 text-center">
+              <span className="w-9 h-9 rounded-full bg-[var(--bg-subtle)] text-[var(--text-4)] grid place-items-center">
+                <MessageSquareText className="w-4 h-4" />
+              </span>
+              <p className="text-sm text-[var(--text-3)]">Esta llamada no tiene transcripción registrada.</p>
+            </div>
           )}
           <div className="space-y-2 max-h-80 overflow-y-auto">
             {messages.map((m) => (
@@ -179,14 +191,25 @@ export function CallLogTable({ initialConversations }: { initialConversations: C
             onClick={() => setSelected(conv)}
             className="w-full py-3 flex flex-col sm:flex-row sm:items-center gap-2 text-left"
           >
-            <div className="flex-1 min-w-0">
-              <p className="font-medium text-[var(--text-1)] truncate">
-                {conv.client?.name ?? 'Cliente sin identificar'}
-              </p>
-              <p className="text-xs text-[var(--text-3)] truncate">
-                {[conv.client?.phone, conv.client?.email].filter(Boolean).join(' · ') || CHANNEL_LABELS[conv.channel] || conv.channel}
-              </p>
-              <p className="text-xs text-[var(--text-4)]">{formatDateTime(conv.started_at)}</p>
+            <div className="flex-1 min-w-0 flex items-center gap-2.5">
+              <span
+                className={`w-8 h-8 rounded-full grid place-items-center shrink-0 ${
+                  conv.status === 'failed'
+                    ? 'bg-red-50 text-red-600'
+                    : 'bg-[var(--teal-100)] text-[var(--teal-800)]'
+                }`}
+              >
+                {conv.status === 'failed' ? <PhoneOff className="w-4 h-4" /> : <PhoneCall className="w-4 h-4" />}
+              </span>
+              <div className="min-w-0">
+                <p className="font-medium text-[var(--text-1)] truncate">
+                  {conv.client?.name ?? 'Cliente sin identificar'}
+                </p>
+                <p className="text-xs text-[var(--text-3)] truncate">
+                  {[conv.client?.phone, conv.client?.email].filter(Boolean).join(' · ') || CHANNEL_LABELS[conv.channel] || conv.channel}
+                </p>
+                <p className="text-xs text-[var(--text-4)]">{formatDateTime(conv.started_at)}</p>
+              </div>
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <span className="text-sm sm:w-14 sm:text-right">{formatDuration(conv.duration_seconds)}</span>
@@ -208,9 +231,14 @@ export function CallLogTable({ initialConversations }: { initialConversations: C
           </button>
         ))}
         {filtered.length === 0 && (
-          <p className="py-6 text-center text-sm text-[var(--text-3)]">
-            {initialConversations.length === 0 ? 'Todavía no hay llamadas registradas.' : 'Ninguna llamada coincide con estos filtros.'}
-          </p>
+          <div className="flex flex-col items-center justify-center gap-2 py-8 text-center">
+            <span className="w-10 h-10 rounded-full bg-[var(--bg-subtle)] text-[var(--text-4)] grid place-items-center">
+              <PhoneCall className="w-5 h-5" />
+            </span>
+            <p className="text-sm text-[var(--text-3)]">
+              {initialConversations.length === 0 ? 'Todavía no hay llamadas registradas.' : 'Ninguna llamada coincide con estos filtros.'}
+            </p>
+          </div>
         )}
       </div>
 

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { CreditCard, Bot, CalendarCheck, CheckCircle2 } from 'lucide-react'
 import type { BusinessSubscription, PlanId } from '@/types'
 import { PLAN_LIMITS } from '@/constants'
 
@@ -30,18 +31,23 @@ export function PlanBilling({ subscription }: { subscription: BusinessSubscripti
 
   return (
     <div className="space-y-4">
-      <div className="card-surface p-4">
-        <p className="text-sm text-[var(--text-3)]">Plan actual</p>
-        <p className="font-display text-2xl font-semibold capitalize text-[var(--text-1)]">{PLAN_LIMITS[currentPlan].name}</p>
-        <p className="text-sm text-[var(--text-3)] mt-1 capitalize">
-          Estado: {STATUS_LABELS[subscription?.status ?? 'active'] ?? subscription?.status}
-          {subscription?.cancel_at_period_end && ' · se cancela al fin del período'}
-        </p>
-        {subscription?.stripe_customer_id && (
-          <button className="btn-secondary mt-3" onClick={openPortal} disabled={loadingPlan === 'portal'}>
-            {loadingPlan === 'portal' ? 'Abriendo…' : 'Administrar facturación'}
-          </button>
-        )}
+      <div className="stat-card p-4 flex items-start gap-3">
+        <span className="w-9 h-9 rounded-full bg-[var(--teal-50)] text-[var(--teal-700)] grid place-items-center shrink-0">
+          <CreditCard className="w-4 h-4" />
+        </span>
+        <div>
+          <p className="text-sm text-[var(--text-3)]">Plan actual</p>
+          <p className="font-display text-2xl font-semibold capitalize text-[var(--text-1)]">{PLAN_LIMITS[currentPlan].name}</p>
+          <p className="text-sm text-[var(--text-3)] mt-1 capitalize">
+            Estado: {STATUS_LABELS[subscription?.status ?? 'active'] ?? subscription?.status}
+            {subscription?.cancel_at_period_end && ' · se cancela al fin del período'}
+          </p>
+          {subscription?.stripe_customer_id && (
+            <button className="btn-secondary mt-3" onClick={openPortal} disabled={loadingPlan === 'portal'}>
+              {loadingPlan === 'portal' ? 'Abriendo…' : 'Administrar facturación'}
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -53,8 +59,14 @@ export function PlanBilling({ subscription }: { subscription: BusinessSubscripti
               <span className="text-sm font-normal text-[var(--text-3)]">/mes</span>
             </p>
             <ul className="text-sm text-[var(--text-3)] mt-2 space-y-1">
-              <li>{plan.agentLimit === 0 ? 'Ilimitados' : plan.agentLimit} agentes IA</li>
-              <li>{plan.bookingLimit === 0 ? 'Ilimitadas' : plan.bookingLimit} citas/mes</li>
+              <li className="flex items-center gap-1.5">
+                <Bot className="w-3.5 h-3.5 text-[var(--teal-700)] shrink-0" />
+                {plan.agentLimit === 0 ? 'Ilimitados' : plan.agentLimit} agentes IA
+              </li>
+              <li className="flex items-center gap-1.5">
+                <CalendarCheck className="w-3.5 h-3.5 text-[var(--teal-700)] shrink-0" />
+                {plan.bookingLimit === 0 ? 'Ilimitadas' : plan.bookingLimit} citas/mes
+              </li>
             </ul>
             {plan.id !== 'free' && plan.id !== currentPlan && (
               <button
@@ -66,7 +78,9 @@ export function PlanBilling({ subscription }: { subscription: BusinessSubscripti
               </button>
             )}
             {plan.id === currentPlan && (
-              <p className="mt-3 text-xs font-semibold text-[var(--teal-700)]">Plan actual</p>
+              <p className="mt-3 text-xs font-semibold text-[var(--teal-700)] flex items-center gap-1.5">
+                <CheckCircle2 className="w-3.5 h-3.5" /> Plan actual
+              </p>
             )}
           </div>
         ))}

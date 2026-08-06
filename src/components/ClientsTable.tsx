@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { ChevronDown, Eye, Home } from 'lucide-react'
+import { ChevronDown, Eye, Home, UsersRound } from 'lucide-react'
 import type { Client, AppointmentWithDetails } from '@/types'
 import { formatDateTime } from '@/lib/formatDate'
 import {
@@ -73,11 +73,16 @@ export function ClientsTable({
                 onClick={() => setExpandedId(expanded ? null : client.id)}
                 className="w-full py-3 flex flex-col sm:flex-row sm:items-center gap-2 text-left"
               >
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-[var(--text-1)]">{client.name}</p>
-                  <p className="text-xs text-[var(--text-3)] truncate">
-                    {[client.phone, client.email].filter(Boolean).join(' · ') || 'Sin datos de contacto'}
-                  </p>
+                <div className="flex-1 min-w-0 flex items-center gap-2.5">
+                  <span className="w-8 h-8 rounded-full bg-[var(--teal-100)] text-[var(--teal-800)] grid place-items-center text-sm font-semibold shrink-0">
+                    {client.name.charAt(0).toUpperCase()}
+                  </span>
+                  <div className="min-w-0">
+                    <p className="font-medium text-[var(--text-1)]">{client.name}</p>
+                    <p className="text-xs text-[var(--text-3)] truncate">
+                      {[client.phone, client.email].filter(Boolean).join(' · ') || 'Sin datos de contacto'}
+                    </p>
+                  </div>
                 </div>
                 <div className="flex flex-wrap items-center gap-3">
                   {clientAppointments.length > 0 && (
@@ -120,12 +125,13 @@ export function ClientsTable({
                     </div>
                   </div>
 
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-3)] mb-2">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--teal-700)] mb-2">
                     Historial de visitas ({clientAppointments.length})
                   </p>
 
                   {clientAppointments.length === 0 ? (
-                    <p className="text-sm text-[var(--text-3)] card-surface p-3.5">
+                    <p className="text-sm text-[var(--text-3)] card-surface p-3.5 flex items-center gap-2">
+                      <Home className="w-4 h-4 text-[var(--text-4)] shrink-0" />
                       Este cliente todavía no tiene citas registradas.
                     </p>
                   ) : (
@@ -189,7 +195,12 @@ export function ClientsTable({
           )
         })}
         {filtered.length === 0 && (
-          <p className="py-6 text-center text-sm text-[var(--text-3)]">Ningún cliente coincide con esta búsqueda.</p>
+          <div className="flex flex-col items-center justify-center gap-2 py-8 text-center">
+            <span className="w-10 h-10 rounded-full bg-[var(--bg-subtle)] text-[var(--text-4)] grid place-items-center">
+              <UsersRound className="w-5 h-5" />
+            </span>
+            <p className="text-sm text-[var(--text-3)]">Ningún cliente coincide con esta búsqueda.</p>
+          </div>
         )}
       </div>
 

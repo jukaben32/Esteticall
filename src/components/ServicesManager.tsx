@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { GripVertical, Pencil, Trash2, Sparkles, CheckCircle2 } from 'lucide-react'
+import { GripVertical, Pencil, Trash2, Sparkles, CheckCircle2, Briefcase } from 'lucide-react'
 import type { BusinessService } from '@/types'
 import type { CatalogService } from '@/constants'
 import { formatServicePrice } from '@/lib/serviceFormat'
@@ -178,9 +178,14 @@ export function ServicesManager({ initialServices }: { initialServices: Business
             </div>
           ))}
           {services.length === 0 && (
-            <p className="text-sm text-[var(--text-3)]">
-              Todavía no hay servicios — agrega uno del catálogo abajo o crea el tuyo.
-            </p>
+            <div className="flex flex-col items-center justify-center gap-2 py-8 text-center">
+              <span className="w-10 h-10 rounded-full bg-[var(--bg-subtle)] text-[var(--text-4)] grid place-items-center">
+                <Briefcase className="w-5 h-5" />
+              </span>
+              <p className="text-sm text-[var(--text-3)]">
+                Todavía no hay servicios — agrega uno del catálogo abajo o crea el tuyo.
+              </p>
+            </div>
           )}
         </div>
       </section>

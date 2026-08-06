@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { CalendarPlus, X } from 'lucide-react'
 import type { AppointmentWithDetails, BusinessService, Listing } from '@/types'
 import { APPOINTMENT_STATUSES } from '@/constants'
 
@@ -77,12 +78,17 @@ export function NewViewingModal({ services, listings, onCreated, onClose }: NewV
         className="card-raised w-full max-w-lg my-6 p-5 space-y-4"
       >
         <div className="flex items-start justify-between">
-          <div>
-            <h2 className="font-display font-semibold text-lg text-[var(--text-1)]">Nueva visita</h2>
-            <p className="text-xs text-[var(--text-3)]">Crea manualmente una visita a propiedad para un cliente</p>
+          <div className="flex items-center gap-2.5">
+            <span className="w-9 h-9 rounded-full bg-[var(--teal-50)] text-[var(--teal-700)] grid place-items-center shrink-0">
+              <CalendarPlus className="w-4 h-4" />
+            </span>
+            <div>
+              <h2 className="font-display font-semibold text-lg text-[var(--text-1)]">Nueva visita</h2>
+              <p className="text-xs text-[var(--text-3)]">Crea manualmente una visita a propiedad para un cliente</p>
+            </div>
           </div>
-          <button type="button" onClick={onClose} className="text-[var(--text-3)] text-xl leading-none">
-            &times;
+          <button type="button" onClick={onClose} aria-label="Cerrar" className="text-[var(--text-3)] hover:text-[var(--text-1)]">
+            <X className="w-4 h-4" />
           </button>
         </div>
 

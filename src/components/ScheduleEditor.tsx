@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { Clock } from 'lucide-react'
 import type { BusinessAvailability } from '@/types'
 
 const DAY_LABELS = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
@@ -57,6 +58,7 @@ export function ScheduleEditor({ initialAvailability }: { initialAvailability: B
             />
             <span className="text-sm font-medium">{DAY_LABELS[day.dayOfWeek]}</span>
           </label>
+          <Clock className="w-3.5 h-3.5 text-[var(--teal-700)] shrink-0" />
           <input
             type="time"
             value={day.startTime}

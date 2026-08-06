@@ -2,7 +2,26 @@
 
 import { useMemo, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { ChevronDown, Plus, Trash2, ExternalLink, Pencil, Lock, Check } from 'lucide-react'
+import {
+  ChevronDown,
+  Plus,
+  Trash2,
+  ExternalLink,
+  Pencil,
+  Lock,
+  Check,
+  Palette,
+  Image as ImageIcon,
+  FileText,
+  Briefcase,
+  UsersRound,
+  Quote,
+  Handshake,
+  HelpCircle,
+  Phone,
+  PanelBottom,
+  Globe,
+} from 'lucide-react'
 import type { Business, AiAgent, BusinessService, WebsiteContent } from '@/types'
 import { WEBSITE_BUILDER_PRICE_USD, WEBSITE_BUILDER_FEATURES } from '@/constants'
 import { WebsiteTemplateRenderer } from './WebsiteTemplateRenderer'
@@ -96,6 +115,19 @@ function toForm(content: WebsiteContent): FormState {
   }
 }
 
+const SECTION_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
+  branding: Palette,
+  hero: ImageIcon,
+  about: FileText,
+  services: Briefcase,
+  team: UsersRound,
+  testimonials: Quote,
+  specialties: Handshake,
+  faq: HelpCircle,
+  contact: Phone,
+  footer: PanelBottom,
+}
+
 function Section({
   title,
   id,
@@ -109,6 +141,7 @@ function Section({
   onToggle: (id: string) => void
   children: React.ReactNode
 }) {
+  const Icon = SECTION_ICONS[id]
   return (
     <div className="border-b border-[var(--border)] last:border-0">
       <button
@@ -116,7 +149,10 @@ function Section({
         onClick={() => onToggle(id)}
         className="w-full flex items-center justify-between py-2.5 text-sm font-medium text-[var(--text-1)]"
       >
-        {title}
+        <span className="flex items-center gap-2">
+          {Icon && <Icon className="w-4 h-4 text-[var(--teal-700)] shrink-0" />}
+          {title}
+        </span>
         <ChevronDown className={`w-4 h-4 transition-transform ${open ? 'rotate-180' : ''}`} />
       </button>
       {open && <div className="pb-4 space-y-3">{children}</div>}
@@ -367,9 +403,14 @@ export function WebsiteEditor({
     <div className="grid grid-cols-1 lg:grid-cols-[380px_1fr] gap-4">
       {/* Left: Design + Content */}
       <div className="card-surface p-4 space-y-5 max-h-[85vh] overflow-y-auto">
-        <div>
-          <p className="font-display font-semibold text-[var(--text-1)]">Website Builder</p>
-          <p className="text-xs text-[var(--text-3)]">Build your agency website</p>
+        <div className="flex items-center gap-2">
+          <span className="w-8 h-8 rounded-full bg-[var(--teal-50)] text-[var(--teal-700)] grid place-items-center shrink-0">
+            <Globe className="w-4 h-4" />
+          </span>
+          <div>
+            <p className="font-display font-semibold text-[var(--text-1)]">Website Builder</p>
+            <p className="text-xs text-[var(--text-3)]">Build your agency website</p>
+          </div>
         </div>
 
         {checkoutStatus === 'success' && (

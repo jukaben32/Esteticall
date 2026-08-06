@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { ChevronLeft, ChevronRight, User, Phone, Mail, DollarSign } from 'lucide-react'
+import { ChevronLeft, ChevronRight, User, Phone, Mail, DollarSign, CalendarCheck, CalendarDays, CalendarClock, X } from 'lucide-react'
 import type { AppointmentWithDetails } from '@/types'
 import { formatDateTime } from '@/lib/formatDate'
 import {
@@ -124,13 +124,20 @@ function AppointmentDrawer({
         className="fixed top-0 right-0 h-full w-full sm:w-96 bg-[var(--bg-surface)] shadow-xl overflow-y-auto p-5 space-y-5"
       >
         <div className="flex items-start justify-between gap-3">
-          <div>
-            <h2 className="font-display font-semibold text-lg text-[var(--text-1)]">
-              {appt.client?.name ?? 'Cliente sin identificar'}
-            </h2>
-            <p className="text-xs text-[var(--text-3)] mt-0.5">{formatDateTime(appt.scheduled_at)}</p>
+          <div className="flex items-center gap-2.5">
+            <span className="w-9 h-9 rounded-full bg-[var(--teal-100)] text-[var(--teal-800)] grid place-items-center text-sm font-semibold shrink-0">
+              {(appt.client?.name ?? '?').charAt(0).toUpperCase()}
+            </span>
+            <div>
+              <h2 className="font-display font-semibold text-lg text-[var(--text-1)]">
+                {appt.client?.name ?? 'Cliente sin identificar'}
+              </h2>
+              <p className="text-xs text-[var(--text-3)] mt-0.5">{formatDateTime(appt.scheduled_at)}</p>
+            </div>
           </div>
-          <button onClick={onClose} className="text-[var(--text-3)] text-xl leading-none shrink-0">&times;</button>
+          <button onClick={onClose} aria-label="Cerrar" className="text-[var(--text-3)] hover:text-[var(--text-1)] shrink-0">
+            <X className="w-4 h-4" />
+          </button>
         </div>
 
         <div className="flex flex-wrap gap-2">
@@ -290,20 +297,32 @@ export function ScheduleCalendar({
   return (
     <div>
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
-        <div className="card-surface p-4">
-          <p className="text-xs text-[var(--text-3)]">Hoy</p>
+        <div className="stat-card p-4">
+          <div className="flex items-center justify-between">
+            <p className="text-xs text-[var(--text-3)]">Hoy</p>
+            <CalendarDays className="w-4 h-4 text-[var(--teal-600)]" />
+          </div>
           <p className="text-2xl font-bold text-[var(--text-1)]">{todayAppointments.length}</p>
         </div>
-        <div className="card-surface p-4">
-          <p className="text-xs text-[var(--text-3)]">Confirmadas</p>
+        <div className="stat-card p-4">
+          <div className="flex items-center justify-between">
+            <p className="text-xs text-[var(--text-3)]">Confirmadas</p>
+            <CalendarCheck className="w-4 h-4 text-[var(--teal-700)]" />
+          </div>
           <p className="text-2xl font-bold text-[var(--teal-700)]">{todayConfirmed}</p>
         </div>
-        <div className="card-surface p-4">
-          <p className="text-xs text-[var(--text-3)]">Pendientes</p>
+        <div className="stat-card p-4">
+          <div className="flex items-center justify-between">
+            <p className="text-xs text-[var(--text-3)]">Pendientes</p>
+            <CalendarClock className="w-4 h-4 text-[var(--gold)]" />
+          </div>
           <p className="text-2xl font-bold text-[var(--gold)]">{todayPending}</p>
         </div>
-        <div className="card-surface p-4">
-          <p className="text-xs text-[var(--text-3)]">Sin pagar hoy</p>
+        <div className="stat-card p-4" style={{ borderLeftColor: '#dc2626' }}>
+          <div className="flex items-center justify-between">
+            <p className="text-xs text-[var(--text-3)]">Sin pagar hoy</p>
+            <DollarSign className="w-4 h-4 text-red-600" />
+          </div>
           <p className="text-2xl font-bold text-red-600">{todayUnpaid}</p>
         </div>
       </div>
@@ -364,7 +383,12 @@ export function ScheduleCalendar({
               <AppointmentRow key={appt.id} appt={appt} onClick={() => setSelected(appt)} />
             ))}
             {selectedDayAppointments.length === 0 && (
-              <p className="py-4 text-sm text-[var(--text-3)]">No hay citas este día.</p>
+              <div className="flex flex-col items-center justify-center gap-2 py-6 text-center">
+                <span className="w-9 h-9 rounded-full bg-[var(--bg-subtle)] text-[var(--text-4)] grid place-items-center">
+                  <CalendarDays className="w-4 h-4" />
+                </span>
+                <p className="text-sm text-[var(--text-3)]">No hay citas este día.</p>
+              </div>
             )}
           </div>
         </div>
@@ -378,7 +402,12 @@ export function ScheduleCalendar({
             <AppointmentRow key={appt.id} appt={appt} onClick={() => setSelected(appt)} />
           ))}
           {upcoming.length === 0 && (
-            <p className="py-4 text-sm text-[var(--text-3)]">No hay citas programadas en los próximos 30 días.</p>
+            <div className="flex flex-col items-center justify-center gap-2 py-6 text-center">
+              <span className="w-9 h-9 rounded-full bg-[var(--bg-subtle)] text-[var(--text-4)] grid place-items-center">
+                <CalendarClock className="w-4 h-4" />
+              </span>
+              <p className="text-sm text-[var(--text-3)]">No hay citas programadas en los próximos 30 días.</p>
+            </div>
           )}
         </div>
       </div>

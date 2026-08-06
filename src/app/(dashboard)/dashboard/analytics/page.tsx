@@ -1,3 +1,4 @@
+import { PhoneCall, Clock, CalendarCheck, TrendingUp } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { getBusinessForOwner } from '@/services/businesses'
 import { listConversationsForBusiness } from '@/services/conversations'
@@ -89,20 +90,31 @@ export default async function AnalyticsPage() {
         <p className="text-sm text-[var(--text-3)] mt-1">Rendimiento de tus agentes IA, últimos 14 días</p>
       </div>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <StatCard label="Conversaciones totales" value={conversations.length} />
-        <StatCard label="Duración promedio" value={`${avgMinutes}:${avgSeconds.toString().padStart(2, '0')}`} />
-        <StatCard label="Citas agendadas" value={appointments.length} />
-        <StatCard label="Tasa de conversión" value={`${conversionRate}%`} />
+        <StatCard icon={PhoneCall} label="Conversaciones totales" value={conversations.length} />
+        <StatCard icon={Clock} label="Duración promedio" value={`${avgMinutes}:${avgSeconds.toString().padStart(2, '0')}`} />
+        <StatCard icon={CalendarCheck} label="Citas agendadas" value={appointments.length} />
+        <StatCard icon={TrendingUp} label="Tasa de conversión" value={`${conversionRate}%`} />
       </div>
       <AnalyticsCharts daily={daily} outcomes={outcomes} />
     </div>
   )
 }
 
-function StatCard({ label, value }: { label: string; value: number | string }) {
+function StatCard({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: React.ComponentType<{ className?: string }>
+  label: string
+  value: number | string
+}) {
   return (
     <div className="stat-card p-4">
-      <p className="text-xs text-[var(--text-3)]">{label}</p>
+      <div className="flex items-center justify-between">
+        <p className="text-xs text-[var(--text-3)]">{label}</p>
+        <Icon className="w-4 h-4 text-[var(--teal-600)]" />
+      </div>
       <p className="font-display text-2xl font-semibold mt-1 text-[var(--teal-700)]">{value}</p>
     </div>
   )

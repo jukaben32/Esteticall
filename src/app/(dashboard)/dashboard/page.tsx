@@ -133,15 +133,25 @@ export default async function OverviewPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <section className="card-surface p-4 lg:col-span-2">
-          <div className="mb-3">
-            <h2 className="font-display font-semibold text-[var(--text-1)]">Tendencia de conversaciones</h2>
-            <p className="text-xs text-[var(--text-3)]">Últimos 14 días · llamadas y visitas</p>
+          <div className="mb-3 flex items-center gap-2">
+            <span className="w-8 h-8 rounded-full bg-[var(--teal-50)] text-[var(--teal-700)] grid place-items-center shrink-0">
+              <TrendingUp className="w-4 h-4" />
+            </span>
+            <div>
+              <h2 className="font-display font-semibold text-[var(--text-1)]">Tendencia de conversaciones</h2>
+              <p className="text-xs text-[var(--text-3)]">Últimos 14 días · llamadas y visitas</p>
+            </div>
           </div>
           <OverviewTrendChart data={trend} />
         </section>
 
         <section className="card-surface p-4">
-          <h2 className="font-display font-semibold text-[var(--text-1)] mb-3">Actividad de hoy</h2>
+          <h2 className="font-display font-semibold text-[var(--text-1)] mb-3 flex items-center gap-2">
+            <span className="w-8 h-8 rounded-full bg-[var(--teal-50)] text-[var(--teal-700)] grid place-items-center shrink-0">
+              <Clock className="w-4 h-4" />
+            </span>
+            Actividad de hoy
+          </h2>
           <ul className="divide-y divide-[var(--border)]">
             <ActivityRow icon={PhoneCall} label="Llamadas de hoy" value={analytics.conversations_today} />
             <ActivityRow icon={TrendingUp} label="Esta semana" value={analytics.conversations_this_week} />
@@ -154,11 +164,16 @@ export default async function OverviewPage() {
 
       <section className="card-surface p-5">
         <div className="flex items-center justify-between mb-4">
-          <div>
-            <h2 className="font-display font-semibold text-[var(--text-1)]">Propiedades</h2>
-            <p className="text-sm text-[var(--text-3)]">
-              {listings.length} en total · {available.length} disponibles
-            </p>
+          <div className="flex items-center gap-2">
+            <span className="w-8 h-8 rounded-full bg-[var(--teal-50)] text-[var(--teal-700)] grid place-items-center shrink-0">
+              <House className="w-4 h-4" />
+            </span>
+            <div>
+              <h2 className="font-display font-semibold text-[var(--text-1)]">Propiedades</h2>
+              <p className="text-sm text-[var(--text-3)]">
+                {listings.length} en total · {available.length} disponibles
+              </p>
+            </div>
           </div>
           <Link href="/dashboard/listings" className="btn-secondary">
             Administrar
@@ -210,14 +225,24 @@ export default async function OverviewPage() {
             </div>
           ))}
           {listings.length === 0 && (
-            <p className="col-span-full text-sm text-[var(--text-3)]">Todavía no hay propiedades.</p>
+            <div className="col-span-full flex flex-col items-center justify-center gap-2 py-8 text-center">
+              <span className="w-10 h-10 rounded-full bg-[var(--bg-subtle)] text-[var(--text-4)] grid place-items-center">
+                <House className="w-5 h-5" />
+              </span>
+              <p className="text-sm text-[var(--text-3)]">Todavía no hay propiedades.</p>
+            </div>
           )}
         </div>
       </section>
 
       <section className="card-surface p-5">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="font-display font-semibold text-[var(--text-1)]">Visitas recientes</h2>
+          <div className="flex items-center gap-2">
+            <span className="w-8 h-8 rounded-full bg-[var(--teal-50)] text-[var(--teal-700)] grid place-items-center shrink-0">
+              <CalendarCheck className="w-4 h-4" />
+            </span>
+            <h2 className="font-display font-semibold text-[var(--text-1)]">Visitas recientes</h2>
+          </div>
           <Link href="/dashboard/viewings" className="btn-secondary">
             Ver todas
           </Link>
@@ -225,12 +250,17 @@ export default async function OverviewPage() {
         <ul className="divide-y divide-[var(--border)]">
           {appointments.slice(0, 5).map((appt) => (
             <li key={appt.id} className="py-3 flex items-center justify-between gap-3 text-sm">
-              <div className="min-w-0">
-                <p className="text-[var(--text-1)] font-medium truncate">{appt.client?.name ?? 'Cliente sin nombre'}</p>
-                <p className="text-xs text-[var(--text-3)] truncate">
-                  {appt.client?.pre_approval_number ?? appt.client?.phone ?? '—'}
-                  {appt.client?.budget ? ` · Presupuesto: $${appt.client.budget.toLocaleString()}` : ''}
-                </p>
+              <div className="min-w-0 flex items-center gap-2.5">
+                <span className="w-8 h-8 rounded-full bg-[var(--teal-100)] text-[var(--teal-800)] grid place-items-center text-sm font-semibold shrink-0">
+                  {(appt.client?.name ?? '?').charAt(0).toUpperCase()}
+                </span>
+                <div className="min-w-0">
+                  <p className="text-[var(--text-1)] font-medium truncate">{appt.client?.name ?? 'Cliente sin nombre'}</p>
+                  <p className="text-xs text-[var(--text-3)] truncate">
+                    {appt.client?.pre_approval_number ?? appt.client?.phone ?? '—'}
+                    {appt.client?.budget ? ` · Presupuesto: $${appt.client.budget.toLocaleString()}` : ''}
+                  </p>
+                </div>
               </div>
               <div className="text-right shrink-0">
                 <p className="text-xs text-[var(--text-3)]">{formatDateTime(appt.scheduled_at)}</p>
@@ -245,7 +275,12 @@ export default async function OverviewPage() {
             </li>
           ))}
           {appointments.length === 0 && (
-            <li className="py-2 text-sm text-[var(--text-3)]">Todavía no hay citas agendadas.</li>
+            <li className="py-6 flex flex-col items-center justify-center gap-2 text-center">
+              <span className="w-10 h-10 rounded-full bg-[var(--bg-subtle)] text-[var(--text-4)] grid place-items-center">
+                <CalendarCheck className="w-5 h-5" />
+              </span>
+              <p className="text-sm text-[var(--text-3)]">Todavía no hay citas agendadas.</p>
+            </li>
           )}
         </ul>
       </section>

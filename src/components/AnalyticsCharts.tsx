@@ -12,6 +12,7 @@ import {
   Tooltip,
   Legend,
 } from 'recharts'
+import { TrendingUp, PhoneCall } from 'lucide-react'
 
 export interface DailyPoint {
   day: string // e.g. "Jul 24"
@@ -34,7 +35,12 @@ export function AnalyticsCharts({
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
       <div className="card-surface p-4">
-        <h2 className="font-display font-semibold mb-3 text-[var(--text-1)]">Conversaciones y citas (últimos 14 días)</h2>
+        <h2 className="font-display font-semibold mb-3 text-[var(--text-1)] flex items-center gap-2">
+          <span className="w-8 h-8 rounded-full bg-[var(--teal-50)] text-[var(--teal-700)] grid place-items-center shrink-0">
+            <TrendingUp className="w-4 h-4" />
+          </span>
+          Conversaciones y citas (últimos 14 días)
+        </h2>
         <ResponsiveContainer width="100%" height={260}>
           <LineChart data={daily}>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
@@ -49,7 +55,12 @@ export function AnalyticsCharts({
       </div>
 
       <div className="card-surface p-4">
-        <h2 className="font-display font-semibold mb-3 text-[var(--text-1)]">Resultados de llamadas</h2>
+        <h2 className="font-display font-semibold mb-3 text-[var(--text-1)] flex items-center gap-2">
+          <span className="w-8 h-8 rounded-full bg-[var(--teal-50)] text-[var(--teal-700)] grid place-items-center shrink-0">
+            <PhoneCall className="w-4 h-4" />
+          </span>
+          Resultados de llamadas
+        </h2>
         <ResponsiveContainer width="100%" height={260}>
           <BarChart data={outcomes}>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />

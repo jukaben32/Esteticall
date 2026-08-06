@@ -92,7 +92,12 @@ export function SupportTicketsPanel({ initialTickets }: { initialTickets: Suppor
       {/* ─── Lista de tickets ─────────────────────────── */}
       <div className="border-b lg:border-b-0 lg:border-r border-[var(--border)] overflow-y-auto max-h-[600px]">
         {tickets.length === 0 && (
-          <p className="p-4 text-sm text-[var(--text-3)]">No hay solicitudes de soporte todavía.</p>
+          <div className="flex flex-col items-center justify-center gap-2 p-8 text-center">
+            <span className="w-10 h-10 rounded-full bg-[var(--bg-subtle)] text-[var(--text-4)] grid place-items-center">
+              <MessageSquare className="w-5 h-5" />
+            </span>
+            <p className="text-sm text-[var(--text-3)]">No hay solicitudes de soporte todavía.</p>
+          </div>
         )}
         {tickets.map((t) => (
           <button
