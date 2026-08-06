@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { Mic, Play, Copy, Pencil, Trash2, Power } from 'lucide-react'
+import { Mic, Play, Copy, Pencil, Trash2, Power, Bot } from 'lucide-react'
 import type { AiAgent, BusinessService } from '@/types'
 import type { AgentTemplate } from '@/constants'
 import { interruptionLabel } from '@/constants'
@@ -162,9 +162,14 @@ export function AiAgentsManager({
             </div>
           ))}
           {agents.length === 0 && (
-            <p className="text-sm text-[var(--text-3)]">
-              Todavía no hay agentes — crea el primero arriba o activa una plantilla abajo.
-            </p>
+            <div className="flex flex-col items-center justify-center gap-2 py-8 text-center">
+              <span className="w-10 h-10 rounded-full bg-[var(--bg-subtle)] text-[var(--text-4)] grid place-items-center">
+                <Bot className="w-5 h-5" />
+              </span>
+              <p className="text-sm text-[var(--text-3)]">
+                Todavía no hay agentes — crea el primero arriba o activa una plantilla abajo.
+              </p>
+            </div>
           )}
         </div>
       </section>

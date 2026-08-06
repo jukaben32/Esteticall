@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { ChevronLeft, Settings2, Play } from 'lucide-react'
+import { ChevronLeft, Settings2, Play, Bot } from 'lucide-react'
 import type { AiAgent, BusinessService } from '@/types'
 import { AgentSettingsFields, type AgentSettingsValue } from './AgentSettingsFields'
 import { AgentAssignServices } from './AgentAssignServices'
@@ -70,18 +70,23 @@ export function AgentStudio({
       </div>
 
       <div className="flex items-center justify-between flex-wrap gap-2">
-        <div>
-          <h1 className="font-display font-semibold text-xl text-[var(--text-1)]">{agent.name}</h1>
-          <p className="text-sm text-[var(--text-3)]">
-            <span
-              className={`badge border-transparent mr-2 ${
-                agent.status === 'live' ? 'bg-[var(--teal-50)] text-[var(--teal-800)]' : 'bg-[var(--bg-raised)] text-[var(--text-3)]'
-              }`}
-            >
-              {agent.status === 'live' ? 'Activo' : agent.status === 'paused' ? 'Pausado' : 'Borrador'}
-            </span>
-            Voz: {agent.voice} · {agent.personality}
-          </p>
+        <div className="flex items-center gap-2.5">
+          <span className="w-9 h-9 rounded-full bg-[var(--teal-50)] text-[var(--teal-700)] grid place-items-center shrink-0">
+            <Bot className="w-4 h-4" />
+          </span>
+          <div>
+            <h1 className="font-display font-semibold text-xl text-[var(--text-1)]">{agent.name}</h1>
+            <p className="text-sm text-[var(--text-3)]">
+              <span
+                className={`badge border-transparent mr-2 ${
+                  agent.status === 'live' ? 'bg-[var(--teal-50)] text-[var(--teal-800)]' : 'bg-[var(--bg-raised)] text-[var(--text-3)]'
+                }`}
+              >
+                {agent.status === 'live' ? 'Activo' : agent.status === 'paused' ? 'Pausado' : 'Borrador'}
+              </span>
+              Voz: {agent.voice} · {agent.personality}
+            </p>
+          </div>
         </div>
       </div>
 

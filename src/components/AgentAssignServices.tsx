@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import { Briefcase } from 'lucide-react'
 import type { BusinessService } from '@/types'
 import { formatServicePrice } from '@/lib/serviceFormat'
 
@@ -31,12 +32,17 @@ export function AgentAssignServices({
 
   return (
     <div className="space-y-3">
-      <div>
-        <p className="text-sm font-medium text-[var(--text-1)]">¿De qué servicios puede hablar este agente?</p>
-        <p className="text-xs text-[var(--text-3)] mt-0.5">
-          El agente solo recomendará y responderá preguntas sobre los servicios que selecciones aquí. Distintos
-          agentes pueden tener distintos alcances.
-        </p>
+      <div className="flex items-center gap-2">
+        <span className="w-8 h-8 rounded-full bg-[var(--teal-50)] text-[var(--teal-700)] grid place-items-center shrink-0">
+          <Briefcase className="w-4 h-4" />
+        </span>
+        <div>
+          <p className="text-sm font-medium text-[var(--text-1)]">¿De qué servicios puede hablar este agente?</p>
+          <p className="text-xs text-[var(--text-3)] mt-0.5">
+            El agente solo recomendará y responderá preguntas sobre los servicios que selecciones aquí. Distintos
+            agentes pueden tener distintos alcances.
+          </p>
+        </div>
       </div>
 
       <div className="flex items-center gap-2">
@@ -87,11 +93,16 @@ export function AgentAssignServices({
           )
         })}
         {filtered.length === 0 && (
-          <p className="text-sm text-[var(--text-3)] py-4 text-center">
-            {services.length === 0
-              ? 'Todavía no tienes servicios — créalos en Dashboard → Servicios.'
-              : 'Ningún servicio coincide con ese filtro.'}
-          </p>
+          <div className="flex flex-col items-center justify-center gap-2 py-6 text-center">
+            <span className="w-9 h-9 rounded-full bg-[var(--bg-subtle)] text-[var(--text-4)] grid place-items-center">
+              <Briefcase className="w-4 h-4" />
+            </span>
+            <p className="text-sm text-[var(--text-3)]">
+              {services.length === 0
+                ? 'Todavía no tienes servicios — créalos en Dashboard → Servicios.'
+                : 'Ningún servicio coincide con ese filtro.'}
+            </p>
+          </div>
         )}
       </div>
     </div>

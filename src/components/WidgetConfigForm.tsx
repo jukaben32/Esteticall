@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { PhoneCall, Code2, Palette } from 'lucide-react'
 import type { Widget } from '@/types'
 import { VoiceWidget } from '@/components/VoiceWidget'
 
@@ -50,7 +51,12 @@ export function WidgetConfigForm({
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
       <div className="card-surface p-4 lg:col-span-2">
-        <h2 className="font-display font-semibold mb-1 text-[var(--text-1)]">Probar el asistente</h2>
+        <h2 className="font-display font-semibold mb-1 text-[var(--text-1)] flex items-center gap-2">
+          <span className="w-8 h-8 rounded-full bg-[var(--teal-50)] text-[var(--teal-700)] grid place-items-center shrink-0">
+            <PhoneCall className="w-4 h-4" />
+          </span>
+          Probar el asistente
+        </h2>
         <p className="text-sm text-[var(--text-3)] mb-3">
           Haz una llamada de prueba real ahora mismo, sin salir del panel. Necesitas al menos un
           agente IA en estado &quot;Activo&quot; (sección Agentes IA) y darle permiso al navegador para usar
@@ -69,7 +75,9 @@ export function WidgetConfigForm({
           Widget activado
         </label>
         <div>
-          <label className="text-xs text-[var(--text-3)]">Color principal</label>
+          <label className="text-xs text-[var(--text-3)] flex items-center gap-1.5">
+            <Palette className="w-3.5 h-3.5 text-[var(--teal-700)]" /> Color principal
+          </label>
           <input
             type="color"
             value={form.primaryColor}
@@ -103,7 +111,12 @@ export function WidgetConfigForm({
       </form>
 
       <div className="card-surface p-4">
-        <h2 className="font-display font-semibold mb-2 text-[var(--text-1)]">Embeber en tu sitio web</h2>
+        <h2 className="font-display font-semibold mb-2 text-[var(--text-1)] flex items-center gap-2">
+          <span className="w-8 h-8 rounded-full bg-[var(--teal-50)] text-[var(--teal-700)] grid place-items-center shrink-0">
+            <Code2 className="w-4 h-4" />
+          </span>
+          Embeber en tu sitio web
+        </h2>
         <p className="text-sm text-[var(--text-3)] mb-3">
           Pega este código en cualquier página de tu sitio para agregar el asistente de voz.
         </p>

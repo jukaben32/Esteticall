@@ -1,6 +1,6 @@
 'use client'
 
-import { X, Sparkles } from 'lucide-react'
+import { X, Sparkles, MessageSquareText } from 'lucide-react'
 import type { WidgetTemplate } from '@/constants'
 import { widgetTemplateName } from '@/constants'
 import { FloatingWidgetLauncher } from './FloatingWidgetLauncher'
@@ -32,9 +32,17 @@ export function WidgetTemplatePreview({
     <div className="fixed inset-0 z-[60] flex items-start justify-center bg-black/40 p-4 overflow-y-auto">
       <div className="card-raised w-full max-w-lg my-8">
         <div className="flex items-center justify-between p-5 pb-0">
-          <div>
-            <h2 className="font-display font-semibold text-lg text-[var(--text-1)]">{widgetTemplateName(template)}</h2>
-            <p className="text-xs text-[var(--text-3)]">{template.role}</p>
+          <div className="flex items-center gap-2.5">
+            <span
+              className="w-9 h-9 rounded-full grid place-items-center shrink-0 text-white shadow-sm"
+              style={{ background: template.primaryColor }}
+            >
+              <MessageSquareText className="w-4 h-4" />
+            </span>
+            <div>
+              <h2 className="font-display font-semibold text-lg text-[var(--text-1)]">{widgetTemplateName(template)}</h2>
+              <p className="text-xs text-[var(--text-3)]">{template.role}</p>
+            </div>
           </div>
           <button onClick={onClose} aria-label="Close" className="text-[var(--text-3)] hover:text-[var(--text-1)]">
             <X className="w-4 h-4" />

@@ -1,6 +1,6 @@
 'use client'
 
-import { X, Sparkles, Home, Heart, Star, Building2, ClipboardList, Building, BarChart3 } from 'lucide-react'
+import { X, Sparkles, Home, Heart, Star, Building2, ClipboardList, Building, BarChart3, MessageCircle, FileText } from 'lucide-react'
 import { AGENT_TEMPLATE_ACCENT_STYLES, type AgentTemplate } from '@/constants'
 
 const ICONS = {
@@ -49,15 +49,23 @@ export function AgentTemplatePreview({
           </button>
         </div>
 
-        <p className="text-xs font-medium text-[var(--text-2)] mb-1">Mensaje de saludo</p>
+        <p className="text-xs font-medium text-[var(--text-2)] mb-1 flex items-center gap-1.5">
+          <MessageCircle className="w-3.5 h-3.5" style={{ color: accent.roleText }} /> Mensaje de saludo
+        </p>
         <p className="text-sm text-[var(--text-1)] mb-3 italic">&quot;{template.greetingMessage}&quot;</p>
 
-        <p className="text-xs font-medium text-[var(--text-2)] mb-1">Prompt del sistema</p>
+        <p className="text-xs font-medium text-[var(--text-2)] mb-1 flex items-center gap-1.5">
+          <FileText className="w-3.5 h-3.5" style={{ color: accent.roleText }} /> Prompt del sistema
+        </p>
         <p className="text-sm text-[var(--text-2)] mb-3">{template.systemPrompt}</p>
 
         <div className="flex flex-wrap gap-1.5 mb-4">
           {template.features.map((f) => (
-            <span key={f} className="badge bg-[var(--bg-raised)] border-transparent text-[var(--text-3)]">
+            <span
+              key={f}
+              className="badge border-transparent"
+              style={{ background: accent.badgeBg, color: accent.badgeText }}
+            >
               {f}
             </span>
           ))}

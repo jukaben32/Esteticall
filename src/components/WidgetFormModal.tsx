@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { X } from 'lucide-react'
+import { X, MessagesSquare } from 'lucide-react'
 import type { AiAgent, Widget } from '@/types'
 import type { WidgetTemplate } from '@/constants'
 import { widgetTemplateName } from '@/constants'
@@ -136,9 +136,17 @@ export function WidgetFormModal({
     <div className="fixed inset-0 z-[60] flex items-start justify-center bg-black/40 p-4 overflow-y-auto">
       <div className="card-raised w-full max-w-lg my-8">
         <div className="flex items-center justify-between p-5 pb-0">
-          <h2 className="font-display font-semibold text-lg text-[var(--text-1)]">
-            {isEdit ? 'Edit Widget' : template ? `Create Widget · ${template.name}` : 'Create Widget'}
-          </h2>
+          <div className="flex items-center gap-2.5">
+            <span
+              className="w-9 h-9 rounded-full grid place-items-center shrink-0 text-white"
+              style={{ background: form.primaryColor }}
+            >
+              <MessagesSquare className="w-4 h-4" />
+            </span>
+            <h2 className="font-display font-semibold text-lg text-[var(--text-1)]">
+              {isEdit ? 'Edit Widget' : template ? `Create Widget · ${template.name}` : 'Create Widget'}
+            </h2>
+          </div>
           <button onClick={onClose} aria-label="Close" className="text-[var(--text-3)] hover:text-[var(--text-1)]">
             <X className="w-4 h-4" />
           </button>

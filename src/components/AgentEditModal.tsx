@@ -1,9 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import { X, Check } from 'lucide-react'
+import { X, Check, Bot } from 'lucide-react'
 import type { AiAgent, BusinessService } from '@/types'
-import type { AgentTemplate } from '@/constants'
+import { AGENT_TEMPLATE_ACCENT_STYLES, type AgentTemplate } from '@/constants'
 import { AgentSettingsFields, type AgentSettingsValue } from './AgentSettingsFields'
 import { AgentAssignServices } from './AgentAssignServices'
 
@@ -105,13 +105,25 @@ export function AgentEditModal({
     <div className="fixed inset-0 z-[60] flex items-start justify-center bg-black/40 p-4 overflow-y-auto">
       <div className="card-raised w-full max-w-lg my-8">
         <div className="flex items-center justify-between p-5 pb-0">
-          <div>
-            <h2 className="font-display font-semibold text-lg text-[var(--text-1)]">
-              {isEdit ? 'Editar agente' : 'Nuevo agente'}
-            </h2>
-            <p className="text-xs text-[var(--text-3)]">
-              Paso {step} de 2 — {step === 1 ? 'Configuración del agente' : 'Asignar servicios'}
-            </p>
+          <div className="flex items-center gap-2.5">
+            <span
+              className="w-9 h-9 rounded-full grid place-items-center shrink-0"
+              style={
+                template
+                  ? { background: AGENT_TEMPLATE_ACCENT_STYLES[template.accent].iconBg, color: AGENT_TEMPLATE_ACCENT_STYLES[template.accent].iconText }
+                  : { background: 'var(--teal-50)', color: 'var(--teal-700)' }
+              }
+            >
+              <Bot className="w-4 h-4" />
+            </span>
+            <div>
+              <h2 className="font-display font-semibold text-lg text-[var(--text-1)]">
+                {isEdit ? 'Editar agente' : 'Nuevo agente'}
+              </h2>
+              <p className="text-xs text-[var(--text-3)]">
+                Paso {step} de 2 — {step === 1 ? 'Configuración del agente' : 'Asignar servicios'}
+              </p>
+            </div>
           </div>
           <div className="flex items-center gap-3">
             <StepDot n={1} active={step === 1} done={step > 1} />

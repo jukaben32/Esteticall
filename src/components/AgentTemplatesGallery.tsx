@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Eye, Check, Home, Heart, Star, Building2, ClipboardList, Building, BarChart3 } from 'lucide-react'
+import { Eye, Check, Home, Heart, Star, Building2, ClipboardList, Building, BarChart3, Sparkles, SearchX } from 'lucide-react'
 import {
   AGENT_TEMPLATES,
   AGENT_TEMPLATE_CATEGORIES,
@@ -37,9 +37,14 @@ export function AgentTemplatesGallery({
   return (
     <section className="card-surface p-5">
       <div className="flex items-center justify-between mb-1">
-        <div>
-          <h2 className="font-display font-semibold text-[var(--text-1)]">Plantillas de Agentes IA</h2>
-          <p className="text-sm text-[var(--text-3)]">Elige un especialista y actívalo en un clic</p>
+        <div className="flex items-center gap-2">
+          <span className="w-8 h-8 rounded-full bg-[var(--teal-50)] text-[var(--teal-700)] grid place-items-center shrink-0">
+            <Sparkles className="w-4 h-4" />
+          </span>
+          <div>
+            <h2 className="font-display font-semibold text-[var(--text-1)]">Plantillas de Agentes IA</h2>
+            <p className="text-sm text-[var(--text-3)]">Elige un especialista y actívalo en un clic</p>
+          </div>
         </div>
         <span className="badge bg-[var(--bg-raised)] border-transparent text-[var(--text-3)]">
           {AGENT_TEMPLATES.length} plantillas disponibles
@@ -75,6 +80,15 @@ export function AgentTemplatesGallery({
           )
         })}
       </div>
+
+      {templates.length === 0 && (
+        <div className="flex flex-col items-center justify-center gap-2 py-8 text-center">
+          <span className="w-10 h-10 rounded-full bg-[var(--bg-subtle)] text-[var(--text-4)] grid place-items-center">
+            <SearchX className="w-5 h-5" />
+          </span>
+          <p className="text-sm text-[var(--text-3)]">Ninguna plantilla coincide con este tema.</p>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {templates.map((template) => {

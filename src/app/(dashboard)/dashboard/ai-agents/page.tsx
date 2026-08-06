@@ -1,3 +1,4 @@
+import { Bot } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { getBusinessForOwner, getSubscription } from '@/services/businesses'
 import { listAgentsForBusiness } from '@/services/aiAgents'
@@ -26,9 +27,14 @@ export default async function AiAgentsPage() {
 
   return (
     <div>
-      <div className="mb-4">
-        <h1 className="font-display font-semibold text-xl text-[var(--text-1)]">Agentes IA</h1>
-        <p className="text-sm text-[var(--text-3)]">Configura las personalidades de tus agentes de voz</p>
+      <div className="mb-4 flex items-center gap-2">
+        <span className="w-8 h-8 rounded-full bg-[var(--teal-50)] text-[var(--teal-700)] grid place-items-center shrink-0">
+          <Bot className="w-4 h-4" />
+        </span>
+        <div>
+          <h1 className="font-display font-semibold text-xl text-[var(--text-1)]">Agentes IA</h1>
+          <p className="text-sm text-[var(--text-3)]">Configura las personalidades de tus agentes de voz</p>
+        </div>
       </div>
       <AiAgentsManager
         initialAgents={agents}

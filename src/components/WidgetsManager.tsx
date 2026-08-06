@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Eye, Pencil, Trash2, Copy, Check } from 'lucide-react'
+import { Eye, Pencil, Trash2, Copy, Check, MessagesSquare } from 'lucide-react'
 import type { AiAgent, WidgetWithAgent, Widget } from '@/types'
 import type { WidgetTemplate } from '@/constants'
 import { WidgetFormModal } from './WidgetFormModal'
@@ -113,9 +113,14 @@ export function WidgetsManager({
     <div className="space-y-4">
       <section className="card-surface p-5">
         <div className="flex items-center justify-between mb-4">
-          <div>
-            <h2 className="font-display font-semibold text-[var(--text-1)]">Embedded Widgets</h2>
-            <p className="text-sm text-[var(--text-3)]">Deploy your AI voice widget on any website</p>
+          <div className="flex items-center gap-2">
+            <span className="w-8 h-8 rounded-full bg-[var(--teal-50)] text-[var(--teal-700)] grid place-items-center shrink-0">
+              <MessagesSquare className="w-4 h-4" />
+            </span>
+            <div>
+              <h2 className="font-display font-semibold text-[var(--text-1)]">Embedded Widgets</h2>
+              <p className="text-sm text-[var(--text-3)]">Deploy your AI voice widget on any website</p>
+            </div>
           </div>
           <button className="btn-primary" onClick={() => setModalWidget('new')}>
             + New Widget
@@ -137,9 +142,14 @@ export function WidgetsManager({
             />
           ))}
           {widgets.length === 0 && (
-            <p className="text-sm text-[var(--text-3)]">
-              No widgets yet — click &quot;+ New Widget&quot; to embed your assistant on a website.
-            </p>
+            <div className="flex flex-col items-center justify-center gap-2 py-8 text-center">
+              <span className="w-10 h-10 rounded-full bg-[var(--bg-subtle)] text-[var(--text-4)] grid place-items-center">
+                <MessagesSquare className="w-5 h-5" />
+              </span>
+              <p className="text-sm text-[var(--text-3)]">
+                No widgets yet — click &quot;+ New Widget&quot; to embed your assistant on a website.
+              </p>
+            </div>
           )}
         </div>
       </section>
@@ -213,21 +223,30 @@ function WidgetCard({
   return (
     <div className="card-surface p-4">
       <div className="flex items-start justify-between gap-3 flex-wrap">
-        <div className="min-w-0">
-          <div className="flex items-center gap-2">
-            <span className={`w-2 h-2 rounded-full shrink-0 ${widget.is_enabled ? 'bg-[var(--teal-600)]' : 'bg-[var(--text-3)]'}`} />
-            <p className="font-medium text-[var(--text-1)] truncate">{widget.name}</p>
-            <span
-              className={`badge border-transparent shrink-0 ${
-                widget.is_enabled ? 'bg-[var(--teal-50)] text-[var(--teal-800)]' : 'bg-[var(--bg-raised)] text-[var(--text-3)]'
-              }`}
-            >
-              {widget.is_enabled ? 'Active' : 'Inactive'}
-            </span>
+        <div className="min-w-0 flex items-start gap-2.5">
+          <span
+            className="w-9 h-9 rounded-full grid place-items-center shrink-0 text-white"
+            style={{ background: widget.primary_color }}
+            title={`Color del widget: ${widget.primary_color}`}
+          >
+            <MessagesSquare className="w-4 h-4" />
+          </span>
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <span className={`w-2 h-2 rounded-full shrink-0 ${widget.is_enabled ? 'bg-[var(--teal-600)]' : 'bg-[var(--text-3)]'}`} />
+              <p className="font-medium text-[var(--text-1)] truncate">{widget.name}</p>
+              <span
+                className={`badge border-transparent shrink-0 ${
+                  widget.is_enabled ? 'bg-[var(--teal-50)] text-[var(--teal-800)]' : 'bg-[var(--bg-raised)] text-[var(--text-3)]'
+                }`}
+              >
+                {widget.is_enabled ? 'Active' : 'Inactive'}
+              </span>
+            </div>
+            <p className="text-xs text-[var(--text-3)] mt-0.5">
+              {widget.position} · {widget.agent_name ?? 'No agent assigned'}
+            </p>
           </div>
-          <p className="text-xs text-[var(--text-3)] mt-0.5">
-            {widget.position} · {widget.agent_name ?? 'No agent assigned'}
-          </p>
         </div>
         <div className="flex items-center gap-3">
           <p className="text-xs text-[var(--text-3)] whitespace-nowrap">
