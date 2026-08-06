@@ -91,7 +91,7 @@ export interface Database {
           title: string
           description: string | null
           listing_type: 'sale' | 'rent' | 'vacation_rental'
-          property_type: 'house' | 'apartment' | 'townhouse' | 'commercial' | 'condo' | 'land'
+          property_type: 'house' | 'apartment' | 'townhouse' | 'commercial' | 'condo' | 'land' | 'industrial' | 'other'
           rental_period: 'night' | 'week' | 'month' | null
           status: 'available' | 'pending' | 'sold' | 'rented' | 'withdrawn'
           price: number

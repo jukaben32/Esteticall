@@ -46,7 +46,7 @@ export const listingSchema = z.object({
   title: z.string().min(3),
   description: z.string().optional(),
   listingType: z.enum(['sale', 'rent', 'vacation_rental']),
-  propertyType: z.enum(['house', 'apartment', 'townhouse', 'commercial', 'condo', 'land']),
+  propertyType: z.enum(['house', 'apartment', 'townhouse', 'commercial', 'condo', 'land', 'industrial', 'other']),
   status: z.enum(['available', 'pending', 'sold', 'rented', 'withdrawn']).default('available'),
   price: z.coerce.number().nonnegative(),
   priceDisplay: z.enum(['fixed', 'negotiable', 'starting_at', 'contact']).default('fixed'),

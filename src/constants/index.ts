@@ -48,6 +48,8 @@ export const PROPERTY_TYPES = [
   { value: 'commercial', label: 'Commercial' },
   { value: 'condo', label: 'Condo' },
   { value: 'land', label: 'Land' },
+  { value: 'industrial', label: 'Industrial' },
+  { value: 'other', label: 'Other' },
 ] as const
 
 export const LISTING_STATUSES = [

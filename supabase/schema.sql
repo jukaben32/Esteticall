@@ -771,3 +771,10 @@ alter table businesses add column if not exists zip_code text;
 alter table businesses add column if not exists stripe_publishable_key text;
 alter table businesses add column if not exists stripe_secret_key text;
 alter table businesses add column if not exists stripe_connected boolean not null default false;
+
+-- 31. LISTINGS — property_type: add 'industrial' (naves industriales) and
+-- 'other' (catch-all) to the existing house/apartment/townhouse/commercial/
+-- condo/land set.
+alter table listings drop constraint if exists listings_property_type_check;
+alter table listings add constraint listings_property_type_check
+  check (property_type in ('house', 'apartment', 'townhouse', 'commercial', 'condo', 'land', 'industrial', 'other'));

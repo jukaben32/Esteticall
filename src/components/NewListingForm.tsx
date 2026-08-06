@@ -11,6 +11,8 @@ const PROPERTY_TYPE_LABELS: Record<string, string> = {
   commercial: 'Comercial',
   condo: 'Condominio',
   land: 'Solar',
+  industrial: 'Nave Industrial',
+  other: 'Otro',
 }
 
 const LISTING_TYPE_LABELS: Record<string, string> = {
