@@ -43,7 +43,11 @@ export function ListingsTable({
   const filtered = useMemo(() => {
     return listings.filter((l) => {
       if (status !== 'all' && l.status !== status) return false
-      if (type !== 'all' && l.property_type !== type) return false
+      if (type === 'airbnb') {
+        if (l.listing_type !== 'vacation_rental') return false
+      } else if (type !== 'all' && l.property_type !== type) {
+        return false
+      }
       if (search && !`${l.title} ${l.address_line} ${l.city}`.toLowerCase().includes(search.toLowerCase()))
         return false
       return true
@@ -105,6 +109,7 @@ export function ListingsTable({
               {PROPERTY_TYPE_LABELS[t.value] ?? t.label}
             </option>
           ))}
+          <option value="airbnb">Airbnb</option>
         </select>
         <button className="btn-primary" onClick={() => setShowForm(true)}>
           + Agregar propiedad
