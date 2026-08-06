@@ -6,6 +6,27 @@ import type { PlanId, AvailableSlot } from '@/types'
 
 type DB = SupabaseClient<Database>
 
+// The Dominican Republic stays on Atlantic Standard Time (UTC-4) year-round —
+// it stopped observing DST in 1974 — so a fixed offset is safe here, unlike
+// most timezones. business_availability.start_time/end_time are wall-clock
+// hours in that timezone; the server's own clock (UTC on Vercel) has nothing
+// to do with them.
+const SANTO_DOMINGO_UTC_OFFSET_MS = 4 * 60 * 60 * 1000
+
+// Reads a UTC instant's date/day-of-week as they'd show on a Santo Domingo
+// wall clock, without depending on the server process's own timezone.
+function toSantoDomingoParts(utcInstant: Date): { dayOfWeek: number; dateKey: string } {
+  const shifted = new Date(utcInstant.getTime() - SANTO_DOMINGO_UTC_OFFSET_MS)
+  return { dayOfWeek: shifted.getUTCDay(), dateKey: shifted.toISOString().slice(0, 10) }
+}
+
+// Turns a Santo Domingo wall-clock date + time into the exact UTC instant it
+// represents — the explicit -04:00 offset makes this unambiguous regardless
+// of what timezone the server itself is running in.
+function santoDomingoInstant(dateKey: string, hours: number, minutes: number): Date {
+  return new Date(`${dateKey}T${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:00.000-04:00`)
+}
+
 type AppointmentJoinRow = Appointment & {
   clients: Pick<Client, 'id' | 'name' | 'phone' | 'email' | 'budget' | 'pre_approval_number'> | null
   business_services: Pick<BusinessService, 'id' | 'name' | 'price'> | null
@@ -240,26 +261,27 @@ export async function getAvailableSlots(
   const slots: AvailableSlot[] = []
 
   for (let day = 0; day < daysAhead; day++) {
-    const date = new Date(fromDate.getTime() + day * 86_400_000)
-    const dayAvailability = availability.filter((a) => a.day_of_week === date.getDay())
+    const { dayOfWeek, dateKey } = toSantoDomingoParts(new Date(fromDate.getTime() + day * 86_400_000))
+    const dayAvailability = availability.filter((a) => a.day_of_week === dayOfWeek)
 
     for (const window of dayAvailability) {
       const [startH, startM] = window.start_time.split(':').map(Number)
       const [endH, endM] = window.end_time.split(':').map(Number)
-      const cursor = new Date(date)
-      cursor.setHours(startH, startM, 0, 0)
-      const end = new Date(date)
-      end.setHours(endH, endM, 0, 0)
+      let minutes = startH * 60 + startM
+      const endMinutes = endH * 60 + endM
 
-      while (cursor < end) {
-        if (cursor > fromDate && !bookedTimes.has(cursor.getTime())) {
+      while (minutes < endMinutes) {
+        const h = Math.floor(minutes / 60)
+        const m = minutes % 60
+        const instant = santoDomingoInstant(dateKey, h, m)
+        if (instant > fromDate && !bookedTimes.has(instant.getTime())) {
           slots.push({
-            date: cursor.toISOString().slice(0, 10),
-            time: cursor.toTimeString().slice(0, 5),
-            datetime: cursor.toISOString(),
+            date: dateKey,
+            time: `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`,
+            datetime: instant.toISOString(),
           })
         }
-        cursor.setMinutes(cursor.getMinutes() + window.slot_minutes)
+        minutes += window.slot_minutes
       }
     }
   }
