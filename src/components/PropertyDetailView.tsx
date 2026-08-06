@@ -3,7 +3,7 @@
 import { useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, Bed, Bath, Move, Car, ExternalLink, Pencil, Trash2, Copy, Check, Plus, Images, X } from 'lucide-react'
+import { ArrowLeft, Bed, Bath, Move, Car, ExternalLink, Pencil, Trash2, Copy, Check, Plus, Images, X, Star, Sparkles } from 'lucide-react'
 import type { AiAgent, ListingWithPhotos } from '@/types'
 import { LISTING_STATUSES } from '@/constants'
 import { EditListingModal } from '@/components/EditListingModal'
@@ -71,6 +71,10 @@ export function PropertyDetailView({
 
   const assignedAgent = listing.agents[0] ?? null
   const assignedAgentFull = agents.find((a) => a.id === assignedAgent?.id) ?? null
+
+  const addressText = [listing.address_line, listing.area_name, listing.city, listing.state, listing.zip]
+    .filter(Boolean)
+    .join(', ')
 
   const galleryPhotos = photos.length
     ? photos
@@ -250,30 +254,44 @@ export function PropertyDetailView({
           <div className="card-surface p-4">
             <div className="flex items-start justify-between gap-3 flex-wrap">
               <div>
-                <h1 className="font-display font-semibold text-xl text-[var(--text-1)]">
-                  {listing.title} {listing.featured && '⭐'}
-                </h1>
-                <p className="text-sm text-[var(--text-3)]">
-                  {[listing.address_line, listing.area_name, listing.city, listing.state, listing.zip]
-                    .filter(Boolean)
-                    .join(', ') || 'Sin dirección'}
-                </p>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h1 className="font-display font-semibold text-xl text-[var(--text-1)]">{listing.title}</h1>
+                  {listing.featured && (
+                    <span
+                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide text-white"
+                      style={{ background: 'linear-gradient(135deg, var(--gold) 0%, #8f6a2c 100%)' }}
+                    >
+                      <Star className="w-3 h-3 fill-current" /> Destacada
+                    </span>
+                  )}
+                </div>
+                <p className="text-sm text-[var(--text-3)] mt-0.5">{addressText || 'Sin dirección'}</p>
               </div>
-              <p className="text-2xl font-bold text-[var(--teal-700)]">
+              <p className="text-2xl font-bold text-gradient-teal">
                 ${listing.price.toLocaleString()}
                 {listingPriceSuffix(listing)}
               </p>
             </div>
 
-            <div className="flex flex-wrap gap-4 mt-4 text-sm text-[var(--text-2)]">
+            <div className="flex flex-wrap gap-2 mt-4">
               {isLandListing(listing) ? (
-                <span className="flex items-center gap-1"><Move className="w-4 h-4" /> {listing.area_sqft.toLocaleString()} m²</span>
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium bg-[var(--bg-subtle)] text-[var(--text-2)]">
+                  <Move className="w-4 h-4 text-[var(--teal-700)]" /> {listing.area_sqft.toLocaleString()} m²
+                </span>
               ) : (
                 <>
-                  <span className="flex items-center gap-1"><Bed className="w-4 h-4" /> {listing.bedrooms} hab.</span>
-                  <span className="flex items-center gap-1"><Bath className="w-4 h-4" /> {listing.bathrooms} baños</span>
-                  <span className="flex items-center gap-1"><Move className="w-4 h-4" /> {listing.area_sqft.toLocaleString()} pies²</span>
-                  <span className="flex items-center gap-1"><Car className="w-4 h-4" /> {listing.parking_spaces} parqueos</span>
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium bg-[var(--bg-subtle)] text-[var(--text-2)]">
+                    <Bed className="w-4 h-4 text-[var(--teal-700)]" /> {listing.bedrooms} hab.
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium bg-[var(--bg-subtle)] text-[var(--text-2)]">
+                    <Bath className="w-4 h-4 text-[var(--teal-700)]" /> {listing.bathrooms} baños
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium bg-[var(--bg-subtle)] text-[var(--text-2)]">
+                    <Move className="w-4 h-4 text-[var(--teal-700)]" /> {listing.area_sqft.toLocaleString()} pies²
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium bg-[var(--bg-subtle)] text-[var(--text-2)]">
+                    <Car className="w-4 h-4 text-[var(--teal-700)]" /> {listing.parking_spaces} parqueos
+                  </span>
                 </>
               )}
             </div>
@@ -287,7 +305,9 @@ export function PropertyDetailView({
                 <p className="text-xs text-[var(--text-3)] mb-1.5">Características y comodidades</p>
                 <div className="flex flex-wrap gap-1.5">
                   {listing.amenities.map((a) => (
-                    <span key={a} className="badge">{a}</span>
+                    <span key={a} className="badge border-[var(--teal-200)] bg-[var(--teal-50)] text-[var(--teal-800)]">
+                      {a}
+                    </span>
                   ))}
                 </div>
               </div>
@@ -307,7 +327,7 @@ export function PropertyDetailView({
             </div>
 
             <div>
-              <label className="text-xs text-[var(--text-3)]">Estado del listado</label>
+              <label className="text-xs font-bold uppercase tracking-wide text-[var(--teal-700)]">Estado del listado</label>
               <div className="mt-1.5 space-y-1">
                 {LISTING_STATUSES.map((s) => {
                   const active = listing.status === s.value
@@ -365,8 +385,10 @@ export function PropertyDetailView({
             </label>
           </div>
 
-          <div className="card-surface p-4">
-            <p className="text-sm font-semibold text-[var(--text-1)] mb-3">Detalles de la propiedad</p>
+          <div className="stat-card p-4">
+            <p className="text-sm font-semibold text-[var(--text-1)] mb-3 flex items-center gap-1.5">
+              <Move className="w-3.5 h-3.5 text-[var(--teal-700)]" /> Detalles de la propiedad
+            </p>
             <dl className="space-y-2 text-sm">
               <div className="flex items-center justify-between">
                 <dt className="text-[var(--text-3)]">Tipo</dt>
@@ -396,8 +418,10 @@ export function PropertyDetailView({
             </dl>
           </div>
 
-          <div className="card-surface p-4">
-            <p className="text-sm font-semibold text-[var(--text-1)] mb-1">Agente IA</p>
+          <div className="card-glow p-4">
+            <p className="text-sm font-semibold text-[var(--text-1)] mb-1 flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5 text-[var(--teal-700)]" /> Agente IA
+            </p>
             <p className="text-xs text-[var(--text-3)] mb-3">El agente dedicado que responde llamadas sobre esta propiedad.</p>
 
             {assignedAgent && (
