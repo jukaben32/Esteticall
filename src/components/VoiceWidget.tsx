@@ -19,7 +19,7 @@ export function VoiceWidget({ businessId }: { businessId: string }) {
   const [config, setConfig] = useState<WidgetConfig | null>(null)
   const [loadError, setLoadError] = useState<string | null>(null)
   const { startCall, endCall } = useRealtimeVoice()
-  const { status, transcript, conversationId, error } = useVoiceStore()
+  const { status, transcript, error } = useVoiceStore()
 
   useEffect(() => {
     fetch(`/api/widget/public/${businessId}/config`)
@@ -32,10 +32,14 @@ export function VoiceWidget({ businessId }: { businessId: string }) {
   }, [businessId])
 
   async function handleToolCall(name: string, args: Record<string, unknown>) {
+    // Live store read, not the `conversationId` destructured above — see the
+    // matching comment in FloatingWidgetLauncher.tsx for why the closure
+    // value is stale (always null) and breaks every tool call in the call.
+    const { conversationId: liveConversationId } = useVoiceStore.getState()
     const res = await fetch('/api/ai/tools', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ conversationId, name, arguments: args }),
+      body: JSON.stringify({ conversationId: liveConversationId, name, arguments: args }),
     })
     return res.json()
   }

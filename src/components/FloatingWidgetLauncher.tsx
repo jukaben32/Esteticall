@@ -39,7 +39,7 @@ export function FloatingWidgetLauncher({
   const [open, setOpen] = useState(defaultOpen)
   const [tab, setTab] = useState<'call' | 'book'>('call')
   const { startCall, endCall } = useRealtimeVoice()
-  const { status, transcript, conversationId, error } = useVoiceStore()
+  const { status, transcript, error } = useVoiceStore()
 
   useEffect(() => {
     if (mode !== 'embed') return
@@ -47,10 +47,17 @@ export function FloatingWidgetLauncher({
   }, [open, mode])
 
   async function handleToolCall(name: string, args: Record<string, unknown>) {
+    // Read the live store instead of the `conversationId` destructured above:
+    // this closure is captured once, when the call starts, while
+    // conversationId is still null — startCall() only sets it after this
+    // function has already been handed off to useRealtimeVoice. Using the
+    // stale null here meant every tool call during the call failed with
+    // "Unknown conversation" (404), regardless of which tool the AI called.
+    const { conversationId: liveConversationId } = useVoiceStore.getState()
     const res = await fetch('/api/ai/tools', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ conversationId, name, arguments: args }),
+      body: JSON.stringify({ conversationId: liveConversationId, name, arguments: args }),
     })
     return res.json()
   }
