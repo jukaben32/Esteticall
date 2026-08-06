@@ -17,12 +17,23 @@ function resolveRecipient(to: string): string {
 
 export async function sendEmail(opts: { to: string; subject: string; html: string }) {
   const resend = getResend()
-  return resend.emails.send({
+  const result = await resend.emails.send({
     from: process.env.RESEND_FROM_EMAIL ?? 'onboarding@resend.dev',
     to: resolveRecipient(opts.to),
     subject: opts.subject,
     html: opts.html,
   })
+  // Resend's SDK resolves (doesn't throw) on API-level failures — e.g. an
+  // unverified "from" domain, or sending to an address other than the
+  // account owner's while still in sandbox mode — leaving result.error set
+  // instead. Callers fire-and-forget these (`.catch(() => {})` / `void`) so
+  // a booking never fails just because the notification email did; without
+  // this log, that kind of failure is invisible everywhere, including here.
+  if (result.error) {
+    console.error(`[email] Resend rejected "${opts.subject}" to ${opts.to}:`, result.error)
+    throw new Error(result.error.message)
+  }
+  return result
 }
 
 function formatEmailDateTime(iso: string): string {

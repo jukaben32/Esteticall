@@ -65,15 +65,15 @@ export async function PATCH(request: Request, { params }: { params: { appointmen
           listingTitle: details.listing?.title,
         }
         if (status === 'scheduled') {
-          void sendAppointmentConfirmationEmail({ ...emailOpts, scheduledAt: appointment.scheduled_at })
+          void sendAppointmentConfirmationEmail({ ...emailOpts, scheduledAt: appointment.scheduled_at }).catch(() => {})
         } else if (status === 'completed') {
-          void sendAppointmentCompletedEmail(emailOpts)
+          void sendAppointmentCompletedEmail(emailOpts).catch(() => {})
         } else if (status === 'cancelled') {
           void sendAppointmentCancelledEmail({
             ...emailOpts,
             scheduledAt: appointment.scheduled_at,
             reason: cancellationReason,
-          })
+          }).catch(() => {})
         }
       }
     } catch {

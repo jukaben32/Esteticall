@@ -113,7 +113,7 @@ export async function POST(request: Request) {
               businessName: business.name,
               scheduledAt: appointment.scheduled_at,
               listingTitle,
-            })
+            }).catch(() => {})
           }
         }
 

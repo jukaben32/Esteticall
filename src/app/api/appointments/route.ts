@@ -52,7 +52,7 @@ export async function POST(request: Request) {
         clientName: client.name,
         businessName: business.name,
         scheduledAt: appointment.scheduled_at,
-      })
+      }).catch(() => {})
     }
 
     return NextResponse.json({ appointment })
