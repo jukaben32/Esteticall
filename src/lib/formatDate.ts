@@ -30,3 +30,18 @@ export function formatDate(iso: string): string {
   const p = getParts(iso)
   return `${p.day}/${p.month}/${p.year}`
 }
+
+// "hace 7 horas" style — computed once, server-side, at request time (never
+// call this from a 'use client' render, or the ticking clock becomes a
+// hydration mismatch). Falls back to the absolute date past ~30 days.
+export function formatRelativeTime(iso: string): string {
+  const diffSeconds = Math.round((Date.now() - new Date(iso).getTime()) / 1000)
+  if (diffSeconds < 60) return 'justo ahora'
+  const diffMinutes = Math.round(diffSeconds / 60)
+  if (diffMinutes < 60) return `hace ${diffMinutes} minuto${diffMinutes === 1 ? '' : 's'}`
+  const diffHours = Math.round(diffMinutes / 60)
+  if (diffHours < 24) return `hace ${diffHours} hora${diffHours === 1 ? '' : 's'}`
+  const diffDays = Math.round(diffHours / 24)
+  if (diffDays < 30) return `hace ${diffDays} día${diffDays === 1 ? '' : 's'}`
+  return formatDate(iso)
+}
