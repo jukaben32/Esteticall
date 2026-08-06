@@ -266,6 +266,12 @@ export async function getAvailableSlots(
     const dayAvailability = availability.filter((a) => a.day_of_week === dayOfWeek)
 
     for (const window of dayAvailability) {
+      // A zero/negative slot_minutes would never advance `minutes` past
+      // `endMinutes` below — infinite loop, which on a serverless function
+      // means it hangs until Vercel kills it on timeout. Nothing in the DB
+      // schema currently rules this value out, so guard it here too.
+      if (!(window.slot_minutes > 0)) continue
+
       const [startH, startM] = window.start_time.split(':').map(Number)
       const [endH, endM] = window.end_time.split(':').map(Number)
       let minutes = startH * 60 + startM

@@ -778,3 +778,13 @@ alter table businesses add column if not exists stripe_connected boolean not nul
 alter table listings drop constraint if exists listings_property_type_check;
 alter table listings add constraint listings_property_type_check
   check (property_type in ('house', 'apartment', 'townhouse', 'commercial', 'condo', 'land', 'industrial', 'other'));
+
+-- 32. BUSINESS_AVAILABILITY — slot_minutes must be positive. A zero (or
+-- negative) value sent getAvailableSlots() into an infinite loop — the
+-- request would just hang until the serverless function timed out, which
+-- the AI voice agent surfaced to callers as "technical problem checking
+-- availability". The application code now guards against it too, but this
+-- closes the gap at the source.
+alter table business_availability drop constraint if exists business_availability_slot_minutes_check;
+alter table business_availability add constraint business_availability_slot_minutes_check
+  check (slot_minutes > 0);

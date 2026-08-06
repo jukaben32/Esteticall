@@ -160,6 +160,9 @@ export async function POST(request: Request) {
     }
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Tool execution failed'
+    // The AI just apologizes and moves on when a tool call fails, so without
+    // this the failure is invisible everywhere — nothing else logs it.
+    console.error(`[ai/tools] ${name} failed for conversation ${conversationId}:`, err)
     return NextResponse.json({ error: message }, { status: 400 })
   }
 }
