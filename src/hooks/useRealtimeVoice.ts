@@ -23,6 +23,9 @@ export function useRealtimeVoice() {
   const dcRef = useRef<RTCDataChannel | null>(null)
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const streamRef = useRef<MediaStream | null>(null)
+  // item_ids already saved via the per-turn response.output_audio_transcript.done
+  // event, so the response.done fallback below never double-saves a turn.
+  const savedAgentItemIdsRef = useRef<Set<string>>(new Set())
 
   const { setStatus, setConversationId, appendTranscript, setError, reset } = useVoiceStore()
 
@@ -57,12 +60,23 @@ export function useRealtimeVoice() {
         const dc = pc.createDataChannel('oai-events')
         dcRef.current = dc
 
+        // With server_vad turn detection the model only ever responds after
+        // detecting the caller's turn — it never speaks first on its own, so
+        // the "Open the call with: ..." greeting instruction in the system
+        // prompt was never actually triggered and the caller sat in silence
+        // until they spoke. Kicking off a response as soon as the channel is
+        // ready makes the agent greet them immediately instead.
+        dc.addEventListener('open', () => {
+          dc.send(JSON.stringify({ type: 'response.create' }))
+        })
+
         dc.addEventListener('message', async (event) => {
           const msg = JSON.parse(event.data)
 
           // Renamed in the GA Realtime API (the beta name 'response.audio_transcript.done'
           // no longer fires) — see /v1/realtime/client_secrets migration notes.
-          if (msg.type === 'response.output_audio_transcript.done') {
+          if (msg.type === 'response.output_audio_transcript.done' && msg.transcript) {
+            savedAgentItemIdsRef.current.add(msg.item_id)
             appendTranscript({ role: 'agent', text: msg.transcript, final: true })
             void fetch(`/api/conversations/${session.conversationId}/messages`, {
               method: 'POST',
@@ -70,6 +84,30 @@ export function useRealtimeVoice() {
               body: JSON.stringify({ role: 'agent', content: msg.transcript }),
             })
           }
+
+          // Fallback: the per-turn event above is documented to fire even on an
+          // interrupted/cancelled response, but if a turn's transcript is ever
+          // missed there, response.done still carries the full output — so pull
+          // any agent transcript from it that wasn't already saved above.
+          if (msg.type === 'response.done') {
+            const outputs = msg.response?.output ?? []
+            for (const item of outputs) {
+              if (savedAgentItemIdsRef.current.has(item.id)) continue
+              const transcript = (item.content ?? [])
+                .map((part: { transcript?: string }) => part.transcript)
+                .filter(Boolean)
+                .join(' ')
+              if (!transcript) continue
+              savedAgentItemIdsRef.current.add(item.id)
+              appendTranscript({ role: 'agent', text: transcript, final: true })
+              void fetch(`/api/conversations/${session.conversationId}/messages`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ role: 'agent', content: transcript }),
+              })
+            }
+          }
+
           if (msg.type === 'conversation.item.input_audio_transcription.completed') {
             appendTranscript({ role: 'caller', text: msg.transcript, final: true })
             void fetch(`/api/conversations/${session.conversationId}/messages`, {
