@@ -66,9 +66,13 @@ export async function POST(request: Request) {
       }
 
       case 'check_availability': {
-        const slots = await getAvailableSlots(supabase, businessId, {
-          fromDate: args.preferredDate ? new Date(args.preferredDate) : undefined,
-        })
+        // The model is instructed to convert relative dates ("mañana") to
+        // YYYY-MM-DD itself, but it's still free-text from a live voice call —
+        // an unparseable value (e.g. it passes "mañana" verbatim) must not
+        // crash the whole request, just fall back to "starting now".
+        const parsedDate = args.preferredDate ? new Date(args.preferredDate) : undefined
+        const fromDate = parsedDate && !isNaN(parsedDate.getTime()) ? parsedDate : undefined
+        const slots = await getAvailableSlots(supabase, businessId, { fromDate })
         return NextResponse.json({ slots: slots.slice(0, 10) })
       }
 

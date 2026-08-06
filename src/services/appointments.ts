@@ -237,7 +237,10 @@ export async function getAvailableSlots(
   businessId: string,
   opts: { fromDate?: Date; daysAhead?: number } = {}
 ): Promise<AvailableSlot[]> {
-  const fromDate = opts.fromDate ?? new Date()
+  // An invalid Date's .toISOString() throws inside the loop below (in
+  // toSantoDomingoParts) — fall back to "now" instead of crashing the whole
+  // request over a caller-supplied fromDate that didn't parse.
+  const fromDate = opts.fromDate && !isNaN(opts.fromDate.getTime()) ? opts.fromDate : new Date()
   const daysAhead = opts.daysAhead ?? 7
 
   const { data: availability, error: availError } = await supabase

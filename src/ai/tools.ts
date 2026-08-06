@@ -113,9 +113,16 @@ export function buildSystemPrompt(opts: {
         .join('\n')
     : 'No listings are currently marked visible to AI agents.'
 
+  // Santo Domingo is a fixed UTC-4 year-round (no DST since 1974), so this
+  // offset trick reliably reads "today" there regardless of server timezone.
+  const todayInSantoDomingo = new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString().slice(0, 10)
+
   return [
     `You are ${agent.name}, the ${agent.specialty} for ${business.name}, a real estate business.`,
     `Personality: ${agent.personality}. Keep responses short and conversational — this is a phone call, not a chat.`,
+    `Today's date is ${todayInSantoDomingo} (America/Santo_Domingo time). When the caller says "tomorrow", "next Friday", etc.,`,
+    'convert it to a real YYYY-MM-DD date yourself before passing it as preferredDate to check_availability — never pass',
+    'the relative word itself, and never guess a date without doing this math.',
     agent.greeting_message ? `Open the call with: "${agent.greeting_message}"` : '',
     '',
     'You can discuss the following listings (use search_listings / get_listing_details for specifics instead of guessing):',
