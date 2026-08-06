@@ -91,14 +91,22 @@ function CallDetailsModal({ entry, onClose }: { entry: CallLogEntry; onClose: ()
 function ConversationDetails({ conv, onClose }: { conv: ConversationWithClient; onClose: () => void }) {
   const [messages, setMessages] = useState<ConversationMessage[]>([])
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
 
   useEffect(() => {
     let cancelled = false
     setLoading(true)
+    setLoadError(false)
     fetch(`/api/conversations/${conv.id}/messages`)
-      .then((res) => (res.ok ? res.json() : { messages: [] }))
+      .then((res) => {
+        if (!res.ok) throw new Error(`${res.status}`)
+        return res.json()
+      })
       .then(({ messages: fetched }) => {
         if (!cancelled) setMessages(fetched ?? [])
+      })
+      .catch(() => {
+        if (!cancelled) setLoadError(true)
       })
       .finally(() => {
         if (!cancelled) setLoading(false)
@@ -140,7 +148,15 @@ function ConversationDetails({ conv, onClose }: { conv: ConversationWithClient; 
           <MessageSquareText className="w-3.5 h-3.5" /> Transcripción
         </p>
         {loading && <p className="text-sm text-[var(--text-3)]">Cargando transcripción…</p>}
-        {!loading && messages.length === 0 && (
+        {!loading && loadError && (
+          <div className="flex flex-col items-center justify-center gap-2 py-6 text-center">
+            <span className="w-9 h-9 rounded-full bg-red-50 text-red-600 grid place-items-center">
+              <MessageSquareText className="w-4 h-4" />
+            </span>
+            <p className="text-sm text-red-600">No se pudo cargar la transcripción — intenta de nuevo.</p>
+          </div>
+        )}
+        {!loading && !loadError && messages.length === 0 && (
           <div className="flex flex-col items-center justify-center gap-2 py-6 text-center">
             <span className="w-9 h-9 rounded-full bg-[var(--bg-subtle)] text-[var(--text-4)] grid place-items-center">
               <MessageSquareText className="w-4 h-4" />

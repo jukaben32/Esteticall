@@ -94,7 +94,10 @@ export async function POST(request: Request, { params }: { params: { agentId: st
         tools: REALTIME_TOOLS,
         audio: {
           output: { voice: agent.voice },
-          input: { turn_detection: turnDetection },
+          // transcription defaults to off in the GA API — without it, the
+          // caller's side of the conversation is never transcribed, so
+          // conversation.item.input_audio_transcription.completed never fires.
+          input: { turn_detection: turnDetection, transcription: { model: 'gpt-4o-mini-transcribe' } },
         },
       },
     }),

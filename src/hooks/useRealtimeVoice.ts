@@ -60,7 +60,9 @@ export function useRealtimeVoice() {
         dc.addEventListener('message', async (event) => {
           const msg = JSON.parse(event.data)
 
-          if (msg.type === 'response.audio_transcript.done') {
+          // Renamed in the GA Realtime API (the beta name 'response.audio_transcript.done'
+          // no longer fires) — see /v1/realtime/client_secrets migration notes.
+          if (msg.type === 'response.output_audio_transcript.done') {
             appendTranscript({ role: 'agent', text: msg.transcript, final: true })
             void fetch(`/api/conversations/${session.conversationId}/messages`, {
               method: 'POST',
