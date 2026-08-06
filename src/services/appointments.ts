@@ -3,6 +3,7 @@ import type { Database } from '@/types/database'
 import type { Appointment, AppointmentWithDetails, Client, BusinessService, Listing } from '@/types'
 import { PLAN_LIMITS, isWithinLimit } from '@/constants'
 import type { PlanId, AvailableSlot } from '@/types'
+import { formatDateTime } from '@/lib/formatDate'
 
 type DB = SupabaseClient<Database>
 
@@ -158,7 +159,7 @@ export async function createAppointment(
     business_id: businessId,
     type: 'appointment_booked',
     title: 'New viewing booked',
-    body: `A viewing was scheduled for ${new Date(input.scheduledAt).toLocaleString()}`,
+    body: `Se agendó una visita para el ${formatDateTime(input.scheduledAt)}`,
   })
 
   return data

@@ -21,6 +21,7 @@ export default async function ClientPortalPage({ params }: { params: { appointme
   const when = new Date(appointment.scheduled_at).toLocaleString('en-US', {
     dateStyle: 'full',
     timeStyle: 'short',
+    timeZone: 'America/Santo_Domingo',
   })
 
   return (

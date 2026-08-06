@@ -37,8 +37,11 @@ function dayLabel(key: string): string {
   })
 }
 
+// Server runs in UTC on Vercel — America/Santo_Domingo is a fixed UTC-4 all
+// year (no DST since 1974), so a plain offset subtraction gives the right
+// local hour without needing Intl.DateTimeFormat here.
 function greeting(): string {
-  const hour = new Date().getHours()
+  const hour = new Date(Date.now() - 4 * 60 * 60 * 1000).getUTCHours()
   if (hour < 12) return 'Buenos días'
   if (hour < 19) return 'Buenas tardes'
   return 'Buenas noches'

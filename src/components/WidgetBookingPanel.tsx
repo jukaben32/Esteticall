@@ -121,8 +121,19 @@ export function WidgetBookingPanel({
         <p className="text-sm font-semibold">Viewing Requested!</p>
         <p className={`text-xs ${subtleText}`}>
           We will confirm your viewing for{' '}
-          {when.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })} at{' '}
-          {when.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}.
+          {when.toLocaleDateString(undefined, {
+            weekday: 'short',
+            month: 'short',
+            day: 'numeric',
+            timeZone: 'America/Santo_Domingo',
+          })}{' '}
+          at{' '}
+          {when.toLocaleTimeString(undefined, {
+            hour: 'numeric',
+            minute: '2-digit',
+            timeZone: 'America/Santo_Domingo',
+          })}
+          .
         </p>
         <p className={`text-xs ${subtleText}`}>Check your email for confirmation details.</p>
       </div>
