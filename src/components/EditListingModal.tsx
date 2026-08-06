@@ -173,7 +173,7 @@ export function EditListingModal({ listing, agents, onSaved, onClose }: EditList
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/40 flex items-start sm:items-center justify-center p-3 overflow-y-auto" onClick={onClose}>
+    <div className="fixed inset-0 z-50 bg-black/40 flex items-start justify-center p-3 overflow-y-auto" onClick={onClose}>
       <form
         onSubmit={handleSave}
         onClick={(e) => e.stopPropagation()}

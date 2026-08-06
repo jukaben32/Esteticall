@@ -484,7 +484,7 @@ export function PropertyDetailView({
 
       {showAllPhotos && (
         <div
-          className="fixed inset-0 z-[60] bg-black/60 flex items-start sm:items-center justify-center p-4 overflow-y-auto"
+          className="fixed inset-0 z-[60] bg-black/60 flex items-start justify-center p-4 overflow-y-auto"
           onClick={() => setShowAllPhotos(false)}
         >
           <div className="card-raised w-full max-w-2xl my-8 p-5" onClick={(e) => e.stopPropagation()}>

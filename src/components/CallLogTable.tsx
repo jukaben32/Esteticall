@@ -70,7 +70,7 @@ function CallDetailsModal({ conv, onClose }: { conv: ConversationWithClient; onC
   }, [conv.id])
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/40 flex items-start sm:items-center justify-center p-3 overflow-y-auto" onClick={onClose}>
+    <div className="fixed inset-0 z-50 bg-black/40 flex items-start justify-center p-3 overflow-y-auto" onClick={onClose}>
       <div onClick={(e) => e.stopPropagation()} className="card-raised w-full max-w-lg my-6 p-5 space-y-4">
         <div className="flex items-start justify-between gap-3">
           <div>

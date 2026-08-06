@@ -28,7 +28,7 @@ export function WidgetPreviewModal({
   }
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-start sm:items-center justify-center bg-black/40 p-4 overflow-y-auto">
+    <div className="fixed inset-0 z-[60] flex items-start justify-center bg-black/40 p-4 overflow-y-auto">
       <div className="card-raised w-full max-w-lg my-8">
         <div className="flex items-center justify-between p-5 pb-0">
           <h2 className="font-display font-semibold text-lg text-[var(--text-1)]">Widget Preview</h2>
