@@ -1,4 +1,4 @@
-import { PhoneCall, Clock, CalendarCheck, TrendingUp } from 'lucide-react'
+import { PhoneCall, Clock, CalendarCheck, TrendingUp, CalendarDays, PhoneForwarded } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { getBusinessForOwner } from '@/services/businesses'
 import { listConversationsForBusiness } from '@/services/conversations'
@@ -83,6 +83,23 @@ export default async function AnalyticsPage() {
     ? Math.round((bookedCount / conversations.length) * 100)
     : 0
 
+  // "Booked" here means the reservation was created in this window (created_at),
+  // not that the visit itself falls in it (scheduled_at can be any future date).
+  const now = new Date()
+  const startOfToday = new Date(`${dayKey(now.toISOString())}T00:00:00Z`)
+  const startOfWeek = new Date(startOfToday)
+  startOfWeek.setUTCDate(startOfWeek.getUTCDate() - ((startOfWeek.getUTCDay() + 6) % 7)) // Monday
+  const startOfMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1))
+
+  const bookedSince = (since: Date) => appointments.filter((a) => new Date(a.created_at) >= since).length
+  const bookedToday = bookedSince(startOfToday)
+  const bookedThisWeek = bookedSince(startOfWeek)
+  const bookedThisMonth = bookedSince(startOfMonth)
+
+  // No hay un campo dedicado de "callback solicitado" en el esquema — se usa
+  // el outcome "escalated" como proxy (ver /api/ai/tools request_callback).
+  const callbacksRequested = conversations.filter((c) => c.outcome === 'escalated').length
+
   return (
     <div className="space-y-6">
       <div>
@@ -96,6 +113,36 @@ export default async function AnalyticsPage() {
         <StatCard icon={TrendingUp} label="Tasa de conversión" value={`${conversionRate}%`} />
       </div>
       <AnalyticsCharts daily={daily} outcomes={outcomes} />
+
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <PeriodStatCard icon={CalendarCheck} label="Hoy" value={bookedToday} subtitle={`${bookedToday} agendadas`} />
+        <PeriodStatCard icon={CalendarDays} label="Esta semana" value={bookedThisWeek} subtitle={`${bookedThisWeek} agendadas`} />
+        <PeriodStatCard icon={CalendarDays} label="Este mes" value={bookedThisMonth} subtitle={`${bookedThisMonth} agendadas`} />
+        <PeriodStatCard icon={PhoneForwarded} label="Callbacks solicitados" value={callbacksRequested} />
+      </div>
+    </div>
+  )
+}
+
+function PeriodStatCard({
+  icon: Icon,
+  label,
+  value,
+  subtitle,
+}: {
+  icon: React.ComponentType<{ className?: string }>
+  label: string
+  value: number | string
+  subtitle?: string
+}) {
+  return (
+    <div className="stat-card p-4">
+      <div className="flex items-center justify-between">
+        <p className="text-xs font-bold uppercase tracking-wide text-[var(--text-3)]">{label}</p>
+        <Icon className="w-4 h-4 text-[var(--teal-600)]" />
+      </div>
+      <p className="font-display text-2xl font-semibold mt-1 text-[var(--teal-700)]">{value}</p>
+      {subtitle && <p className="text-xs text-[var(--text-4)] mt-0.5">{subtitle}</p>}
     </div>
   )
 }
