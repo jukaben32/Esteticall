@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { Eye, CalendarCheck, X, CalendarX2 } from 'lucide-react'
+import { Banknote, CalendarCheck, CalendarX2, CheckCircle2, CreditCard, Eye, Search, X, XCircle } from 'lucide-react'
 import type { AppointmentWithDetails, BusinessService, Listing } from '@/types'
 import { APPOINTMENT_STATUSES } from '@/constants'
 import { formatDateTime } from '@/lib/formatDate'
@@ -12,6 +12,31 @@ import {
   PAYMENT_LABELS,
 } from '@/lib/appointmentFormat'
 import { NewViewingModal } from '@/components/NewViewingModal'
+
+function formatMoney(value: number | null | undefined): string {
+  if (!value) return '-'
+  return '$' + value.toLocaleString()
+}
+
+function initials(name: string | null | undefined): string {
+  const clean = name?.trim()
+  if (!clean) return '?'
+  const parts = clean.split(/\s+/).slice(0, 2)
+  return parts.map((part) => part.charAt(0).toUpperCase()).join('')
+}
+
+function paymentLabel(status: string): string {
+  if (status === 'paid') return 'Pagado (Stripe)'
+  return PAYMENT_LABELS[status] ?? status
+}
+
+function serviceLabel(appt: AppointmentWithDetails): string {
+  return appt.service?.name ?? 'Sin servicio asignado'
+}
+
+function listingLabel(appt: AppointmentWithDetails): string {
+  return appt.listing?.title ?? 'Sin propiedad asignada'
+}
 
 function ViewingDetailsModal({ appt, onClose }: { appt: AppointmentWithDetails; onClose: () => void }) {
   return (
@@ -26,8 +51,8 @@ function ViewingDetailsModal({ appt, onClose }: { appt: AppointmentWithDetails; 
               <h2 className="font-display font-semibold text-lg text-[var(--text-1)]">Detalles de la cita</h2>
               <p className="text-xs text-[var(--text-3)] mt-0.5">
                 {formatDateTime(appt.scheduled_at)}
-                {appt.service ? ` · ${appt.service.name}` : ''}
-                {appt.listing ? ` · ${appt.listing.title}` : ''}
+                {appt.service ? ` - ${appt.service.name}` : ''}
+                {appt.listing ? ` - ${appt.listing.title}` : ''}
               </p>
             </div>
           </div>
@@ -41,32 +66,38 @@ function ViewingDetailsModal({ appt, onClose }: { appt: AppointmentWithDetails; 
             {STATUS_LABELS[appt.status] ?? appt.status}
           </span>
           <span className={`badge border-transparent ${PAYMENT_STYLES[appt.payment_status] ?? ''}`}>
-            {PAYMENT_LABELS[appt.payment_status] ?? appt.payment_status}
+            {paymentLabel(appt.payment_status)}
           </span>
         </div>
 
         <div className="grid grid-cols-2 gap-3 bg-[var(--bg-raised)] rounded-lg p-3 text-sm">
           <div>
             <p className="text-[10px] uppercase tracking-wide text-[var(--text-3)]">Cliente</p>
-            <p className="text-[var(--text-1)] font-medium truncate">{appt.client?.name ?? '—'}</p>
+            <p className="text-[var(--text-1)] font-medium truncate">{appt.client?.name ?? '-'}</p>
           </div>
           <div>
-            <p className="text-[10px] uppercase tracking-wide text-[var(--text-3)]">Teléfono</p>
-            <p className="text-[var(--text-1)] font-medium truncate">{appt.client?.phone ?? '—'}</p>
+            <p className="text-[10px] uppercase tracking-wide text-[var(--text-3)]">Telefono</p>
+            <p className="text-[var(--text-1)] font-medium truncate">{appt.client?.phone ?? '-'}</p>
           </div>
           <div>
             <p className="text-[10px] uppercase tracking-wide text-[var(--text-3)]">Correo</p>
-            <p className="text-[var(--text-1)] font-medium truncate">{appt.client?.email ?? '—'}</p>
+            <p className="text-[var(--text-1)] font-medium truncate">{appt.client?.email ?? '-'}</p>
           </div>
           <div>
             <p className="text-[10px] uppercase tracking-wide text-[var(--text-3)]">Presupuesto</p>
-            <p className="text-[var(--text-1)] font-medium truncate">
-              {appt.client?.budget ? `$${appt.client.budget.toLocaleString()}` : '—'}
-            </p>
+            <p className="text-[var(--text-1)] font-medium truncate">{formatMoney(appt.client?.budget)}</p>
+          </div>
+          <div>
+            <p className="text-[10px] uppercase tracking-wide text-[var(--text-3)]">Servicio</p>
+            <p className="text-[var(--text-1)] font-medium truncate">{serviceLabel(appt)}</p>
+          </div>
+          <div>
+            <p className="text-[10px] uppercase tracking-wide text-[var(--text-3)]">Pago</p>
+            <p className="text-[var(--text-1)] font-medium truncate">{paymentLabel(appt.payment_status)}</p>
           </div>
           <div className="col-span-2">
-            <p className="text-[10px] uppercase tracking-wide text-[var(--text-3)]">No. de pre-aprobación</p>
-            <p className="text-[var(--text-1)] font-medium truncate">{appt.client?.pre_approval_number ?? '—'}</p>
+            <p className="text-[10px] uppercase tracking-wide text-[var(--text-3)]">No. de pre-aprobacion</p>
+            <p className="text-[var(--text-1)] font-medium truncate">{appt.client?.pre_approval_number ?? '-'}</p>
           </div>
         </div>
 
@@ -79,7 +110,7 @@ function ViewingDetailsModal({ appt, onClose }: { appt: AppointmentWithDetails; 
 
         {appt.status === 'cancelled' && appt.cancellation_reason && (
           <div>
-            <p className="text-[10px] uppercase tracking-wide text-[var(--text-3)] mb-1">Motivo de cancelación</p>
+            <p className="text-[10px] uppercase tracking-wide text-[var(--text-3)] mb-1">Motivo de cancelacion</p>
             <p className="text-sm text-[var(--text-2)]">{appt.cancellation_reason}</p>
           </div>
         )}
@@ -103,13 +134,16 @@ export function ViewingsManager({
   const [showForm, setShowForm] = useState(false)
   const [viewing, setViewing] = useState<AppointmentWithDetails | null>(null)
 
+  const confirmedCount = appointments.filter((a) => a.status === 'scheduled').length
+  const pendingCount = appointments.filter((a) => a.status === 'pending_confirmation').length
+
   const filtered = useMemo(
     () =>
       appointments.filter((a) => {
         if (status !== 'all' && a.status !== status) return false
         if (search) {
           const q = search.toLowerCase()
-          const haystack = `${a.client?.name ?? ''} ${a.client?.phone ?? ''} ${a.client?.email ?? ''}`.toLowerCase()
+          const haystack = `${a.client?.name ?? ''} ${a.client?.phone ?? ''} ${a.client?.email ?? ''} ${a.service?.name ?? ''} ${a.listing?.title ?? ''}`.toLowerCase()
           if (!haystack.includes(q)) return false
         }
         return true
@@ -117,99 +151,244 @@ export function ViewingsManager({
     [appointments, status, search]
   )
 
-  async function setAppointmentStatus(id: string, nextStatus: string) {
-    let cancellationReason: string | undefined
-    if (nextStatus === 'cancelled') {
-      cancellationReason = window.prompt('Motivo de cancelación (opcional):') ?? undefined
-    }
-    const res = await fetch(`/api/appointments/${id}`, {
+  async function patchAppointment(appt: AppointmentWithDetails, body: Record<string, unknown>) {
+    const res = await fetch(`/api/appointments/${appt.id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status: nextStatus, cancellationReason }),
+      body: JSON.stringify(body),
     })
     if (res.ok) {
       const { appointment } = await res.json()
-      setAppointments((prev) => prev.map((a) => (a.id === appointment.id ? { ...a, ...appointment } : a)))
+      const updated = { ...appt, ...appointment }
+      setAppointments((prev) => prev.map((a) => (a.id === updated.id ? { ...a, ...updated } : a)))
+      setViewing((prev) => (prev?.id === updated.id ? { ...prev, ...updated } : prev))
     }
+  }
+
+  async function setAppointmentStatus(appt: AppointmentWithDetails, nextStatus: string) {
+    let cancellationReason: string | undefined
+    if (nextStatus === 'cancelled') {
+      cancellationReason = window.prompt('Motivo de cancelacion (opcional):') ?? undefined
+    }
+    await patchAppointment(appt, { status: nextStatus, cancellationReason })
+  }
+
+  async function setAppointmentPayment(appt: AppointmentWithDetails, paymentStatus: AppointmentWithDetails['payment_status']) {
+    await patchAppointment(appt, { payment_status: paymentStatus })
+  }
+
+  function renderActions(appt: AppointmentWithDetails) {
+    const canMarkCash = appt.payment_status === 'pending' || appt.payment_status === 'not_required' || appt.payment_status === 'refunded'
+    const canResetCash = appt.payment_status === 'cash'
+    const canComplete = appt.status !== 'completed' && appt.status !== 'cancelled'
+    const canCancel = appt.status !== 'cancelled'
+
+    return (
+      <div className="flex items-center justify-end gap-1.5">
+        <button
+          type="button"
+          onClick={() => setViewing(appt)}
+          title="Ver detalles"
+          className="w-7 h-7 rounded-full bg-[var(--bg-subtle)] text-[var(--teal-700)] grid place-items-center hover:bg-[var(--teal-100)]"
+        >
+          <Eye className="w-3.5 h-3.5" />
+        </button>
+        {canMarkCash && (
+          <button
+            type="button"
+            onClick={() => setAppointmentPayment(appt, 'cash')}
+            title="Marcar pagado en efectivo"
+            className="w-7 h-7 rounded-full bg-[var(--bg-raised)] text-[var(--teal-700)] grid place-items-center hover:bg-[var(--teal-50)]"
+          >
+            <Banknote className="w-3.5 h-3.5" />
+          </button>
+        )}
+        {canResetCash && (
+          <button
+            type="button"
+            onClick={() => setAppointmentPayment(appt, 'pending')}
+            title="Marcar pago pendiente"
+            className="w-7 h-7 rounded-full bg-[var(--bg-raised)] text-[var(--gold)] grid place-items-center hover:bg-[var(--teal-50)]"
+          >
+            <CreditCard className="w-3.5 h-3.5" />
+          </button>
+        )}
+        {canComplete && (
+          <button
+            type="button"
+            onClick={() => setAppointmentStatus(appt, 'completed')}
+            title="Marcar completada"
+            className="w-7 h-7 rounded-full bg-[var(--bg-raised)] text-[var(--teal-700)] grid place-items-center hover:bg-[var(--teal-50)]"
+          >
+            <CheckCircle2 className="w-3.5 h-3.5" />
+          </button>
+        )}
+        {canCancel && (
+          <button
+            type="button"
+            onClick={() => setAppointmentStatus(appt, 'cancelled')}
+            title="Cancelar cita"
+            className="w-7 h-7 rounded-full bg-red-50 text-red-600 grid place-items-center hover:bg-red-100"
+          >
+            <XCircle className="w-3.5 h-3.5" />
+          </button>
+        )}
+      </div>
+    )
   }
 
   return (
     <div>
-      <div className="flex flex-wrap items-center gap-2 mb-4">
-        <input
-          placeholder="Buscar por nombre, teléfono o correo..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="input-field flex-1 min-w-[200px]"
-        />
-        <select value={status} onChange={(e) => setStatus(e.target.value)} className="input-field w-auto">
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-2.5">
+          <span className="w-9 h-9 rounded-full bg-[var(--teal-50)] text-[var(--teal-700)] grid place-items-center shrink-0">
+            <CalendarCheck className="w-4 h-4" />
+          </span>
+          <div>
+            <h1 className="font-display font-semibold text-xl text-[var(--text-1)]">Citas de propiedades</h1>
+            <p className="text-sm text-[var(--text-3)]">
+              {appointments.length} en total - {confirmedCount} confirmadas - {pendingCount} pendientes
+            </p>
+          </div>
+        </div>
+        <button className="btn-primary sm:shrink-0" onClick={() => setShowForm(true)}>+ Nueva cita</button>
+      </div>
+
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center mb-4">
+        <label className="relative flex-1 min-w-[220px]">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-4)]" />
+          <input
+            placeholder="Buscar por nombre, telefono, correo, servicio o propiedad..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="input-field pl-9"
+          />
+        </label>
+        <select value={status} onChange={(e) => setStatus(e.target.value)} className="input-field sm:w-52">
           <option value="all">Todos los estados</option>
           {APPOINTMENT_STATUSES.map((s) => (
             <option key={s} value={s}>{STATUS_LABELS[s] ?? s}</option>
           ))}
         </select>
-        <button className="btn-primary" onClick={() => setShowForm(true)}>+ Nueva cita</button>
       </div>
 
-      <div className="divide-y divide-[var(--border)]">
+      <div className="hidden md:block overflow-x-auto rounded-2xl border border-[var(--border)] bg-white">
+        <table className="w-full min-w-[980px] text-sm">
+          <thead className="bg-[var(--teal-50)]/80 text-[10px] uppercase tracking-widest text-[var(--teal-800)]">
+            <tr>
+              <th className="px-4 py-3 text-left font-bold">Cliente</th>
+              <th className="px-4 py-3 text-left font-bold">Presupuesto / Pre-aprobacion</th>
+              <th className="px-4 py-3 text-left font-bold">Servicio</th>
+              <th className="px-4 py-3 text-left font-bold">Fecha</th>
+              <th className="px-4 py-3 text-left font-bold">Pago</th>
+              <th className="px-4 py-3 text-left font-bold">Estado</th>
+              <th className="px-4 py-3 text-right font-bold">Acciones</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-[var(--border)]">
+            {filtered.map((appt) => (
+              <tr key={appt.id} className="align-middle hover:bg-[var(--bg-page)]/70 transition-colors">
+                <td className="px-4 py-3">
+                  <div className="flex items-center gap-2.5">
+                    <span className="w-8 h-8 rounded-full bg-[var(--teal-100)] text-[var(--teal-800)] grid place-items-center text-sm font-semibold shrink-0">
+                      {initials(appt.client?.name)}
+                    </span>
+                    <div className="min-w-0">
+                      <p className="font-semibold text-[var(--text-1)] truncate">{appt.client?.name ?? 'Cliente sin identificar'}</p>
+                      <p className="text-[11px] text-[var(--text-3)] truncate">{appt.client?.phone ?? '-'}</p>
+                      <p className="text-[11px] text-[var(--text-4)] truncate">{appt.client?.email ?? '-'}</p>
+                    </div>
+                  </div>
+                </td>
+                <td className="px-4 py-3 text-xs text-[var(--text-2)]">
+                  <p>{appt.client?.budget ? `Presupuesto: ${formatMoney(appt.client.budget)}` : '-'}</p>
+                  {appt.client?.pre_approval_number && (
+                    <p className="mt-1 text-[var(--text-4)]">Pre-aprobacion: {appt.client.pre_approval_number}</p>
+                  )}
+                </td>
+                <td className="px-4 py-3 text-xs text-[var(--text-2)]">
+                  <p className="font-medium text-[var(--text-1)]">{serviceLabel(appt)}</p>
+                  <p className="mt-1 text-[var(--text-4)] truncate max-w-[160px]">{listingLabel(appt)}</p>
+                </td>
+                <td className="px-4 py-3 text-xs text-[var(--text-2)] whitespace-nowrap">{formatDateTime(appt.scheduled_at)}</td>
+                <td className="px-4 py-3">
+                  <span className={`badge border-transparent ${PAYMENT_STYLES[appt.payment_status] ?? ''}`}>
+                    {paymentLabel(appt.payment_status)}
+                  </span>
+                </td>
+                <td className="px-4 py-3">
+                  <span className={`badge border-transparent ${STATUS_STYLES[appt.status] ?? ''}`}>
+                    {STATUS_LABELS[appt.status] ?? appt.status}
+                  </span>
+                </td>
+                <td className="px-4 py-3">
+                  <div className="flex items-center justify-end gap-2">
+                    {renderActions(appt)}
+                    <select
+                      value={appt.status}
+                      onChange={(e) => setAppointmentStatus(appt, e.target.value)}
+                      className={`input-field w-36 text-xs py-1 border-transparent ${STATUS_STYLES[appt.status] ?? ''}`}
+                    >
+                      {APPOINTMENT_STATUSES.map((s) => (
+                        <option key={s} value={s}>{STATUS_LABELS[s] ?? s}</option>
+                      ))}
+                    </select>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="md:hidden divide-y divide-[var(--border)] rounded-2xl border border-[var(--border)] bg-white px-3">
         {filtered.map((appt) => (
-          <div key={appt.id} className="py-3 flex flex-col sm:flex-row sm:items-center gap-2">
-            <div className="flex-1 min-w-0 flex items-center gap-2.5">
-              <span className="w-8 h-8 rounded-full bg-[var(--teal-100)] text-[var(--teal-800)] grid place-items-center text-sm font-semibold shrink-0">
-                {(appt.client?.name ?? '?').charAt(0).toUpperCase()}
+          <div key={appt.id} className="py-3">
+            <div className="flex items-start gap-2.5">
+              <span className="w-9 h-9 rounded-full bg-[var(--teal-100)] text-[var(--teal-800)] grid place-items-center text-sm font-semibold shrink-0">
+                {initials(appt.client?.name)}
               </span>
-              <div className="min-w-0">
-                <p className="font-medium text-[var(--text-1)] truncate">
-                  {appt.client?.name ?? 'Cliente sin identificar'}
-                </p>
-                <p className="text-xs text-[var(--text-3)] truncate">
-                  {[
-                    appt.client?.budget ? `Presupuesto: $${appt.client.budget.toLocaleString()}` : null,
-                    appt.client?.pre_approval_number ? `Pre-aprobación: ${appt.client.pre_approval_number}` : null,
-                  ]
-                    .filter(Boolean)
-                    .join(' · ') || '—'}
-                </p>
-                <p className="text-xs text-[var(--text-4)]">
-                  {appt.service?.name ?? 'Sin servicio asignado'}
-                  {appt.listing ? ` · ${appt.listing.title}` : ' · Sin propiedad asignada'} · {formatDateTime(appt.scheduled_at)}
-                </p>
+              <div className="min-w-0 flex-1">
+                <p className="font-semibold text-[var(--text-1)] truncate">{appt.client?.name ?? 'Cliente sin identificar'}</p>
+                <p className="text-xs text-[var(--text-3)] truncate">{appt.client?.phone ?? '-'} - {appt.client?.email ?? '-'}</p>
+                <div className="mt-2 grid grid-cols-2 gap-2 text-xs text-[var(--text-2)]">
+                  <p><span className="text-[var(--text-4)]">Servicio:</span> {serviceLabel(appt)}</p>
+                  <p><span className="text-[var(--text-4)]">Presupuesto:</span> {formatMoney(appt.client?.budget)}</p>
+                  <p className="col-span-2"><span className="text-[var(--text-4)]">Fecha:</span> {formatDateTime(appt.scheduled_at)}</p>
+                  <p className="col-span-2"><span className="text-[var(--text-4)]">Propiedad:</span> {listingLabel(appt)}</p>
+                </div>
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  <span className={`badge border-transparent ${PAYMENT_STYLES[appt.payment_status] ?? ''}`}>{paymentLabel(appt.payment_status)}</span>
+                  <span className={`badge border-transparent ${STATUS_STYLES[appt.status] ?? ''}`}>{STATUS_LABELS[appt.status] ?? appt.status}</span>
+                </div>
               </div>
             </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <span className={`badge border-transparent ${PAYMENT_STYLES[appt.payment_status] ?? ''}`}>
-                {PAYMENT_LABELS[appt.payment_status] ?? appt.payment_status}
-              </span>
+            <div className="mt-3 flex items-center justify-between gap-2">
+              {renderActions(appt)}
               <select
                 value={appt.status}
-                onChange={(e) => setAppointmentStatus(appt.id, e.target.value)}
-                className={`input-field w-auto text-xs py-1 border-transparent ${STATUS_STYLES[appt.status] ?? ''}`}
+                onChange={(e) => setAppointmentStatus(appt, e.target.value)}
+                className={`input-field w-40 text-xs py-1 border-transparent ${STATUS_STYLES[appt.status] ?? ''}`}
               >
                 {APPOINTMENT_STATUSES.map((s) => (
                   <option key={s} value={s}>{STATUS_LABELS[s] ?? s}</option>
                 ))}
               </select>
-              <button
-                onClick={() => setViewing(appt)}
-                title="Ver detalles"
-                className="p-1.5 rounded-lg text-[var(--text-3)] hover:bg-[var(--bg-raised)] hover:text-[var(--text-1)]"
-              >
-                <Eye className="w-4 h-4" />
-              </button>
             </div>
           </div>
         ))}
-        {filtered.length === 0 && (
-          <div className="flex flex-col items-center justify-center gap-2 py-8 text-center">
-            <span className="w-10 h-10 rounded-full bg-[var(--bg-subtle)] text-[var(--text-4)] grid place-items-center">
-              <CalendarX2 className="w-5 h-5" />
-            </span>
-            <p className="text-sm text-[var(--text-3)]">
-              {appointments.length === 0 ? 'Todavía no hay citas registradas.' : 'Ninguna cita coincide con este filtro.'}
-            </p>
-          </div>
-        )}
       </div>
+
+      {filtered.length === 0 && (
+        <div className="flex flex-col items-center justify-center gap-2 py-8 text-center">
+          <span className="w-10 h-10 rounded-full bg-[var(--bg-subtle)] text-[var(--text-4)] grid place-items-center">
+            <CalendarX2 className="w-5 h-5" />
+          </span>
+          <p className="text-sm text-[var(--text-3)]">
+            {appointments.length === 0 ? 'Todavia no hay citas registradas.' : 'Ninguna cita coincide con este filtro.'}
+          </p>
+        </div>
+      )}
 
       {showForm && (
         <NewViewingModal
