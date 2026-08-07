@@ -71,6 +71,9 @@ interface FormState {
   clientsServed: string
   satisfactionPct: string
   aboutTitle: string
+  aboutStory: string
+  aboutPhotoUrl: string
+  trustBadgesText: string
   featuredServiceIds: string[]
   footerTagline: string
   footerCopyright: string
@@ -104,6 +107,9 @@ function toForm(content: WebsiteContent): FormState {
     clientsServed: w.clients_served?.toString() ?? '',
     satisfactionPct: w.satisfaction_pct?.toString() ?? '',
     aboutTitle: w.about_title,
+    aboutStory: w.about_story ?? '',
+    aboutPhotoUrl: w.about_photo_url ?? '',
+    trustBadgesText: (w.trust_badges ?? []).join('\n'),
     featuredServiceIds: w.featured_service_ids ?? [],
     footerTagline: w.footer_tagline ?? '',
     footerCopyright: w.footer_copyright ?? '',
@@ -216,10 +222,27 @@ export function WebsiteEditor({
   const [openSection, setOpenSection] = useState<string | null>('branding')
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [aboutPhotoBusy, setAboutPhotoBusy] = useState(false)
+  const [aboutPhotoError, setAboutPhotoError] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   function patch(p: Partial<FormState>) {
     setForm((f) => ({ ...f, ...p }))
+  }
+
+  async function handleUploadAboutPhoto(file: File) {
+    setAboutPhotoBusy(true)
+    setAboutPhotoError(null)
+    const body = new FormData()
+    body.append('file', file)
+    const res = await fetch('/api/website/photo', { method: 'POST', body })
+    const data = await res.json()
+    setAboutPhotoBusy(false)
+    if (!res.ok) {
+      setAboutPhotoError(data.error ?? 'No se pudo subir la foto')
+      return
+    }
+    patch({ aboutPhotoUrl: data.url })
   }
 
   const siteUrl = useMemo(
@@ -251,6 +274,12 @@ export function WebsiteEditor({
         clients_served: form.clientsServed ? Number(form.clientsServed) : null,
         satisfaction_pct: form.satisfactionPct ? Number(form.satisfactionPct) : null,
         about_title: form.aboutTitle,
+        about_story: form.aboutStory || null,
+        about_photo_url: form.aboutPhotoUrl || null,
+        trust_badges: form.trustBadgesText
+          .split('\n')
+          .map((s) => s.trim())
+          .filter(Boolean),
         featured_service_ids: form.featuredServiceIds,
         footer_tagline: form.footerTagline || null,
         footer_copyright: form.footerCopyright || null,
@@ -331,6 +360,12 @@ export function WebsiteEditor({
         clientsServed: form.clientsServed ? Number(form.clientsServed) : undefined,
         satisfactionPct: form.satisfactionPct ? Number(form.satisfactionPct) : undefined,
         aboutTitle: form.aboutTitle,
+        aboutStory: form.aboutStory,
+        aboutPhotoUrl: form.aboutPhotoUrl,
+        trustBadges: form.trustBadgesText
+          .split('\n')
+          .map((s) => s.trim())
+          .filter(Boolean),
         featuredServiceIds: form.featuredServiceIds,
         footerTagline: form.footerTagline,
         footerCopyright: form.footerCopyright,
@@ -649,19 +684,76 @@ export function WebsiteEditor({
           </Section>
 
           <Section title="About Section" id="about" open={openSection === 'about'} onToggle={toggle}>
-            <Field label="Title">
+            <Field label="Headline">
               <input
                 value={form.aboutTitle}
                 onChange={(e) => patch({ aboutTitle: e.target.value })}
                 className="input-field w-full"
+                placeholder="Dedicated to Finding Your Dream Property"
               />
             </Field>
-            <Field label="Body">
+            <Field label="Mission">
               <textarea
                 value={form.about}
                 onChange={(e) => patch({ about: e.target.value })}
                 className="input-field w-full"
+                rows={3}
+              />
+            </Field>
+            <Field label="Story (optional)">
+              <textarea
+                value={form.aboutStory}
+                onChange={(e) => patch({ aboutStory: e.target.value })}
+                className="input-field w-full"
+                rows={3}
+              />
+            </Field>
+            <Field label="About Photo · 4:3 recommended">
+              <div className="mt-1 flex items-center gap-3">
+                {form.aboutPhotoUrl ? (
+                  <div className="relative group w-24 shrink-0" style={{ aspectRatio: '4 / 3' }}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={form.aboutPhotoUrl}
+                      alt=""
+                      className="w-full h-full rounded-lg object-cover border border-[var(--border)]"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => patch({ aboutPhotoUrl: '' })}
+                      className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-red-600 text-white text-xs opacity-0 group-hover:opacity-100 transition"
+                    >
+                      &times;
+                    </button>
+                  </div>
+                ) : (
+                  <label className="w-full aspect-[4/3] max-w-xs rounded-lg border border-dashed border-[var(--border)] grid place-items-center gap-1 text-[var(--text-4)] text-xs cursor-pointer hover:border-[var(--teal-600)] transition">
+                    <ImageIcon className="w-5 h-5" />
+                    <span>{aboutPhotoBusy ? 'Uploading…' : 'Click or drag to upload'}</span>
+                    <span className="text-[10px] opacity-70">PNG, JPG, WebP · max 5MB</span>
+                    <input
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp"
+                      className="hidden"
+                      disabled={aboutPhotoBusy}
+                      onChange={(e) => {
+                        const file = e.target.files?.[0]
+                        if (file) void handleUploadAboutPhoto(file)
+                        e.target.value = ''
+                      }}
+                    />
+                  </label>
+                )}
+              </div>
+              {aboutPhotoError && <p className="text-xs text-red-600 mt-1">{aboutPhotoError}</p>}
+            </Field>
+            <Field label="Trust Badges (one per line)">
+              <textarea
+                value={form.trustBadgesText}
+                onChange={(e) => patch({ trustBadgesText: e.target.value })}
+                className="input-field w-full"
                 rows={4}
+                placeholder={'Licensed Real Estate Agents\nAccepting New Clients\nVirtual Viewings Available\nFree Market Analysis'}
               />
             </Field>
           </Section>

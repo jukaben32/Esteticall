@@ -302,8 +302,13 @@ export function WebsiteTemplateRenderer({
               {website.about ||
                 'We believe every client deserves personalized, expert guidance. Our team combines decades of market expertise with cutting-edge tools to deliver results.'}
             </p>
+            {website.about_story && (
+              <p className="mb-5" style={{ color: style.subtext }}>
+                {website.about_story}
+              </p>
+            )}
             <ul className="space-y-2">
-              {ABOUT_HIGHLIGHTS.map((h) => (
+              {(website.trust_badges?.length ? website.trust_badges : ABOUT_HIGHLIGHTS).map((h) => (
                 <li key={h} className="flex items-center gap-2 text-sm">
                   <CheckCircle2 className="w-4 h-4 shrink-0" style={{ color: website.primary_color }} />
                   {h}
@@ -312,10 +317,15 @@ export function WebsiteTemplateRenderer({
             </ul>
           </div>
           <div
-            className="rounded-2xl aspect-[4/3] grid place-items-center"
+            className="rounded-2xl aspect-[4/3] overflow-hidden grid place-items-center"
             style={{ backgroundColor: style.cardBg, border: `1px solid ${style.border}` }}
           >
-            <Home className="w-8 h-8 opacity-30" />
+            {website.about_photo_url ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={website.about_photo_url} alt="" className="w-full h-full object-cover" />
+            ) : (
+              <Home className="w-8 h-8 opacity-30" />
+            )}
           </div>
         </section>
       )}

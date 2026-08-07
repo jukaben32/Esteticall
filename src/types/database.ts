@@ -354,6 +354,9 @@ export interface Database {
           clients_served: number | null
           satisfaction_pct: number | null
           about_title: string
+          about_story: string | null
+          about_photo_url: string | null
+          trust_badges: string[]
           featured_service_ids: string[]
           footer_tagline: string | null
           footer_copyright: string | null

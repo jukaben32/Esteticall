@@ -788,3 +788,18 @@ alter table listings add constraint listings_property_type_check
 alter table business_availability drop constraint if exists business_availability_slot_minutes_check;
 alter table business_availability add constraint business_availability_slot_minutes_check
   check (slot_minutes > 0);
+
+-- 33. WEBSITES — About Section: Story is a second, optional paragraph
+-- (Mission stays required-ish via the existing `about` column); About Photo
+-- is an uploaded image instead of the old placeholder icon; Trust Badges
+-- were previously a hardcoded, unchangeable list in the renderer — they're
+-- now a per-business array, seeded with the old hardcoded values so existing
+-- published sites render identically until an owner edits them.
+alter table websites add column if not exists about_story text;
+alter table websites add column if not exists about_photo_url text;
+alter table websites add column if not exists trust_badges text[] not null default array[
+  'Licensed Real Estate Agents',
+  'Accepting New Clients',
+  'Virtual Viewings Available',
+  'Free Market Analysis'
+];
