@@ -424,19 +424,58 @@ export function WebsiteEditor({
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-[380px_1fr] gap-4">
-      {/* Left: Design + Content */}
-      <div className="card-surface p-4 space-y-5 max-h-[85vh] overflow-y-auto">
-        <div className="flex items-center gap-2">
-          <span className="w-8 h-8 rounded-full bg-[var(--teal-50)] text-[var(--teal-700)] grid place-items-center shrink-0">
-            <Globe className="w-4 h-4" />
+    <div className="overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--bg-page)] shadow-sm">
+      <div className="flex flex-col gap-2 border-b border-[var(--border)] bg-white/80 px-3 py-2 backdrop-blur sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex min-w-0 items-center gap-2">
+          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-[var(--teal-50)] text-[var(--teal-700)]">
+            <Globe className="h-4 w-4" />
           </span>
-          <div>
-            <p className="font-display font-semibold text-[var(--text-1)]">Website Builder</p>
-            <p className="text-xs text-[var(--text-3)]">Build your agency website</p>
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-[var(--text-1)]">Website Builder</p>
+            <p className="text-[11px] text-[var(--text-3)]">Build your agency website</p>
           </div>
         </div>
+        <div className="flex flex-wrap items-center gap-1.5">
+          <a href="#website-preview" className="btn-secondary !px-2.5 !py-1.5 !text-[11px]">
+            Preview
+          </a>
+          <button onClick={() => save()} disabled={saving} className="btn-secondary !px-2.5 !py-1.5 !text-[11px]">
+            <Pencil className="h-3.5 w-3.5" /> {saving ? 'Saving...' : saved ? 'Saved!' : 'Save'}
+          </button>
+          {form.isPublished ? (
+            <button onClick={() => save(false)} className="btn-secondary !px-2.5 !py-1.5 !text-[11px] !text-red-600 hover:!bg-red-50">
+              Unpublish
+            </button>
+          ) : (
+            <button onClick={handlePublishClick} disabled={checkingOut} className="btn-primary !px-2.5 !py-1.5 !text-[11px]">
+              {!websiteBuilderEnabled && <Lock className="h-3.5 w-3.5" />}
+              {checkingOut ? 'Redirecting...' : 'Publish'}
+            </button>
+          )}
+          <a href={siteUrl} target="_blank" rel="noreferrer" className="btn-secondary !px-2.5 !py-1.5 !text-[11px]">
+            <ExternalLink className="h-3.5 w-3.5" /> View Live
+          </a>
+        </div>
+      </div>
 
+      <div className="flex flex-col gap-2 border-b border-[var(--border)] bg-[var(--bg-subtle)] px-3 py-1.5 text-[11px] text-[var(--text-3)] sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex min-w-0 items-center gap-2">
+          <span className="grid h-6 w-6 shrink-0 place-items-center rounded-lg bg-[var(--teal-700)] text-white">
+            <Globe className="h-3.5 w-3.5" />
+          </span>
+          <span className="font-semibold text-[var(--text-1)]">Website Builder</span>
+          <span className="truncate">
+            {form.isPublished ? `Live at /sites/${slug}` : `Design free - ${WEBSITE_BUILDER_PRICE_USD}USD/mo to publish`}
+          </span>
+        </div>
+        <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${form.isPublished ? 'bg-[var(--teal-50)] text-[var(--teal-700)]' : 'bg-[var(--bg-raised)] text-[var(--text-3)]'}`}>
+          {form.isPublished ? 'Published' : 'Not published'}
+        </span>
+      </div>
+
+      <div className="grid grid-cols-1 gap-0 lg:grid-cols-[300px_1fr]">
+        {/* Left: Design + Content */}
+        <div className="max-h-[82vh] space-y-4 overflow-y-auto border-r border-[var(--border)] bg-white p-3">
         {checkoutStatus === 'success' && (
           <p className="text-xs rounded-lg p-2.5 bg-[var(--teal-50)] text-[var(--teal-800)]">
             Payment successful! Click <strong>Publish</strong> below to make your site live.
@@ -448,29 +487,6 @@ export function WebsiteEditor({
           </p>
         )}
 
-        <div className="flex items-center justify-between text-xs">
-          <span className="text-[var(--text-3)]">
-            Website Builder · {form.isPublished ? `Live at /sites/${slug}` : 'Not published'}
-          </span>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <button onClick={() => save()} disabled={saving} className="btn-secondary !text-xs">
-            <Pencil className="w-3.5 h-3.5" /> {saving ? 'Saving…' : saved ? 'Saved!' : 'Save'}
-          </button>
-          {form.isPublished ? (
-            <button onClick={() => save(false)} className="btn-secondary !text-xs">
-              Unpublish
-            </button>
-          ) : (
-            <button onClick={handlePublishClick} disabled={checkingOut} className="btn-primary !text-xs">
-              {!websiteBuilderEnabled && <Lock className="w-3.5 h-3.5" />}
-              {checkingOut ? 'Redirecting…' : 'Publish'}
-            </button>
-          )}
-          <a href={siteUrl} target="_blank" rel="noreferrer" className="btn-secondary !text-xs">
-            <ExternalLink className="w-3.5 h-3.5" /> View Live
-          </a>
-        </div>
         {error && <p className="text-xs text-red-500">{error}</p>}
 
         {!websiteBuilderEnabled && !form.isPublished && (
@@ -1037,18 +1053,19 @@ export function WebsiteEditor({
         </div>
       </div>
 
-      {/* Right: Live preview */}
-      <div className="card-surface p-2 overflow-hidden">
-        <p className="text-xs text-[var(--text-3)] px-2 py-1">
-          Preview · {TEMPLATES.find((t) => t.id === form.template)?.name} template
-        </p>
-        <div className="rounded-xl border border-[var(--border)] overflow-y-auto max-h-[80vh]">
+        {/* Right: Live preview */}
+        <div id="website-preview" className="overflow-hidden bg-[var(--bg-page)] p-2">
+          <p className="px-2 py-1 text-xs text-[var(--text-3)]">
+            Preview - {TEMPLATES.find((t) => t.id === form.template)?.name} template
+          </p>
+          <div className="max-h-[80vh] overflow-y-auto rounded-xl border border-[var(--border)]">
           <WebsiteTemplateRenderer
             businessName={business.name}
             businessPhone={business.phone}
             content={previewContent}
             isEditorPreview
           />
+          </div>
         </div>
       </div>
     </div>
