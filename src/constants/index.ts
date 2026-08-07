@@ -36,6 +36,20 @@ export const WEBSITE_BUILDER_FEATURES = [
   'Renew anytime — cancel anytime',
 ] as const
 
+// Seeded into website_specialties the first time a business opens the
+// builder's Partners & Lenders panel with nothing in it yet — matches the
+// reference template's starting content instead of leaving new sites with
+// an empty, unlabeled "+ Add Insurance" button and no sense of what goes
+// there. Owners are free to edit or delete every one of these afterward.
+export const DEFAULT_WEBSITE_SPECIALTIES = [
+  'Residential Sales',
+  'Commercial Leasing',
+  'Property Management',
+  'Investment Properties',
+  'New Construction',
+  'Luxury Estates',
+] as const
+
 // 0 means "unlimited" in the env contract.
 export function isWithinLimit(used: number, limit: number): boolean {
   return limit === 0 || used < limit

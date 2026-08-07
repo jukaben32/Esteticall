@@ -1,6 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '@/types/database'
-import type { Website, WebsiteContent } from '@/types'
+import type { Website, WebsiteContent, WebsiteSpecialty } from '@/types'
 import type {
   WebsiteInput,
   WebsiteServiceInput,
@@ -9,6 +9,7 @@ import type {
   WebsiteSpecialtyInput,
   WebsiteFaqInput,
 } from '@/validations'
+import { DEFAULT_WEBSITE_SPECIALTIES } from '@/constants'
 
 type DB = SupabaseClient<Database>
 
@@ -41,6 +42,24 @@ export async function getOrCreateWebsiteForBusiness(supabase: DB, businessId: st
   return data
 }
 
+// A brand-new (or never-touched) business has zero rows here, which left
+// the builder's "Partners & Lenders" panel showing nothing but a bare
+// "+ Add Insurance" button — no sense of what belongs there, unlike the
+// reference template's pre-filled starting list. Seeded lazily, the first
+// time the panel is actually loaded empty, rather than at business-creation
+// time, so it also backfills businesses that already exist.
+async function seedDefaultSpecialtiesIfEmpty(
+  supabase: DB,
+  businessId: string,
+  existing: WebsiteSpecialty[]
+): Promise<WebsiteSpecialty[]> {
+  if (existing.length > 0) return existing
+  const rows = DEFAULT_WEBSITE_SPECIALTIES.map((label, i) => ({ business_id: businessId, label, sort_order: i }))
+  const { data, error } = await supabase.from('website_specialties').insert(rows).select('*')
+  if (error) throw error
+  return data ?? []
+}
+
 // Everything the builder's left panel (and the public site) needs in one
 // round trip: the website row plus its five child lists.
 export async function getWebsiteContentForBusiness(supabase: DB, businessId: string): Promise<WebsiteContent> {
@@ -58,7 +77,7 @@ export async function getWebsiteContentForBusiness(supabase: DB, businessId: str
     services: services ?? [],
     teamMembers: teamMembers ?? [],
     testimonials: testimonials ?? [],
-    specialties: specialties ?? [],
+    specialties: await seedDefaultSpecialtiesIfEmpty(supabase, businessId, specialties ?? []),
     faqs: faqs ?? [],
   }
 }
