@@ -12,6 +12,7 @@ import {
   Check,
   Palette,
   Image as ImageIcon,
+  UploadCloud,
   FileText,
   Briefcase,
   UsersRound,
@@ -220,6 +221,17 @@ export function WebsiteEditor({
 
   function patch(p: Partial<FormState>) {
     setForm((f) => ({ ...f, ...p }))
+  }
+
+  function handleLogoFile(file: File | undefined) {
+    if (!file || !file.type.startsWith('image/')) return
+    if (file.size > 5 * 1024 * 1024) {
+      setError('El logo no puede superar 5 MB')
+      return
+    }
+    const reader = new FileReader()
+    reader.onload = () => patch({ logoUrl: typeof reader.result === 'string' ? reader.result : form.logoUrl })
+    reader.readAsDataURL(file)
   }
 
   const siteUrl = useMemo(
@@ -552,31 +564,63 @@ export function WebsiteEditor({
           <p className="text-xs font-semibold text-[var(--text-3)] mb-1">CONTENT</p>
 
           <Section title="Branding" id="branding" open={openSection === 'branding'} onToggle={toggle}>
-            <Field label="Logo URL">
-              <input
-                value={form.logoUrl}
-                onChange={(e) => patch({ logoUrl: e.target.value })}
-                className="input-field w-full"
-                placeholder="https://…"
-              />
-            </Field>
-            <Field label="Site Title">
-              <input
-                value={form.siteTitle}
-                onChange={(e) => patch({ siteTitle: e.target.value })}
-                className="input-field w-full"
-                placeholder={business.name}
-              />
-            </Field>
-            <Field label="Site Description">
-              <textarea
-                value={form.siteDescription}
-                onChange={(e) => patch({ siteDescription: e.target.value })}
-                className="input-field w-full"
-                rows={2}
-                placeholder="A short tagline shown in search engines and browser tabs."
-              />
-            </Field>
+            <div className="space-y-2.5 rounded-xl bg-[var(--bg-subtle)] p-3">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-3)]">Logo - 1:1 recommended</p>
+                <label
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={(e) => {
+                    e.preventDefault()
+                    handleLogoFile(e.dataTransfer.files[0])
+                  }}
+                  className="mt-1.5 flex min-h-[112px] cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed border-[var(--border)] bg-white/70 px-3 py-4 text-center transition hover:border-[var(--teal-700)] hover:bg-[var(--teal-50)]"
+                >
+                  {form.logoUrl ? (
+                    <span className="flex flex-col items-center gap-2">
+                      <span
+                        aria-label="Logo preview"
+                        className="grid h-12 w-12 place-items-center overflow-hidden rounded-xl border border-[var(--border)] bg-white bg-contain bg-center bg-no-repeat shadow-sm"
+                        style={{ backgroundImage: `url("${form.logoUrl}")` }}
+                      />
+                      <span className="text-xs font-semibold text-[var(--teal-700)]">Cambiar logo</span>
+                    </span>
+                  ) : (
+                    <span className="flex flex-col items-center gap-1.5">
+                      <span className="grid h-9 w-9 place-items-center rounded-lg bg-[var(--teal-50)] text-[var(--teal-700)]">
+                        <UploadCloud className="h-4 w-4" />
+                      </span>
+                      <span className="text-xs font-semibold text-[var(--teal-700)]">Click or drag to upload</span>
+                      <span className="text-[10px] text-[var(--text-3)]">PNG, JPG, WEBP - max 5 MB</span>
+                    </span>
+                  )}
+                  <input type="file" accept="image/png,image/jpeg,image/webp" className="sr-only" onChange={(e) => handleLogoFile(e.target.files?.[0])} />
+                </label>
+                <input
+                  value={form.logoUrl}
+                  onChange={(e) => patch({ logoUrl: e.target.value })}
+                  className="input-field mt-2 h-8 w-full !rounded-lg !px-2.5 !py-1 text-xs"
+                  placeholder="https://..."
+                />
+              </div>
+
+              <Field label="Site Title">
+                <input
+                  value={form.siteTitle}
+                  onChange={(e) => patch({ siteTitle: e.target.value })}
+                  className="input-field h-8 w-full !rounded-lg !px-2.5 !py-1 text-xs"
+                  placeholder={business.name}
+                />
+              </Field>
+              <Field label="Site Description">
+                <textarea
+                  value={form.siteDescription}
+                  onChange={(e) => patch({ siteDescription: e.target.value })}
+                  className="input-field w-full !rounded-lg !px-2.5 !py-2 text-xs"
+                  rows={3}
+                  placeholder="A short tagline shown in search engines and browser tabs."
+                />
+              </Field>
+            </div>
           </Section>
 
           <Section title="Hero Section" id="hero" open={openSection === 'hero'} onToggle={toggle}>
