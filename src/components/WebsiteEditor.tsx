@@ -1024,12 +1024,12 @@ export function WebsiteEditor({
                 placeholder="Mon–Fri 9am–6pm · Sat 10am–4pm"
               />
             </Field>
-            <Field label="Google Maps (embed URL)">
+            <Field label="Google Maps (URL or coordinates)">
               <input
                 value={form.contactMapsUrl}
                 onChange={(e) => patch({ contactMapsUrl: e.target.value })}
                 className="input-field w-full"
-                placeholder="https://maps.google.com/maps?q=…&output=embed"
+                placeholder="18.462, -69.296 or Google Maps URL"
               />
             </Field>
           </Section>
