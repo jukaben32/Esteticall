@@ -1,8 +1,9 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '@/types/database'
-import type { Website, WebsiteContent, BusinessService } from '@/types'
+import type { Website, WebsiteContent } from '@/types'
 import type {
   WebsiteInput,
+  WebsiteServiceInput,
   WebsiteTeamMemberInput,
   WebsiteTestimonialInput,
   WebsiteSpecialtyInput,
@@ -13,6 +14,7 @@ type DB = SupabaseClient<Database>
 
 export interface SaveWebsiteContentInput {
   website: WebsiteInput
+  services: WebsiteServiceInput[]
   teamMembers: WebsiteTeamMemberInput[]
   testimonials: WebsiteTestimonialInput[]
   specialties: WebsiteSpecialtyInput[]
@@ -39,31 +41,25 @@ export async function getOrCreateWebsiteForBusiness(supabase: DB, businessId: st
   return data
 }
 
-async function listFeaturedServices(supabase: DB, businessId: string, ids: string[]): Promise<BusinessService[]> {
-  if (ids.length === 0) return []
-  const { data, error } = await supabase.from('business_services').select('*').eq('business_id', businessId).in('id', ids)
-  if (error) throw error
-  return data ?? []
-}
-
 // Everything the builder's left panel (and the public site) needs in one
-// round trip: the website row plus its four child lists.
+// round trip: the website row plus its five child lists.
 export async function getWebsiteContentForBusiness(supabase: DB, businessId: string): Promise<WebsiteContent> {
   const website = await getOrCreateWebsiteForBusiness(supabase, businessId)
-  const [{ data: teamMembers }, { data: testimonials }, { data: specialties }, { data: faqs }] = await Promise.all([
-    supabase.from('website_team_members').select('*').eq('business_id', businessId).order('sort_order'),
-    supabase.from('website_testimonials').select('*').eq('business_id', businessId).order('sort_order'),
-    supabase.from('website_specialties').select('*').eq('business_id', businessId).order('sort_order'),
-    supabase.from('website_faqs').select('*').eq('business_id', businessId).order('sort_order'),
-  ])
-  const featuredServices = await listFeaturedServices(supabase, businessId, website.featured_service_ids ?? [])
+  const [{ data: services }, { data: teamMembers }, { data: testimonials }, { data: specialties }, { data: faqs }] =
+    await Promise.all([
+      supabase.from('website_services').select('*').eq('business_id', businessId).order('sort_order'),
+      supabase.from('website_team_members').select('*').eq('business_id', businessId).order('sort_order'),
+      supabase.from('website_testimonials').select('*').eq('business_id', businessId).order('sort_order'),
+      supabase.from('website_specialties').select('*').eq('business_id', businessId).order('sort_order'),
+      supabase.from('website_faqs').select('*').eq('business_id', businessId).order('sort_order'),
+    ])
   return {
     website,
+    services: services ?? [],
     teamMembers: teamMembers ?? [],
     testimonials: testimonials ?? [],
     specialties: specialties ?? [],
     faqs: faqs ?? [],
-    featuredServices,
   }
 }
 
@@ -78,20 +74,21 @@ export async function getPublishedWebsiteContent(supabase: DB, businessId: strin
     .eq('is_published', true)
     .maybeSingle()
   if (!website) return null
-  const [{ data: teamMembers }, { data: testimonials }, { data: specialties }, { data: faqs }] = await Promise.all([
-    supabase.from('website_team_members').select('*').eq('business_id', businessId).order('sort_order'),
-    supabase.from('website_testimonials').select('*').eq('business_id', businessId).order('sort_order'),
-    supabase.from('website_specialties').select('*').eq('business_id', businessId).order('sort_order'),
-    supabase.from('website_faqs').select('*').eq('business_id', businessId).order('sort_order'),
-  ])
-  const featuredServices = await listFeaturedServices(supabase, businessId, website.featured_service_ids ?? [])
+  const [{ data: services }, { data: teamMembers }, { data: testimonials }, { data: specialties }, { data: faqs }] =
+    await Promise.all([
+      supabase.from('website_services').select('*').eq('business_id', businessId).order('sort_order'),
+      supabase.from('website_team_members').select('*').eq('business_id', businessId).order('sort_order'),
+      supabase.from('website_testimonials').select('*').eq('business_id', businessId).order('sort_order'),
+      supabase.from('website_specialties').select('*').eq('business_id', businessId).order('sort_order'),
+      supabase.from('website_faqs').select('*').eq('business_id', businessId).order('sort_order'),
+    ])
   return {
     website,
+    services: services ?? [],
     teamMembers: teamMembers ?? [],
     testimonials: testimonials ?? [],
     specialties: specialties ?? [],
     faqs: faqs ?? [],
-    featuredServices,
   }
 }
 
@@ -124,7 +121,6 @@ export async function upsertWebsite(supabase: DB, businessId: string, input: Web
         about_story: input.aboutStory || null,
         about_photo_url: input.aboutPhotoUrl || null,
         trust_badges: input.trustBadges,
-        featured_service_ids: input.featuredServiceIds,
         footer_tagline: input.footerTagline || null,
         footer_copyright: input.footerCopyright || null,
         contact_phone: input.contactPhone || null,
@@ -141,13 +137,13 @@ export async function upsertWebsite(supabase: DB, businessId: string, input: Web
   return data
 }
 
-// The builder's dynamic lists (Team, Testimonials, Specialties, FAQ) are
-// replaced wholesale on every Save — simpler and safer than diffing
-// client-side temp ids against DB ids, and these lists are small (a handful
-// of rows) so a delete+insert is cheap and avoids partial-save bugs.
+// The builder's dynamic lists (Services, Team, Testimonials, Specialties,
+// FAQ) are replaced wholesale on every Save — simpler and safer than
+// diffing client-side temp ids against DB ids, and these lists are small (a
+// handful of rows) so a delete+insert is cheap and avoids partial-save bugs.
 async function replaceList<T extends { id?: string; sortOrder: number }>(
   supabase: DB,
-  table: 'website_team_members' | 'website_testimonials' | 'website_specialties' | 'website_faqs',
+  table: 'website_services' | 'website_team_members' | 'website_testimonials' | 'website_specialties' | 'website_faqs',
   businessId: string,
   items: T[],
   toRow: (item: T, index: number) => Record<string, unknown>
@@ -167,6 +163,14 @@ export async function saveWebsiteContent(
 ): Promise<WebsiteContent> {
   await upsertWebsite(supabase, businessId, input.website)
 
+  await replaceList(supabase, 'website_services', businessId, input.services, (s, i) => ({
+    icon: s.icon,
+    name: s.name,
+    description: s.description || null,
+    duration: s.duration || null,
+    price: s.price || null,
+    sort_order: i,
+  }))
   await replaceList(supabase, 'website_team_members', businessId, input.teamMembers, (m, i) => ({
     name: m.name,
     role: m.role,

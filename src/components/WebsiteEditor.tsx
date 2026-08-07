@@ -23,10 +23,26 @@ import {
   Phone,
   PanelBottom,
   Globe,
+  Home,
+  ClipboardList,
+  TrendingUp,
+  Building2,
+  Key,
 } from 'lucide-react'
-import type { Business, AiAgent, BusinessService, WebsiteContent } from '@/types'
+import type { Business, AiAgent, WebsiteContent } from '@/types'
 import { WEBSITE_BUILDER_PRICE_USD, WEBSITE_BUILDER_FEATURES } from '@/constants'
 import { WebsiteTemplateRenderer } from './WebsiteTemplateRenderer'
+
+// Keep in sync with SERVICE_ICONS in WebsiteTemplateRenderer — same fixed
+// icon set, keyed so the choice survives a save/reload instead of being
+// re-derived from array position.
+const SERVICE_ICON_OPTIONS = [
+  { key: 'home', label: 'Home', Icon: Home },
+  { key: 'clipboard', label: 'Listing', Icon: ClipboardList },
+  { key: 'trending', label: 'Analysis', Icon: TrendingUp },
+  { key: 'building', label: 'Building', Icon: Building2 },
+  { key: 'key', label: 'Key', Icon: Key },
+] as const
 
 const TEMPLATES = [
   { id: 'clarity', name: 'Clarity', tagline: 'Clean · Minimal · White' },
@@ -40,6 +56,15 @@ const FONTS = [
   { id: 'poppins', label: 'Poppins (Round)' },
 ] as const
 
+type WebsiteServiceForm = {
+  id?: string
+  icon: string
+  name: string
+  description: string
+  duration: string
+  price: string
+  sortOrder: number
+}
 type TeamMemberForm = { id?: string; name: string; role: string; bio: string; photoUrl: string; sortOrder: number }
 type TestimonialForm = {
   id?: string
@@ -76,7 +101,6 @@ interface FormState {
   aboutStory: string
   aboutPhotoUrl: string
   trustBadgesText: string
-  featuredServiceIds: string[]
   footerTagline: string
   footerCopyright: string
   contactPhone: string
@@ -112,7 +136,6 @@ function toForm(content: WebsiteContent): FormState {
     aboutStory: w.about_story ?? '',
     aboutPhotoUrl: w.about_photo_url ?? '',
     trustBadgesText: (w.trust_badges ?? []).join('\n'),
-    featuredServiceIds: w.featured_service_ids ?? [],
     footerTagline: w.footer_tagline ?? '',
     footerCopyright: w.footer_copyright ?? '',
     contactPhone: w.contact_phone ?? '',
@@ -181,19 +204,28 @@ export function WebsiteEditor({
   business,
   initialContent,
   agents,
-  services,
   websiteBuilderEnabled,
 }: {
   business: Business
   initialContent: WebsiteContent
   agents: AiAgent[]
-  services: BusinessService[]
   websiteBuilderEnabled: boolean
 }) {
   const [form, setForm] = useState<FormState>(toForm(initialContent))
   const [slug, setSlug] = useState(business.slug)
   const [checkingOut, setCheckingOut] = useState(false)
   const checkoutStatus = useSearchParams().get('checkout')
+  const [websiteServices, setWebsiteServices] = useState<WebsiteServiceForm[]>(
+    initialContent.services.map((s, i) => ({
+      id: s.id,
+      icon: s.icon,
+      name: s.name,
+      description: s.description ?? '',
+      duration: s.duration ?? '',
+      price: s.price ?? '',
+      sortOrder: i,
+    }))
+  )
   const [teamMembers, setTeamMembers] = useState<TeamMemberForm[]>(
     initialContent.teamMembers.map((m, i) => ({
       id: m.id,
@@ -304,7 +336,6 @@ export function WebsiteEditor({
           .split('\n')
           .map((s) => s.trim())
           .filter(Boolean),
-        featured_service_ids: form.featuredServiceIds,
         footer_tagline: form.footerTagline || null,
         footer_copyright: form.footerCopyright || null,
         contact_phone: form.contactPhone || null,
@@ -313,6 +344,18 @@ export function WebsiteEditor({
         contact_hours: form.contactHours || null,
         contact_maps_url: form.contactMapsUrl || null,
       },
+      services: websiteServices.map((s, i) => ({
+        id: s.id ?? `tmp-${i}`,
+        business_id: business.id,
+        icon: s.icon,
+        name: s.name,
+        description: s.description || null,
+        duration: s.duration || null,
+        price: s.price || null,
+        sort_order: i,
+        created_at: '',
+        updated_at: '',
+      })),
       teamMembers: teamMembers.map((m, i) => ({
         id: m.id ?? `tmp-${i}`,
         business_id: business.id,
@@ -352,9 +395,8 @@ export function WebsiteEditor({
         created_at: '',
         updated_at: '',
       })),
-      featuredServices: services.filter((s) => form.featuredServiceIds.includes(s.id)),
     }),
-    [initialContent.website, form, teamMembers, testimonials, specialties, faqs, services, business.id]
+    [initialContent.website, form, websiteServices, teamMembers, testimonials, specialties, faqs, business.id]
   )
 
   async function save(publish?: boolean) {
@@ -390,7 +432,6 @@ export function WebsiteEditor({
           .split('\n')
           .map((s) => s.trim())
           .filter(Boolean),
-        featuredServiceIds: form.featuredServiceIds,
         footerTagline: form.footerTagline,
         footerCopyright: form.footerCopyright,
         contactPhone: form.contactPhone,
@@ -399,6 +440,13 @@ export function WebsiteEditor({
         contactHours: form.contactHours,
         contactMapsUrl: form.contactMapsUrl,
       },
+      services: websiteServices.map((s, i) => ({
+        ...s,
+        sortOrder: i,
+        description: s.description || undefined,
+        duration: s.duration || undefined,
+        price: s.price || undefined,
+      })),
       teamMembers: teamMembers.map((m, i) => ({ ...m, sortOrder: i, photoUrl: m.photoUrl || undefined, bio: m.bio || undefined })),
       testimonials: testimonials.map((t, i) => ({
         ...t,
@@ -880,27 +928,89 @@ export function WebsiteEditor({
           </Section>
 
           <Section title="Services" id="services" open={openSection === 'services'} onToggle={toggle}>
-            {services.length === 0 && (
-              <p className="text-xs text-[var(--text-3)]">Create services on the Services page first.</p>
-            )}
-            <div className="space-y-1.5 max-h-40 overflow-y-auto">
-              {services.map((s) => (
-                <label key={s.id} className="flex items-center gap-2 text-sm">
-                  <input
-                    type="checkbox"
-                    checked={form.featuredServiceIds.includes(s.id)}
+            {websiteServices.map((s, i) => (
+              <div key={i} className="card-surface p-3 space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-xs font-medium text-[var(--text-3)]">Service {i + 1}</span>
+                  <button onClick={() => setWebsiteServices((cur) => cur.filter((_, idx) => idx !== i))}>
+                    <Trash2 className="w-3.5 h-3.5 text-red-500" />
+                  </button>
+                </div>
+                <div className="grid grid-cols-[auto_1fr] gap-2 items-end">
+                  <Field label="Icon">
+                    <select
+                      value={s.icon}
+                      onChange={(e) =>
+                        setWebsiteServices((cur) => cur.map((x, idx) => (idx === i ? { ...x, icon: e.target.value } : x)))
+                      }
+                      className="input-field w-16"
+                    >
+                      {SERVICE_ICON_OPTIONS.map((opt) => (
+                        <option key={opt.key} value={opt.key}>
+                          {opt.label}
+                        </option>
+                      ))}
+                    </select>
+                  </Field>
+                  <Field label="Name">
+                    <input
+                      value={s.name}
+                      onChange={(e) =>
+                        setWebsiteServices((cur) => cur.map((x, idx) => (idx === i ? { ...x, name: e.target.value } : x)))
+                      }
+                      className="input-field w-full"
+                    />
+                  </Field>
+                </div>
+                <Field label="Description">
+                  <textarea
+                    value={s.description}
+                    rows={3}
                     onChange={(e) =>
-                      patch({
-                        featuredServiceIds: e.target.checked
-                          ? [...form.featuredServiceIds, s.id]
-                          : form.featuredServiceIds.filter((id) => id !== s.id),
-                      })
+                      setWebsiteServices((cur) =>
+                        cur.map((x, idx) => (idx === i ? { ...x, description: e.target.value } : x))
+                      )
                     }
+                    className="input-field w-full"
                   />
-                  {s.name}
-                </label>
-              ))}
-            </div>
+                </Field>
+                <div className="grid grid-cols-2 gap-2">
+                  <Field label="Duration">
+                    <input
+                      placeholder="60 min"
+                      value={s.duration}
+                      onChange={(e) =>
+                        setWebsiteServices((cur) =>
+                          cur.map((x, idx) => (idx === i ? { ...x, duration: e.target.value } : x))
+                        )
+                      }
+                      className="input-field w-full"
+                    />
+                  </Field>
+                  <Field label="Price">
+                    <input
+                      placeholder="Free, Commission-based, From $200…"
+                      value={s.price}
+                      onChange={(e) =>
+                        setWebsiteServices((cur) => cur.map((x, idx) => (idx === i ? { ...x, price: e.target.value } : x)))
+                      }
+                      className="input-field w-full"
+                    />
+                  </Field>
+                </div>
+              </div>
+            ))}
+            <button
+              onClick={() =>
+                setWebsiteServices((cur) => [
+                  ...cur,
+                  { icon: 'home', name: '', description: '', duration: '', price: '', sortOrder: cur.length },
+                ])
+              }
+              className="btn-secondary w-full !text-xs"
+            >
+              <Plus className="w-3.5 h-3.5" /> Add Service
+            </button>
           </Section>
 
           <Section title="Team Members" id="team" open={openSection === 'team'} onToggle={toggle}>

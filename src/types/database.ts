@@ -393,6 +393,25 @@ export interface Database {
         Update: Partial<Database['public']['Tables']['website_team_members']['Row']>
         Relationships: []
       }
+      website_services: {
+        Row: {
+          id: string
+          business_id: string
+          icon: string
+          name: string
+          description: string | null
+          duration: string | null
+          price: string | null
+          sort_order: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: Partial<Database['public']['Tables']['website_services']['Row']> & {
+          business_id: string
+        }
+        Update: Partial<Database['public']['Tables']['website_services']['Row']>
+        Relationships: []
+      }
       website_testimonials: {
         Row: {
           id: string

@@ -139,7 +139,6 @@ export const websiteSchema = z.object({
   aboutStory: z.string().optional(),
   aboutPhotoUrl: z.string().optional(),
   trustBadges: z.array(z.string()).default([]),
-  featuredServiceIds: z.array(z.string().uuid()).default([]),
   footerTagline: z.string().optional(),
   footerCopyright: z.string().optional(),
   contactPhone: z.string().optional(),
@@ -169,6 +168,17 @@ export const websiteTeamMemberSchema = z.object({
 })
 export type WebsiteTeamMemberInput = z.infer<typeof websiteTeamMemberSchema>
 
+export const websiteServiceSchema = z.object({
+  id: z.string().uuid().optional(),
+  icon: z.string().default('home'),
+  name: z.string().default(''),
+  description: z.string().optional(),
+  duration: z.string().optional(),
+  price: z.string().optional(),
+  sortOrder: z.coerce.number().int().default(0),
+})
+export type WebsiteServiceInput = z.infer<typeof websiteServiceSchema>
+
 export const websiteTestimonialSchema = z.object({
   id: z.string().uuid().optional(),
   quote: z.string().default(''),
@@ -196,6 +206,7 @@ export type WebsiteFaqInput = z.infer<typeof websiteFaqSchema>
 
 export const saveWebsiteContentSchema = z.object({
   website: websiteSchema,
+  services: z.array(websiteServiceSchema).default([]),
   teamMembers: z.array(websiteTeamMemberSchema).default([]),
   testimonials: z.array(websiteTestimonialSchema).default([]),
   specialties: z.array(websiteSpecialtySchema).default([]),

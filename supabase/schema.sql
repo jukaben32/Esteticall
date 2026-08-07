@@ -806,3 +806,34 @@ alter table websites add column if not exists trust_badges text[] not null defau
   'Virtual Viewings Available',
   'Free Market Analysis'
 ];
+
+-- 34. WEBSITE SERVICES — the Website Builder's own Services list (icon,
+-- name, description, duration, price), authored directly in the builder
+-- like Team Members / Testimonials / FAQ. Replaces the old "pick from your
+-- actual business_services" checkbox picker (websites.featured_service_ids,
+-- left in place but no longer read/written) — the reference template's
+-- Services section is independent marketing copy, not tied to the services
+-- actually bookable through the AI agent.
+create table if not exists website_services (
+  id          uuid primary key default gen_random_uuid(),
+  business_id uuid not null references businesses(id) on delete cascade,
+  icon        text not null default 'home',
+  name        text not null default '',
+  description text,
+  duration    text,
+  price       text,
+  sort_order  integer not null default 0,
+  created_at  timestamptz not null default now(),
+  updated_at  timestamptz not null default now()
+);
+create index if not exists idx_website_services_business_id on website_services (business_id);
+create trigger update_website_services_updated_at
+  before update on website_services
+  for each row execute function update_updated_at_column();
+alter table website_services enable row level security;
+create policy "Business owners can manage their website services"
+  on website_services for all using (is_business_owner(business_id));
+create policy "Public can view services of published websites"
+  on website_services for select using (
+    exists (select 1 from websites where websites.business_id = website_services.business_id and websites.is_published)
+  );

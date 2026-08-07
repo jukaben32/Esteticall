@@ -56,19 +56,6 @@ const FONT_LINKS: Record<string, string> = {
   poppins: 'https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap',
 }
 
-// This is the customer-facing published site (and the builder's live
-// preview of it), so copy stays in English regardless of the dashboard's
-// locale — same convention as WidgetBookingPanel.
-function formatPublicPrice(s: { price: number | null; price_max?: number | null; price_type: string | null }): string {
-  if (s.price_type === 'call_for_price' || s.price == null) return 'Call for price'
-  const price = `$${s.price.toLocaleString()}`
-  if (s.price_type === 'price_range') {
-    return s.price_max != null ? `${price} - $${s.price_max.toLocaleString()}` : price
-  }
-  if (s.price_type === 'starting_at') return `From ${price}`
-  return price
-}
-
 const ABOUT_HIGHLIGHTS = [
   'Licensed Real Estate Agents',
   'Accepting New Clients',
@@ -76,7 +63,16 @@ const ABOUT_HIGHLIGHTS = [
   'Free Market Analysis',
 ]
 
-const SERVICE_ICONS = [Home, ClipboardList, TrendingUp, Building2, Key]
+// Keyed so a service's icon choice survives a save/reload instead of being
+// re-derived from its position in the list — keep in sync with
+// SERVICE_ICON_OPTIONS in WebsiteEditor.
+const SERVICE_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
+  home: Home,
+  clipboard: ClipboardList,
+  trending: TrendingUp,
+  building: Building2,
+  key: Key,
+}
 
 function toDecimalDegrees(degrees: string, minutes = '0', seconds = '0', direction: string) {
   const value = Number(degrees) + Number(minutes) / 60 + Number(seconds) / 3600
@@ -123,7 +119,7 @@ export function WebsiteTemplateRenderer({
   content: WebsiteContent
   isEditorPreview?: boolean
 }) {
-  const { website, teamMembers, testimonials, specialties, faqs, featuredServices } = content
+  const { website, services, teamMembers, testimonials, specialties, faqs } = content
   const style = TEMPLATE_STYLES[website.template] ?? TEMPLATE_STYLES.clarity
   const font = FONT_STACKS[website.font] ?? FONT_STACKS.inter
   const isPulse = website.template === 'pulse'
@@ -286,7 +282,7 @@ export function WebsiteTemplateRenderer({
       </section>
 
       {/* Services */}
-      {featuredServices.length > 0 && (
+      {services.length > 0 && (
         <section id="services" className="px-6 sm:px-10 py-14 text-center" style={{ backgroundColor: style.cardBg }}>
           <p className="text-xs font-semibold tracking-widest mb-2" style={{ color: website.primary_color }}>
             WHAT WE OFFER
@@ -296,8 +292,8 @@ export function WebsiteTemplateRenderer({
             Comprehensive care tailored to every stage of your property journey.
           </p>
           <div className="max-w-4xl mx-auto grid grid-cols-1 sm:grid-cols-3 gap-4 text-left">
-            {featuredServices.map((s, i) => {
-              const Icon = SERVICE_ICONS[i % SERVICE_ICONS.length]
+            {services.map((s) => {
+              const Icon = SERVICE_ICONS[s.icon] ?? Home
               return (
                 <div key={s.id} className="rounded-xl p-4 border" style={{ borderColor: style.border, backgroundColor: style.bg }}>
                   <span
@@ -313,9 +309,9 @@ export function WebsiteTemplateRenderer({
                     </p>
                   )}
                   <div className="flex items-center justify-between mt-3 text-sm">
-                    <span style={{ color: style.subtext }}>{s.duration_minutes} min</span>
+                    <span style={{ color: style.subtext }}>{s.duration}</span>
                     <span className="font-semibold" style={{ color: website.primary_color }}>
-                      {formatPublicPrice(s)}
+                      {s.price}
                     </span>
                   </div>
                 </div>
