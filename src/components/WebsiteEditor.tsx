@@ -13,6 +13,7 @@ import {
   Palette,
   Image as ImageIcon,
   UploadCloud,
+  X,
   FileText,
   Briefcase,
   UsersRound,
@@ -231,6 +232,17 @@ export function WebsiteEditor({
     }
     const reader = new FileReader()
     reader.onload = () => patch({ logoUrl: typeof reader.result === 'string' ? reader.result : form.logoUrl })
+    reader.readAsDataURL(file)
+  }
+
+  function handleHeroFile(file: File | undefined) {
+    if (!file || !file.type.startsWith('image/')) return
+    if (file.size > 5 * 1024 * 1024) {
+      setError('La imagen del hero no puede superar 5 MB')
+      return
+    }
+    const reader = new FileReader()
+    reader.onload = () => patch({ heroImageUrl: typeof reader.result === 'string' ? reader.result : form.heroImageUrl })
     reader.readAsDataURL(file)
   }
 
@@ -624,72 +636,121 @@ export function WebsiteEditor({
           </Section>
 
           <Section title="Hero Section" id="hero" open={openSection === 'hero'} onToggle={toggle}>
-            <Field label="Headline">
-              <input
-                value={form.headline}
-                onChange={(e) => patch({ headline: e.target.value })}
-                className="input-field w-full"
-                placeholder="Premium Real Estate, Exceptional Service"
-              />
-            </Field>
-            <Field label="Subheadline">
-              <textarea
-                value={form.heroSubheadline}
-                onChange={(e) => patch({ heroSubheadline: e.target.value })}
-                className="input-field w-full"
-                rows={2}
-              />
-            </Field>
-            <Field label="Hero Image URL">
-              <input
-                value={form.heroImageUrl}
-                onChange={(e) => patch({ heroImageUrl: e.target.value })}
-                className="input-field w-full"
-                placeholder="https://…"
-              />
-            </Field>
-            <div className="grid grid-cols-2 gap-2">
-              <Field label="CTA Primary">
+            <div className="space-y-2.5 rounded-xl bg-[var(--bg-subtle)] p-3">
+              <Field label="Headline">
                 <input
-                  value={form.ctaPrimaryText}
-                  onChange={(e) => patch({ ctaPrimaryText: e.target.value })}
-                  className="input-field w-full"
+                  value={form.headline}
+                  onChange={(e) => patch({ headline: e.target.value })}
+                  className="input-field h-8 w-full !rounded-lg !px-2.5 !py-1 text-xs"
+                  placeholder="Premium Real Estate, Exceptional Service"
                 />
               </Field>
-              <Field label="CTA Secondary">
-                <input
-                  value={form.ctaSecondaryText}
-                  onChange={(e) => patch({ ctaSecondaryText: e.target.value })}
-                  className="input-field w-full"
+
+              <Field label="Subheadline">
+                <textarea
+                  value={form.heroSubheadline}
+                  onChange={(e) => patch({ heroSubheadline: e.target.value })}
+                  className="input-field w-full !rounded-lg !px-2.5 !py-2 text-xs"
+                  rows={3}
                 />
               </Field>
+
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-3)]">Hero Image - 4:3 recommended</p>
+                <div
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={(e) => {
+                    e.preventDefault()
+                    handleHeroFile(e.dataTransfer.files[0])
+                  }}
+                  className="relative mt-1.5 aspect-[4/3] overflow-hidden rounded-xl border border-dashed border-[var(--border)] bg-white/70 bg-cover bg-center shadow-sm transition hover:border-[var(--teal-700)]"
+                  style={form.heroImageUrl ? { backgroundImage: `url("${form.heroImageUrl}")` } : undefined}
+                >
+                  <label className="absolute inset-0 flex cursor-pointer items-center justify-center text-center">
+                    {!form.heroImageUrl && (
+                      <span className="flex flex-col items-center gap-1.5 px-3">
+                        <span className="grid h-9 w-9 place-items-center rounded-lg bg-[var(--teal-50)] text-[var(--teal-700)]">
+                          <UploadCloud className="h-4 w-4" />
+                        </span>
+                        <span className="text-xs font-semibold text-[var(--teal-700)]">Click or drag to upload</span>
+                        <span className="text-[10px] text-[var(--text-3)]">PNG, JPG, WEBP - max 5 MB</span>
+                      </span>
+                    )}
+                    <input type="file" accept="image/png,image/jpeg,image/webp" className="sr-only" onChange={(e) => handleHeroFile(e.target.files?.[0])} />
+                  </label>
+
+                  {form.heroImageUrl && (
+                    <div className="absolute right-2 top-2 flex items-center gap-1">
+                      <label className="grid h-7 w-7 cursor-pointer place-items-center rounded-full bg-white/90 text-[var(--teal-700)] shadow-sm hover:bg-white">
+                        <UploadCloud className="h-3.5 w-3.5" />
+                        <input type="file" accept="image/png,image/jpeg,image/webp" className="sr-only" onChange={(e) => handleHeroFile(e.target.files?.[0])} />
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => patch({ heroImageUrl: '' })}
+                        className="grid h-7 w-7 place-items-center rounded-full bg-white/90 text-red-600 shadow-sm hover:bg-white"
+                        aria-label="Remove hero image"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+                <input
+                  value={form.heroImageUrl}
+                  onChange={(e) => patch({ heroImageUrl: e.target.value })}
+                  className="input-field mt-2 h-8 w-full !rounded-lg !px-2.5 !py-1 text-xs"
+                  placeholder="https://..."
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <Field label="CTA Primary">
+                  <input
+                    value={form.ctaPrimaryText}
+                    onChange={(e) => patch({ ctaPrimaryText: e.target.value })}
+                    className="input-field h-8 w-full !rounded-lg !px-2.5 !py-1 text-xs"
+                  />
+                </Field>
+                <Field label="CTA Secondary">
+                  <input
+                    value={form.ctaSecondaryText}
+                    onChange={(e) => patch({ ctaSecondaryText: e.target.value })}
+                    className="input-field h-8 w-full !rounded-lg !px-2.5 !py-1 text-xs"
+                  />
+                </Field>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <Field label="Years Exp.">
+                  <input
+                    value={form.yearsExperience}
+                    onChange={(e) => patch({ yearsExperience: e.target.value })}
+                    className="input-field h-8 w-full !rounded-lg !px-2.5 !py-1 text-xs"
+                    inputMode="numeric"
+                  />
+                </Field>
+                <Field label="Clients Served">
+                  <input
+                    value={form.clientsServed}
+                    onChange={(e) => patch({ clientsServed: e.target.value })}
+                    className="input-field h-8 w-full !rounded-lg !px-2.5 !py-1 text-xs"
+                    inputMode="numeric"
+                  />
+                </Field>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <Field label="Satisfaction %">
+                  <input
+                    value={form.satisfactionPct}
+                    onChange={(e) => patch({ satisfactionPct: e.target.value })}
+                    className="input-field h-8 w-full !rounded-lg !px-2.5 !py-1 text-xs"
+                    inputMode="numeric"
+                  />
+                </Field>
+              </div>
             </div>
-            <div className="grid grid-cols-2 gap-2">
-              <Field label="Years Exp.">
-                <input
-                  value={form.yearsExperience}
-                  onChange={(e) => patch({ yearsExperience: e.target.value })}
-                  className="input-field w-full"
-                  inputMode="numeric"
-                />
-              </Field>
-              <Field label="Clients Served">
-                <input
-                  value={form.clientsServed}
-                  onChange={(e) => patch({ clientsServed: e.target.value })}
-                  className="input-field w-full"
-                  inputMode="numeric"
-                />
-              </Field>
-            </div>
-            <Field label="Satisfaction %">
-              <input
-                value={form.satisfactionPct}
-                onChange={(e) => patch({ satisfactionPct: e.target.value })}
-                className="input-field w-full"
-                inputMode="numeric"
-              />
-            </Field>
           </Section>
 
           <Section title="About Section" id="about" open={openSection === 'about'} onToggle={toggle}>
