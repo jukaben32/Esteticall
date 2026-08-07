@@ -6,9 +6,9 @@ import { getBusinessForOwner } from '@/services/businesses'
 const MAX_BYTES = 5 * 1024 * 1024
 const ALLOWED_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp'])
 
-// Uploads a single Website Builder image (currently: the About Section
-// photo) to the same public "listing-photos" bucket listings already use,
-// under a website/{businessId}/ prefix — avoids provisioning a second
+// Uploads a single Website Builder image (About Section photo, Team Member
+// headshots, …) to the same public "listing-photos" bucket listings already
+// use, under a website/{businessId}/ prefix — avoids provisioning a second
 // bucket just for this. Runs with the service-role client because Storage
 // writes need the bucket's write policy, which is service-role-only.
 export async function POST(request: Request) {
@@ -32,9 +32,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'La imagen no puede pesar más de 5 MB' }, { status: 400 })
   }
 
+  const kindRaw = formData.get('kind')
+  const kind = typeof kindRaw === 'string' && /^[a-z-]+$/.test(kindRaw) ? kindRaw : 'photo'
+
   const admin = createAdminClient()
   const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg'
-  const path = `website/${business.id}/about-${Date.now()}.${ext}`
+  const path = `website/${business.id}/${kind}-${Date.now()}.${ext}`
 
   const { error: uploadError } = await admin.storage
     .from('listing-photos')

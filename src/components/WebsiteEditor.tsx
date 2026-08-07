@@ -258,25 +258,50 @@ export function WebsiteEditor({
   const [saved, setSaved] = useState(false)
   const [aboutPhotoBusy, setAboutPhotoBusy] = useState(false)
   const [aboutPhotoError, setAboutPhotoError] = useState<string | null>(null)
+  const [teamPhotoBusyIndex, setTeamPhotoBusyIndex] = useState<number | null>(null)
+  const [teamPhotoError, setTeamPhotoError] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   function patch(p: Partial<FormState>) {
     setForm((f) => ({ ...f, ...p }))
   }
 
+  async function uploadWebsitePhoto(file: File, kind: string): Promise<string | null> {
+    const body = new FormData()
+    body.append('file', file)
+    body.append('kind', kind)
+    const res = await fetch('/api/website/photo', { method: 'POST', body })
+    const data = await res.json()
+    if (!res.ok) {
+      throw new Error(data.error ?? 'No se pudo subir la foto')
+    }
+    return data.url as string
+  }
+
   async function handleUploadAboutPhoto(file: File) {
     setAboutPhotoBusy(true)
     setAboutPhotoError(null)
-    const body = new FormData()
-    body.append('file', file)
-    const res = await fetch('/api/website/photo', { method: 'POST', body })
-    const data = await res.json()
-    setAboutPhotoBusy(false)
-    if (!res.ok) {
-      setAboutPhotoError(data.error ?? 'No se pudo subir la foto')
-      return
+    try {
+      const url = await uploadWebsitePhoto(file, 'about')
+      patch({ aboutPhotoUrl: url ?? '' })
+    } catch (err) {
+      setAboutPhotoError(err instanceof Error ? err.message : 'No se pudo subir la foto')
+    } finally {
+      setAboutPhotoBusy(false)
     }
-    patch({ aboutPhotoUrl: data.url })
+  }
+
+  async function handleUploadTeamPhoto(index: number, file: File) {
+    setTeamPhotoBusyIndex(index)
+    setTeamPhotoError(null)
+    try {
+      const url = await uploadWebsitePhoto(file, 'team')
+      setTeamMembers((cur) => cur.map((x, idx) => (idx === index ? { ...x, photoUrl: url ?? '' } : x)))
+    } catch (err) {
+      setTeamPhotoError(err instanceof Error ? err.message : 'No se pudo subir la foto')
+    } finally {
+      setTeamPhotoBusyIndex(null)
+    }
   }
 
   function handleLogoFile(file: File | undefined) {
@@ -1016,44 +1041,83 @@ export function WebsiteEditor({
           <Section title="Team Members" id="team" open={openSection === 'team'} onToggle={toggle}>
             {teamMembers.map((m, i) => (
               <div key={i} className="card-surface p-3 space-y-2">
-                <div className="flex justify-end">
+                <div className="flex justify-between items-center">
+                  <span className="text-xs font-medium text-[var(--text-3)]">Member {i + 1}</span>
                   <button onClick={() => setTeamMembers((cur) => cur.filter((_, idx) => idx !== i))}>
                     <Trash2 className="w-3.5 h-3.5 text-red-500" />
                   </button>
                 </div>
-                <input
-                  placeholder="Name"
-                  value={m.name}
-                  onChange={(e) =>
-                    setTeamMembers((cur) => cur.map((x, idx) => (idx === i ? { ...x, name: e.target.value } : x)))
-                  }
-                  className="input-field w-full"
-                />
-                <input
-                  placeholder="Role / Title"
-                  value={m.role}
-                  onChange={(e) =>
-                    setTeamMembers((cur) => cur.map((x, idx) => (idx === i ? { ...x, role: e.target.value } : x)))
-                  }
-                  className="input-field w-full"
-                />
-                <textarea
-                  placeholder="Bio"
-                  value={m.bio}
-                  rows={2}
-                  onChange={(e) =>
-                    setTeamMembers((cur) => cur.map((x, idx) => (idx === i ? { ...x, bio: e.target.value } : x)))
-                  }
-                  className="input-field w-full"
-                />
-                <input
-                  placeholder="Photo URL"
-                  value={m.photoUrl}
-                  onChange={(e) =>
-                    setTeamMembers((cur) => cur.map((x, idx) => (idx === i ? { ...x, photoUrl: e.target.value } : x)))
-                  }
-                  className="input-field w-full"
-                />
+                <Field label="Name">
+                  <input
+                    value={m.name}
+                    onChange={(e) =>
+                      setTeamMembers((cur) => cur.map((x, idx) => (idx === i ? { ...x, name: e.target.value } : x)))
+                    }
+                    className="input-field w-full"
+                  />
+                </Field>
+                <Field label="Role / Title">
+                  <input
+                    value={m.role}
+                    onChange={(e) =>
+                      setTeamMembers((cur) => cur.map((x, idx) => (idx === i ? { ...x, role: e.target.value } : x)))
+                    }
+                    className="input-field w-full"
+                  />
+                </Field>
+                <Field label="Bio">
+                  <textarea
+                    value={m.bio}
+                    rows={2}
+                    onChange={(e) =>
+                      setTeamMembers((cur) => cur.map((x, idx) => (idx === i ? { ...x, bio: e.target.value } : x)))
+                    }
+                    className="input-field w-full"
+                  />
+                </Field>
+                <Field label="Photo · 1:1 recommended">
+                  <div className="mt-1 flex items-center gap-3">
+                    {m.photoUrl ? (
+                      <div className="relative group w-20 shrink-0" style={{ aspectRatio: '1 / 1' }}>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={m.photoUrl}
+                          alt=""
+                          className="w-full h-full rounded-lg object-cover border border-[var(--border)]"
+                        />
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setTeamMembers((cur) => cur.map((x, idx) => (idx === i ? { ...x, photoUrl: '' } : x)))
+                          }
+                          className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-red-600 text-white text-xs opacity-0 group-hover:opacity-100 transition"
+                        >
+                          &times;
+                        </button>
+                      </div>
+                    ) : (
+                      <label className="w-full aspect-square max-w-[10rem] rounded-lg border border-dashed border-[var(--border)] grid place-items-center gap-1 text-[var(--text-4)] text-xs cursor-pointer hover:border-[var(--teal-600)] transition">
+                        <ImageIcon className="w-5 h-5" />
+                        <span>{teamPhotoBusyIndex === i ? 'Uploading…' : 'Click or drag to upload'}</span>
+                        <span className="text-[10px] opacity-70 text-center px-1">PNG, JPG, WebP · max 5MB</span>
+                        <input
+                          type="file"
+                          accept="image/png,image/jpeg,image/webp"
+                          className="hidden"
+                          disabled={teamPhotoBusyIndex === i}
+                          onChange={(e) => {
+                            const file = e.target.files?.[0]
+                            if (file) void handleUploadTeamPhoto(i, file)
+                            e.target.value = ''
+                          }}
+                        />
+                      </label>
+                    )}
+                  </div>
+                  {teamPhotoBusyIndex === null && teamPhotoError && (
+                    <p className="text-xs text-red-600 mt-1">{teamPhotoError}</p>
+                  )}
+                </Field>
               </div>
             ))}
             <button
