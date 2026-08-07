@@ -35,6 +35,7 @@ create table if not exists businesses (
 create index if not exists idx_businesses_owner_id on businesses (owner_id);
 create index if not exists idx_businesses_slug on businesses (slug);
 
+drop trigger if exists update_businesses_updated_at on businesses;
 create trigger update_businesses_updated_at
   before update on businesses
   for each row execute function update_updated_at_column();
@@ -50,12 +51,16 @@ returns boolean as $$
   );
 $$ language sql stable security definer;
 
+drop policy if exists "Owners can view their own business" on businesses;
 create policy "Owners can view their own business"
   on businesses for select using (owner_id = auth.uid());
+drop policy if exists "Owners can update their own business" on businesses;
 create policy "Owners can update their own business"
   on businesses for update using (owner_id = auth.uid());
+drop policy if exists "Authenticated users can create a business" on businesses;
 create policy "Authenticated users can create a business"
   on businesses for insert with check (owner_id = auth.uid());
+drop policy if exists "Public can view businesses by slug" on businesses;
 create policy "Public can view businesses by slug"
   on businesses for select using (true);
 
@@ -80,14 +85,17 @@ create table if not exists business_subscriptions (
 create index if not exists idx_business_subscriptions_business_id on business_subscriptions (business_id);
 create index if not exists idx_business_subscriptions_stripe_customer_id on business_subscriptions (stripe_customer_id);
 
+drop trigger if exists update_business_subscriptions_updated_at on business_subscriptions;
 create trigger update_business_subscriptions_updated_at
   before update on business_subscriptions
   for each row execute function update_updated_at_column();
 
 alter table business_subscriptions enable row level security;
 
+drop policy if exists "Business owners can view their subscription" on business_subscriptions;
 create policy "Business owners can view their subscription"
   on business_subscriptions for select using (is_business_owner(business_id));
+drop policy if exists "Business owners can manage their subscription" on business_subscriptions;
 create policy "Business owners can manage their subscription"
   on business_subscriptions for all using (is_business_owner(business_id));
 
@@ -111,14 +119,17 @@ create table if not exists ai_agents (
 
 create index if not exists idx_ai_agents_business_id on ai_agents (business_id);
 
+drop trigger if exists update_ai_agents_updated_at on ai_agents;
 create trigger update_ai_agents_updated_at
   before update on ai_agents
   for each row execute function update_updated_at_column();
 
 alter table ai_agents enable row level security;
 
+drop policy if exists "Business owners can manage their agents" on ai_agents;
 create policy "Business owners can manage their agents"
   on ai_agents for all using (is_business_owner(business_id));
+drop policy if exists "Public can view live agents" on ai_agents;
 create policy "Public can view live agents"
   on ai_agents for select using (status = 'live');
 
@@ -157,14 +168,17 @@ create table if not exists listings (
 create index if not exists idx_listings_business_id on listings (business_id);
 create index if not exists idx_listings_status on listings (status);
 
+drop trigger if exists update_listings_updated_at on listings;
 create trigger update_listings_updated_at
   before update on listings
   for each row execute function update_updated_at_column();
 
 alter table listings enable row level security;
 
+drop policy if exists "Business owners can manage their listings" on listings;
 create policy "Business owners can manage their listings"
   on listings for all using (is_business_owner(business_id));
+drop policy if exists "Public can view available listings" on listings;
 create policy "Public can view available listings"
   on listings for select using (status = 'available');
 
@@ -186,8 +200,10 @@ create unique index if not exists uq_listing_photos_one_cover
 
 alter table listing_photos enable row level security;
 
+drop policy if exists "Business owners can manage their listing photos" on listing_photos;
 create policy "Business owners can manage their listing photos"
   on listing_photos for all using (is_business_owner(business_id));
+drop policy if exists "Public can view photos of available listings" on listing_photos;
 create policy "Public can view photos of available listings"
   on listing_photos for select using (
     exists (select 1 from listings l where l.id = listing_id and l.status = 'available')
@@ -207,6 +223,7 @@ create index if not exists idx_agent_listings_listing_id on agent_listings (list
 
 alter table agent_listings enable row level security;
 
+drop policy if exists "Business owners can manage agent-listing links" on agent_listings;
 create policy "Business owners can manage agent-listing links"
   on agent_listings for all using (is_business_owner(business_id));
 
@@ -230,14 +247,17 @@ create index if not exists idx_clients_business_id on clients (business_id);
 create index if not exists idx_clients_auth_user_id on clients (auth_user_id);
 create index if not exists idx_clients_phone on clients (phone);
 
+drop trigger if exists update_clients_updated_at on clients;
 create trigger update_clients_updated_at
   before update on clients
   for each row execute function update_updated_at_column();
 
 alter table clients enable row level security;
 
+drop policy if exists "Business owners can manage their clients" on clients;
 create policy "Business owners can manage their clients"
   on clients for all using (is_business_owner(business_id));
+drop policy if exists "Clients can view their own record" on clients;
 create policy "Clients can view their own record"
   on clients for select using (auth.uid() = auth_user_id);
 
@@ -266,8 +286,10 @@ create index if not exists idx_conversations_started_at on conversations (starte
 
 alter table conversations enable row level security;
 
+drop policy if exists "Business owners can view their conversations" on conversations;
 create policy "Business owners can view their conversations"
   on conversations for select using (is_business_owner(business_id));
+drop policy if exists "Service role can manage conversations" on conversations;
 create policy "Service role can manage conversations"
   on conversations for all using (auth.role() = 'service_role');
 
@@ -286,8 +308,10 @@ create index if not exists idx_conversation_messages_business_id on conversation
 
 alter table conversation_messages enable row level security;
 
+drop policy if exists "Business owners can view their conversation messages" on conversation_messages;
 create policy "Business owners can view their conversation messages"
   on conversation_messages for select using (is_business_owner(business_id));
+drop policy if exists "Service role can manage conversation messages" on conversation_messages;
 create policy "Service role can manage conversation messages"
   on conversation_messages for all using (auth.role() = 'service_role');
 
@@ -310,14 +334,17 @@ create index if not exists idx_appointments_business_id on appointments (busines
 create index if not exists idx_appointments_scheduled_at on appointments (scheduled_at);
 create index if not exists idx_appointments_client_id on appointments (client_id);
 
+drop trigger if exists update_appointments_updated_at on appointments;
 create trigger update_appointments_updated_at
   before update on appointments
   for each row execute function update_updated_at_column();
 
 alter table appointments enable row level security;
 
+drop policy if exists "Business owners can manage their appointments" on appointments;
 create policy "Business owners can manage their appointments"
   on appointments for all using (is_business_owner(business_id));
+drop policy if exists "Clients can view their own appointments" on appointments;
 create policy "Clients can view their own appointments"
   on appointments for select using (
     exists (select 1 from clients c where c.id = client_id and c.auth_user_id = auth.uid())
@@ -340,8 +367,10 @@ create index if not exists idx_business_availability_business_id on business_ava
 
 alter table business_availability enable row level security;
 
+drop policy if exists "Business owners can manage their availability" on business_availability;
 create policy "Business owners can manage their availability"
   on business_availability for all using (is_business_owner(business_id));
+drop policy if exists "Public can view active availability" on business_availability;
 create policy "Public can view active availability"
   on business_availability for select using (is_active);
 
@@ -359,12 +388,14 @@ create table if not exists knowledge_documents (
 
 create index if not exists idx_knowledge_documents_business_id on knowledge_documents (business_id);
 
+drop trigger if exists update_knowledge_documents_updated_at on knowledge_documents;
 create trigger update_knowledge_documents_updated_at
   before update on knowledge_documents
   for each row execute function update_updated_at_column();
 
 alter table knowledge_documents enable row level security;
 
+drop policy if exists "Business owners can manage their knowledge base" on knowledge_documents;
 create policy "Business owners can manage their knowledge base"
   on knowledge_documents for all using (is_business_owner(business_id));
 
@@ -382,14 +413,17 @@ create table if not exists widgets (
 
 create index if not exists idx_widgets_business_id on widgets (business_id);
 
+drop trigger if exists update_widgets_updated_at on widgets;
 create trigger update_widgets_updated_at
   before update on widgets
   for each row execute function update_updated_at_column();
 
 alter table widgets enable row level security;
 
+drop policy if exists "Business owners can manage their widget" on widgets;
 create policy "Business owners can manage their widget"
   on widgets for all using (is_business_owner(business_id));
+drop policy if exists "Public can view enabled widget config" on widgets;
 create policy "Public can view enabled widget config"
   on widgets for select using (is_enabled);
 
@@ -409,14 +443,17 @@ create table if not exists websites (
 create index if not exists idx_websites_business_id on websites (business_id);
 create index if not exists idx_websites_custom_domain on websites (custom_domain);
 
+drop trigger if exists update_websites_updated_at on websites;
 create trigger update_websites_updated_at
   before update on websites
   for each row execute function update_updated_at_column();
 
 alter table websites enable row level security;
 
+drop policy if exists "Business owners can manage their website" on websites;
 create policy "Business owners can manage their website"
   on websites for all using (is_business_owner(business_id));
+drop policy if exists "Public can view published websites" on websites;
 create policy "Public can view published websites"
   on websites for select using (is_published);
 
@@ -437,6 +474,7 @@ create index if not exists idx_notifications_is_read on notifications (is_read);
 
 alter table notifications enable row level security;
 
+drop policy if exists "Business owners can manage their notifications" on notifications;
 create policy "Business owners can manage their notifications"
   on notifications for all using (is_business_owner(business_id));
 
@@ -455,16 +493,20 @@ create table if not exists support_tickets (
 create index if not exists idx_support_tickets_business_id on support_tickets (business_id);
 create index if not exists idx_support_tickets_client_id on support_tickets (client_id);
 
+drop trigger if exists update_support_tickets_updated_at on support_tickets;
 create trigger update_support_tickets_updated_at
   before update on support_tickets
   for each row execute function update_updated_at_column();
 
 alter table support_tickets enable row level security;
 
+drop policy if exists "Clients can view their own tickets" on support_tickets;
 create policy "Clients can view their own tickets"
   on support_tickets for select using (auth.uid() = client_id);
+drop policy if exists "Clients can create tickets" on support_tickets;
 create policy "Clients can create tickets"
   on support_tickets for insert with check (auth.uid() = client_id);
+drop policy if exists "Business owners can manage all tickets" on support_tickets;
 create policy "Business owners can manage all tickets"
   on support_tickets for all using (is_business_owner(business_id));
 
@@ -483,6 +525,7 @@ create index if not exists idx_support_messages_business_id on support_messages 
 
 alter table support_messages enable row level security;
 
+drop policy if exists "Clients can view messages on their own tickets" on support_messages;
 create policy "Clients can view messages on their own tickets"
   on support_messages for select using (
     exists (
@@ -490,6 +533,7 @@ create policy "Clients can view messages on their own tickets"
       where t.id = ticket_id and t.client_id = auth.uid()
     )
   );
+drop policy if exists "Clients can send messages on their own tickets" on support_messages;
 create policy "Clients can send messages on their own tickets"
   on support_messages for insert with check (
     exists (
@@ -497,6 +541,7 @@ create policy "Clients can send messages on their own tickets"
       where t.id = ticket_id and t.client_id = auth.uid()
     )
   );
+drop policy if exists "Business owners can manage all support messages" on support_messages;
 create policy "Business owners can manage all support messages"
   on support_messages for all using (is_business_owner(business_id));
 
@@ -517,14 +562,17 @@ create table if not exists business_services (
 
 create index if not exists idx_business_services_business_id on business_services (business_id);
 
+drop trigger if exists update_business_services_updated_at on business_services;
 create trigger update_business_services_updated_at
   before update on business_services
   for each row execute function update_updated_at_column();
 
 alter table business_services enable row level security;
 
+drop policy if exists "Business owners can manage their services" on business_services;
 create policy "Business owners can manage their services"
   on business_services for all using (is_business_owner(business_id));
+drop policy if exists "Public can view active services" on business_services;
 create policy "Public can view active services"
   on business_services for select using (is_active);
 
@@ -592,6 +640,7 @@ create index if not exists idx_agent_services_service_id on agent_services (serv
 
 alter table agent_services enable row level security;
 
+drop policy if exists "Business owners can manage agent-service links" on agent_services;
 create policy "Business owners can manage agent-service links"
   on agent_services for all using (is_business_owner(business_id));
 
@@ -685,12 +734,15 @@ create table if not exists website_team_members (
   updated_at  timestamptz not null default now()
 );
 create index if not exists idx_website_team_members_business_id on website_team_members (business_id);
+drop trigger if exists update_website_team_members_updated_at on website_team_members;
 create trigger update_website_team_members_updated_at
   before update on website_team_members
   for each row execute function update_updated_at_column();
 alter table website_team_members enable row level security;
+drop policy if exists "Business owners can manage their team members" on website_team_members;
 create policy "Business owners can manage their team members"
   on website_team_members for all using (is_business_owner(business_id));
+drop policy if exists "Public can view team members of published websites" on website_team_members;
 create policy "Public can view team members of published websites"
   on website_team_members for select using (
     exists (select 1 from websites where websites.business_id = website_team_members.business_id and websites.is_published)
@@ -709,12 +761,15 @@ create table if not exists website_testimonials (
   updated_at  timestamptz not null default now()
 );
 create index if not exists idx_website_testimonials_business_id on website_testimonials (business_id);
+drop trigger if exists update_website_testimonials_updated_at on website_testimonials;
 create trigger update_website_testimonials_updated_at
   before update on website_testimonials
   for each row execute function update_updated_at_column();
 alter table website_testimonials enable row level security;
+drop policy if exists "Business owners can manage their testimonials" on website_testimonials;
 create policy "Business owners can manage their testimonials"
   on website_testimonials for all using (is_business_owner(business_id));
+drop policy if exists "Public can view testimonials of published websites" on website_testimonials;
 create policy "Public can view testimonials of published websites"
   on website_testimonials for select using (
     exists (select 1 from websites where websites.business_id = website_testimonials.business_id and websites.is_published)
@@ -734,8 +789,10 @@ create table if not exists website_specialties (
 );
 create index if not exists idx_website_specialties_business_id on website_specialties (business_id);
 alter table website_specialties enable row level security;
+drop policy if exists "Business owners can manage their specialties" on website_specialties;
 create policy "Business owners can manage their specialties"
   on website_specialties for all using (is_business_owner(business_id));
+drop policy if exists "Public can view specialties of published websites" on website_specialties;
 create policy "Public can view specialties of published websites"
   on website_specialties for select using (
     exists (select 1 from websites where websites.business_id = website_specialties.business_id and websites.is_published)
@@ -752,8 +809,10 @@ create table if not exists website_faqs (
 );
 create index if not exists idx_website_faqs_business_id on website_faqs (business_id);
 alter table website_faqs enable row level security;
+drop policy if exists "Business owners can manage their website FAQs" on website_faqs;
 create policy "Business owners can manage their website FAQs"
   on website_faqs for all using (is_business_owner(business_id));
+drop policy if exists "Public can view FAQs of published websites" on website_faqs;
 create policy "Public can view FAQs of published websites"
   on website_faqs for select using (
     exists (select 1 from websites where websites.business_id = website_faqs.business_id and websites.is_published)
@@ -827,12 +886,15 @@ create table if not exists website_services (
   updated_at  timestamptz not null default now()
 );
 create index if not exists idx_website_services_business_id on website_services (business_id);
+drop trigger if exists update_website_services_updated_at on website_services;
 create trigger update_website_services_updated_at
   before update on website_services
   for each row execute function update_updated_at_column();
 alter table website_services enable row level security;
+drop policy if exists "Business owners can manage their website services" on website_services;
 create policy "Business owners can manage their website services"
   on website_services for all using (is_business_owner(business_id));
+drop policy if exists "Public can view services of published websites" on website_services;
 create policy "Public can view services of published websites"
   on website_services for select using (
     exists (select 1 from websites where websites.business_id = website_services.business_id and websites.is_published)
