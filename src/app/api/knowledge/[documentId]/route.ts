@@ -26,10 +26,11 @@ export async function PATCH(request: Request, { params }: { params: { documentId
     return NextResponse.json({ error: parsed.error.issues[0]?.message }, { status: 400 })
   }
 
-  const { sourceUrl, catalogKey, ...rest } = parsed.data
+  const { sourceUrl, catalogKey, isActive, ...rest } = parsed.data
   const patch: Partial<KnowledgeDocument> = { ...rest }
   if (sourceUrl !== undefined) patch.source_url = sourceUrl || null
   if (catalogKey !== undefined) patch.catalog_key = catalogKey || null
+  if (isActive !== undefined) patch.is_active = isActive
 
   const document = await updateKnowledgeDocument(ctx.supabase, ctx.business.id, params.documentId, patch)
   return NextResponse.json({ document })

@@ -66,7 +66,7 @@ export interface ConversationWithClient extends Conversation {
 
 export interface AppointmentWithDetails extends Appointment {
   client: Pick<Client, 'id' | 'name' | 'phone' | 'email' | 'budget' | 'pre_approval_number'> | null
-  service: Pick<BusinessService, 'id' | 'name' | 'price'> | null
+  service: Pick<BusinessService, 'id' | 'name' | 'price' | 'duration_minutes'> | null
   listing: Pick<Listing, 'id' | 'title' | 'listing_code'> | null
 }
 

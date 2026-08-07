@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { getBusinessForOwner } from '@/services/businesses'
-import { updateService, deleteService } from '@/services/businessServices'
+import { updateService } from '@/services/businessServices'
 
 async function requireBusiness() {
   const supabase = await createClient()
@@ -25,6 +25,6 @@ export async function PATCH(request: Request, { params }: { params: { serviceId:
 export async function DELETE(_request: Request, { params }: { params: { serviceId: string } }) {
   const ctx = await requireBusiness()
   if ('error' in ctx) return NextResponse.json({ error: ctx.error }, { status: 401 })
-  await deleteService(ctx.supabase, ctx.business.id, params.serviceId)
-  return NextResponse.json({ ok: true })
+  const service = await updateService(ctx.supabase, ctx.business.id, params.serviceId, { is_active: false })
+  return NextResponse.json({ service })
 }

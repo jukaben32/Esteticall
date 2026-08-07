@@ -12,6 +12,8 @@ import {
   Check,
   Palette,
   Image as ImageIcon,
+  UploadCloud,
+  X,
   FileText,
   Briefcase,
   UsersRound,
@@ -245,6 +247,28 @@ export function WebsiteEditor({
     patch({ aboutPhotoUrl: data.url })
   }
 
+  function handleLogoFile(file: File | undefined) {
+    if (!file || !file.type.startsWith('image/')) return
+    if (file.size > 5 * 1024 * 1024) {
+      setError('El logo no puede superar 5 MB')
+      return
+    }
+    const reader = new FileReader()
+    reader.onload = () => patch({ logoUrl: typeof reader.result === 'string' ? reader.result : form.logoUrl })
+    reader.readAsDataURL(file)
+  }
+
+  function handleHeroFile(file: File | undefined) {
+    if (!file || !file.type.startsWith('image/')) return
+    if (file.size > 5 * 1024 * 1024) {
+      setError('La imagen del hero no puede superar 5 MB')
+      return
+    }
+    const reader = new FileReader()
+    reader.onload = () => patch({ heroImageUrl: typeof reader.result === 'string' ? reader.result : form.heroImageUrl })
+    reader.readAsDataURL(file)
+  }
+
   const siteUrl = useMemo(
     () => (typeof window !== 'undefined' ? `${window.location.origin}/sites/${slug}` : `/sites/${slug}`),
     [slug]
@@ -435,19 +459,58 @@ export function WebsiteEditor({
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-[380px_1fr] gap-4">
-      {/* Left: Design + Content */}
-      <div className="card-surface p-4 space-y-5 max-h-[85vh] overflow-y-auto">
-        <div className="flex items-center gap-2">
-          <span className="w-8 h-8 rounded-full bg-[var(--teal-50)] text-[var(--teal-700)] grid place-items-center shrink-0">
-            <Globe className="w-4 h-4" />
+    <div className="overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--bg-page)] shadow-sm">
+      <div className="flex flex-col gap-2 border-b border-[var(--border)] bg-white/80 px-3 py-2 backdrop-blur sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex min-w-0 items-center gap-2">
+          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-[var(--teal-50)] text-[var(--teal-700)]">
+            <Globe className="h-4 w-4" />
           </span>
-          <div>
-            <p className="font-display font-semibold text-[var(--text-1)]">Website Builder</p>
-            <p className="text-xs text-[var(--text-3)]">Build your agency website</p>
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-[var(--text-1)]">Website Builder</p>
+            <p className="text-[11px] text-[var(--text-3)]">Build your agency website</p>
           </div>
         </div>
+        <div className="flex flex-wrap items-center gap-1.5">
+          <a href="#website-preview" className="btn-secondary !px-2.5 !py-1.5 !text-[11px]">
+            Preview
+          </a>
+          <button onClick={() => save()} disabled={saving} className="btn-secondary !px-2.5 !py-1.5 !text-[11px]">
+            <Pencil className="h-3.5 w-3.5" /> {saving ? 'Saving...' : saved ? 'Saved!' : 'Save'}
+          </button>
+          {form.isPublished ? (
+            <button onClick={() => save(false)} className="btn-secondary !px-2.5 !py-1.5 !text-[11px] !text-red-600 hover:!bg-red-50">
+              Unpublish
+            </button>
+          ) : (
+            <button onClick={handlePublishClick} disabled={checkingOut} className="btn-primary !px-2.5 !py-1.5 !text-[11px]">
+              {!websiteBuilderEnabled && <Lock className="h-3.5 w-3.5" />}
+              {checkingOut ? 'Redirecting...' : 'Publish'}
+            </button>
+          )}
+          <a href={siteUrl} target="_blank" rel="noreferrer" className="btn-secondary !px-2.5 !py-1.5 !text-[11px]">
+            <ExternalLink className="h-3.5 w-3.5" /> View Live
+          </a>
+        </div>
+      </div>
 
+      <div className="flex flex-col gap-2 border-b border-[var(--border)] bg-[var(--bg-subtle)] px-3 py-1.5 text-[11px] text-[var(--text-3)] sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex min-w-0 items-center gap-2">
+          <span className="grid h-6 w-6 shrink-0 place-items-center rounded-lg bg-[var(--teal-700)] text-white">
+            <Globe className="h-3.5 w-3.5" />
+          </span>
+          <span className="font-semibold text-[var(--text-1)]">Website Builder</span>
+          <span className="truncate">
+            {form.isPublished ? `Live at /sites/${slug}` : `Design free - ${WEBSITE_BUILDER_PRICE_USD}USD/mo to publish`}
+          </span>
+        </div>
+        <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${form.isPublished ? 'bg-[var(--teal-50)] text-[var(--teal-700)]' : 'bg-[var(--bg-raised)] text-[var(--text-3)]'}`}>
+          {form.isPublished ? 'Published' : 'Not published'}
+        </span>
+      </div>
+
+      <div className="grid grid-cols-1 gap-0 lg:grid-cols-[300px_1fr]">
+        {/* Left: Design + Content */}
+        <div className="max-h-[82vh] space-y-4 overflow-y-auto border-r border-[var(--border)] bg-white p-3">
         {checkoutStatus === 'success' && (
           <p className="text-xs rounded-lg p-2.5 bg-[var(--teal-50)] text-[var(--teal-800)]">
             Payment successful! Click <strong>Publish</strong> below to make your site live.
@@ -459,29 +522,6 @@ export function WebsiteEditor({
           </p>
         )}
 
-        <div className="flex items-center justify-between text-xs">
-          <span className="text-[var(--text-3)]">
-            Website Builder · {form.isPublished ? `Live at /sites/${slug}` : 'Not published'}
-          </span>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <button onClick={() => save()} disabled={saving} className="btn-secondary !text-xs">
-            <Pencil className="w-3.5 h-3.5" /> {saving ? 'Saving…' : saved ? 'Saved!' : 'Save'}
-          </button>
-          {form.isPublished ? (
-            <button onClick={() => save(false)} className="btn-secondary !text-xs">
-              Unpublish
-            </button>
-          ) : (
-            <button onClick={handlePublishClick} disabled={checkingOut} className="btn-primary !text-xs">
-              {!websiteBuilderEnabled && <Lock className="w-3.5 h-3.5" />}
-              {checkingOut ? 'Redirecting…' : 'Publish'}
-            </button>
-          )}
-          <a href={siteUrl} target="_blank" rel="noreferrer" className="btn-secondary !text-xs">
-            <ExternalLink className="w-3.5 h-3.5" /> View Live
-          </a>
-        </div>
         {error && <p className="text-xs text-red-500">{error}</p>}
 
         {!websiteBuilderEnabled && !form.isPublished && (
@@ -587,100 +627,181 @@ export function WebsiteEditor({
           <p className="text-xs font-semibold text-[var(--text-3)] mb-1">CONTENT</p>
 
           <Section title="Branding" id="branding" open={openSection === 'branding'} onToggle={toggle}>
-            <Field label="Logo URL">
-              <input
-                value={form.logoUrl}
-                onChange={(e) => patch({ logoUrl: e.target.value })}
-                className="input-field w-full"
-                placeholder="https://…"
-              />
-            </Field>
-            <Field label="Site Title">
-              <input
-                value={form.siteTitle}
-                onChange={(e) => patch({ siteTitle: e.target.value })}
-                className="input-field w-full"
-                placeholder={business.name}
-              />
-            </Field>
-            <Field label="Site Description">
-              <textarea
-                value={form.siteDescription}
-                onChange={(e) => patch({ siteDescription: e.target.value })}
-                className="input-field w-full"
-                rows={2}
-                placeholder="A short tagline shown in search engines and browser tabs."
-              />
-            </Field>
+            <div className="space-y-2.5 rounded-xl bg-[var(--bg-subtle)] p-3">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-3)]">Logo - 1:1 recommended</p>
+                <label
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={(e) => {
+                    e.preventDefault()
+                    handleLogoFile(e.dataTransfer.files[0])
+                  }}
+                  className="mt-1.5 flex min-h-[112px] cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed border-[var(--border)] bg-white/70 px-3 py-4 text-center transition hover:border-[var(--teal-700)] hover:bg-[var(--teal-50)]"
+                >
+                  {form.logoUrl ? (
+                    <span className="flex flex-col items-center gap-2">
+                      <span
+                        aria-label="Logo preview"
+                        className="grid h-12 w-12 place-items-center overflow-hidden rounded-xl border border-[var(--border)] bg-white bg-contain bg-center bg-no-repeat shadow-sm"
+                        style={{ backgroundImage: `url("${form.logoUrl}")` }}
+                      />
+                      <span className="text-xs font-semibold text-[var(--teal-700)]">Cambiar logo</span>
+                    </span>
+                  ) : (
+                    <span className="flex flex-col items-center gap-1.5">
+                      <span className="grid h-9 w-9 place-items-center rounded-lg bg-[var(--teal-50)] text-[var(--teal-700)]">
+                        <UploadCloud className="h-4 w-4" />
+                      </span>
+                      <span className="text-xs font-semibold text-[var(--teal-700)]">Click or drag to upload</span>
+                      <span className="text-[10px] text-[var(--text-3)]">PNG, JPG, WEBP - max 5 MB</span>
+                    </span>
+                  )}
+                  <input type="file" accept="image/png,image/jpeg,image/webp" className="sr-only" onChange={(e) => handleLogoFile(e.target.files?.[0])} />
+                </label>
+                <input
+                  value={form.logoUrl}
+                  onChange={(e) => patch({ logoUrl: e.target.value })}
+                  className="input-field mt-2 h-8 w-full !rounded-lg !px-2.5 !py-1 text-xs"
+                  placeholder="https://..."
+                />
+              </div>
+
+              <Field label="Site Title">
+                <input
+                  value={form.siteTitle}
+                  onChange={(e) => patch({ siteTitle: e.target.value })}
+                  className="input-field h-8 w-full !rounded-lg !px-2.5 !py-1 text-xs"
+                  placeholder={business.name}
+                />
+              </Field>
+              <Field label="Site Description">
+                <textarea
+                  value={form.siteDescription}
+                  onChange={(e) => patch({ siteDescription: e.target.value })}
+                  className="input-field w-full !rounded-lg !px-2.5 !py-2 text-xs"
+                  rows={3}
+                  placeholder="A short tagline shown in search engines and browser tabs."
+                />
+              </Field>
+            </div>
           </Section>
 
           <Section title="Hero Section" id="hero" open={openSection === 'hero'} onToggle={toggle}>
-            <Field label="Headline">
-              <input
-                value={form.headline}
-                onChange={(e) => patch({ headline: e.target.value })}
-                className="input-field w-full"
-                placeholder="Premium Real Estate, Exceptional Service"
-              />
-            </Field>
-            <Field label="Subheadline">
-              <textarea
-                value={form.heroSubheadline}
-                onChange={(e) => patch({ heroSubheadline: e.target.value })}
-                className="input-field w-full"
-                rows={2}
-              />
-            </Field>
-            <Field label="Hero Image URL">
-              <input
-                value={form.heroImageUrl}
-                onChange={(e) => patch({ heroImageUrl: e.target.value })}
-                className="input-field w-full"
-                placeholder="https://…"
-              />
-            </Field>
-            <div className="grid grid-cols-2 gap-2">
-              <Field label="CTA Primary">
+            <div className="space-y-2.5 rounded-xl bg-[var(--bg-subtle)] p-3">
+              <Field label="Headline">
                 <input
-                  value={form.ctaPrimaryText}
-                  onChange={(e) => patch({ ctaPrimaryText: e.target.value })}
-                  className="input-field w-full"
+                  value={form.headline}
+                  onChange={(e) => patch({ headline: e.target.value })}
+                  className="input-field h-8 w-full !rounded-lg !px-2.5 !py-1 text-xs"
+                  placeholder="Premium Real Estate, Exceptional Service"
                 />
               </Field>
-              <Field label="CTA Secondary">
-                <input
-                  value={form.ctaSecondaryText}
-                  onChange={(e) => patch({ ctaSecondaryText: e.target.value })}
-                  className="input-field w-full"
+
+              <Field label="Subheadline">
+                <textarea
+                  value={form.heroSubheadline}
+                  onChange={(e) => patch({ heroSubheadline: e.target.value })}
+                  className="input-field w-full !rounded-lg !px-2.5 !py-2 text-xs"
+                  rows={3}
                 />
               </Field>
+
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-3)]">Hero Image - 4:3 recommended</p>
+                <div
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={(e) => {
+                    e.preventDefault()
+                    handleHeroFile(e.dataTransfer.files[0])
+                  }}
+                  className="relative mt-1.5 aspect-[4/3] overflow-hidden rounded-xl border border-dashed border-[var(--border)] bg-white/70 bg-cover bg-center shadow-sm transition hover:border-[var(--teal-700)]"
+                  style={form.heroImageUrl ? { backgroundImage: `url("${form.heroImageUrl}")` } : undefined}
+                >
+                  <label className="absolute inset-0 flex cursor-pointer items-center justify-center text-center">
+                    {!form.heroImageUrl && (
+                      <span className="flex flex-col items-center gap-1.5 px-3">
+                        <span className="grid h-9 w-9 place-items-center rounded-lg bg-[var(--teal-50)] text-[var(--teal-700)]">
+                          <UploadCloud className="h-4 w-4" />
+                        </span>
+                        <span className="text-xs font-semibold text-[var(--teal-700)]">Click or drag to upload</span>
+                        <span className="text-[10px] text-[var(--text-3)]">PNG, JPG, WEBP - max 5 MB</span>
+                      </span>
+                    )}
+                    <input type="file" accept="image/png,image/jpeg,image/webp" className="sr-only" onChange={(e) => handleHeroFile(e.target.files?.[0])} />
+                  </label>
+
+                  {form.heroImageUrl && (
+                    <div className="absolute right-2 top-2 flex items-center gap-1">
+                      <label className="grid h-7 w-7 cursor-pointer place-items-center rounded-full bg-white/90 text-[var(--teal-700)] shadow-sm hover:bg-white">
+                        <UploadCloud className="h-3.5 w-3.5" />
+                        <input type="file" accept="image/png,image/jpeg,image/webp" className="sr-only" onChange={(e) => handleHeroFile(e.target.files?.[0])} />
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => patch({ heroImageUrl: '' })}
+                        className="grid h-7 w-7 place-items-center rounded-full bg-white/90 text-red-600 shadow-sm hover:bg-white"
+                        aria-label="Remove hero image"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+                <input
+                  value={form.heroImageUrl}
+                  onChange={(e) => patch({ heroImageUrl: e.target.value })}
+                  className="input-field mt-2 h-8 w-full !rounded-lg !px-2.5 !py-1 text-xs"
+                  placeholder="https://..."
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <Field label="CTA Primary">
+                  <input
+                    value={form.ctaPrimaryText}
+                    onChange={(e) => patch({ ctaPrimaryText: e.target.value })}
+                    className="input-field h-8 w-full !rounded-lg !px-2.5 !py-1 text-xs"
+                  />
+                </Field>
+                <Field label="CTA Secondary">
+                  <input
+                    value={form.ctaSecondaryText}
+                    onChange={(e) => patch({ ctaSecondaryText: e.target.value })}
+                    className="input-field h-8 w-full !rounded-lg !px-2.5 !py-1 text-xs"
+                  />
+                </Field>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <Field label="Years Exp.">
+                  <input
+                    value={form.yearsExperience}
+                    onChange={(e) => patch({ yearsExperience: e.target.value })}
+                    className="input-field h-8 w-full !rounded-lg !px-2.5 !py-1 text-xs"
+                    inputMode="numeric"
+                  />
+                </Field>
+                <Field label="Clients Served">
+                  <input
+                    value={form.clientsServed}
+                    onChange={(e) => patch({ clientsServed: e.target.value })}
+                    className="input-field h-8 w-full !rounded-lg !px-2.5 !py-1 text-xs"
+                    inputMode="numeric"
+                  />
+                </Field>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <Field label="Satisfaction %">
+                  <input
+                    value={form.satisfactionPct}
+                    onChange={(e) => patch({ satisfactionPct: e.target.value })}
+                    className="input-field h-8 w-full !rounded-lg !px-2.5 !py-1 text-xs"
+                    inputMode="numeric"
+                  />
+                </Field>
+              </div>
             </div>
-            <div className="grid grid-cols-2 gap-2">
-              <Field label="Years Exp.">
-                <input
-                  value={form.yearsExperience}
-                  onChange={(e) => patch({ yearsExperience: e.target.value })}
-                  className="input-field w-full"
-                  inputMode="numeric"
-                />
-              </Field>
-              <Field label="Clients Served">
-                <input
-                  value={form.clientsServed}
-                  onChange={(e) => patch({ clientsServed: e.target.value })}
-                  className="input-field w-full"
-                  inputMode="numeric"
-                />
-              </Field>
-            </div>
-            <Field label="Satisfaction %">
-              <input
-                value={form.satisfactionPct}
-                onChange={(e) => patch({ satisfactionPct: e.target.value })}
-                className="input-field w-full"
-                inputMode="numeric"
-              />
-            </Field>
           </Section>
 
           <Section title="About Section" id="about" open={openSection === 'about'} onToggle={toggle}>
@@ -995,12 +1116,12 @@ export function WebsiteEditor({
                 placeholder="Mon–Fri 9am–6pm · Sat 10am–4pm"
               />
             </Field>
-            <Field label="Google Maps (embed URL)">
+            <Field label="Google Maps (URL or coordinates)">
               <input
                 value={form.contactMapsUrl}
                 onChange={(e) => patch({ contactMapsUrl: e.target.value })}
                 className="input-field w-full"
-                placeholder="https://maps.google.com/maps?q=…&output=embed"
+                placeholder="18.462, -69.296 or Google Maps URL"
               />
             </Field>
           </Section>
@@ -1024,18 +1145,19 @@ export function WebsiteEditor({
         </div>
       </div>
 
-      {/* Right: Live preview */}
-      <div className="card-surface p-2 overflow-hidden">
-        <p className="text-xs text-[var(--text-3)] px-2 py-1">
-          Preview · {TEMPLATES.find((t) => t.id === form.template)?.name} template
-        </p>
-        <div className="rounded-xl border border-[var(--border)] overflow-y-auto max-h-[80vh]">
+        {/* Right: Live preview */}
+        <div id="website-preview" className="overflow-hidden bg-[var(--bg-page)] p-2">
+          <p className="px-2 py-1 text-xs text-[var(--text-3)]">
+            Preview - {TEMPLATES.find((t) => t.id === form.template)?.name} template
+          </p>
+          <div className="max-h-[80vh] overflow-y-auto rounded-xl border border-[var(--border)]">
           <WebsiteTemplateRenderer
             businessName={business.name}
             businessPhone={business.phone}
             content={previewContent}
             isEditorPreview
           />
+          </div>
         </div>
       </div>
     </div>

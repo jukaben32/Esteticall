@@ -175,11 +175,11 @@ export function EditListingModal({ listing, agents, onSaved, onClose }: EditList
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/40 flex items-start justify-center p-3 overflow-y-auto" onClick={onClose}>
+    <div className="fixed inset-0 z-50 bg-black/40 flex items-start justify-center p-3 overflow-y-auto sm:overflow-hidden" onClick={onClose}>
       <form
         onSubmit={handleSave}
         onClick={(e) => e.stopPropagation()}
-        className="card-raised w-full max-w-2xl my-6 p-5 space-y-4"
+        className="card-raised w-full max-w-2xl my-6 p-5 space-y-4 sm:my-3 sm:max-h-[calc(100dvh-1.5rem)] sm:overflow-y-auto sm:overscroll-contain"
       >
         <div className="flex items-center justify-between">
           <h2 className="font-display font-semibold text-lg text-[var(--text-1)]">Editar propiedad</h2>

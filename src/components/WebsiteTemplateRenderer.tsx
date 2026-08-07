@@ -78,6 +78,40 @@ const ABOUT_HIGHLIGHTS = [
 
 const SERVICE_ICONS = [Home, ClipboardList, TrendingUp, Building2, Key]
 
+function toDecimalDegrees(degrees: string, minutes = '0', seconds = '0', direction: string) {
+  const value = Number(degrees) + Number(minutes) / 60 + Number(seconds) / 3600
+  return /[SW]/i.test(direction) ? -value : value
+}
+
+function normalizeMapEmbedUrl(rawValue: string | null) {
+  const value = rawValue?.trim()
+  if (!value) return null
+
+  const iframeSrc = value.match(/src=["']([^"']+)["']/i)?.[1]
+  const input = (iframeSrc ?? value).trim()
+  const dms = input.match(
+    /(\d+(?:\.\d+)?)[^0-9NSEW]+(\d+(?:\.\d+)?)?[^0-9NSEW]*(\d+(?:\.\d+)?)?[^0-9NSEW]*([NS])[^0-9NSEW]+(\d+(?:\.\d+)?)[^0-9NSEW]+(\d+(?:\.\d+)?)?[^0-9NSEW]*(\d+(?:\.\d+)?)?[^0-9NSEW]*([EW])/i
+  )
+  const query = dms
+    ? `${toDecimalDegrees(dms[1], dms[2], dms[3], dms[4])},${toDecimalDegrees(dms[5], dms[6], dms[7], dms[8])}`
+    : input
+
+  if (/^https?:\/\//i.test(query)) {
+    try {
+      const url = new URL(query)
+      const host = url.hostname.toLowerCase()
+      const isGoogleMap = host.includes('google.') || host === 'maps.app.goo.gl' || host === 'goo.gl'
+      const isEmbed = url.pathname.includes('/maps/embed') || url.searchParams.get('output') === 'embed'
+      if (isGoogleMap && isEmbed) return query
+      if (!isGoogleMap) return query
+    } catch {
+      // Fall back to a Google Maps search embed below.
+    }
+  }
+
+  return `https://maps.google.com/maps?q=${encodeURIComponent(query)}&output=embed`
+}
+
 export function WebsiteTemplateRenderer({
   businessName,
   businessPhone,
@@ -94,6 +128,7 @@ export function WebsiteTemplateRenderer({
   const font = FONT_STACKS[website.font] ?? FONT_STACKS.inter
   const isPulse = website.template === 'pulse'
   const isSerenity = website.template === 'serenity'
+  const mapEmbedUrl = normalizeMapEmbedUrl(website.contact_maps_url)
 
   return (
     <div style={{ backgroundColor: style.bg, color: style.text, fontFamily: font }} className="min-h-full">
@@ -456,8 +491,8 @@ export function WebsiteTemplateRenderer({
             className="rounded-2xl overflow-hidden min-h-[240px] grid place-items-center"
             style={{ backgroundColor: style.border }}
           >
-            {website.contact_maps_url ? (
-              <iframe src={website.contact_maps_url} className="w-full h-full min-h-[240px]" loading="lazy" title="Map" />
+            {mapEmbedUrl ? (
+              <iframe src={mapEmbedUrl} className="w-full h-full min-h-[240px]" loading="lazy" title="Map" />
             ) : (
               isEditorPreview && (
                 <div className="text-center px-4" style={{ color: style.subtext }}>

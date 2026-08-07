@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { ChevronLeft, ChevronRight, User, Phone, Mail, DollarSign, CalendarCheck, CalendarDays, CalendarClock, X } from 'lucide-react'
+import { BriefcaseBusiness, CalendarCheck, CalendarClock, CalendarDays, ChevronLeft, ChevronRight, CreditCard, DollarSign, Mail, Phone, User, X } from 'lucide-react'
 import type { AppointmentWithDetails } from '@/types'
 import { formatDateTime } from '@/lib/formatDate'
 import {
@@ -52,24 +52,75 @@ function formatDayHeader(dayKey: string): string {
   return `${WEEKDAY_LONG[date.getDay()]}, ${d} de ${MONTH_LABELS[m - 1]}`
 }
 
+function dateFromDayKey(dayKey: string): Date {
+  const [y, m, d] = dayKey.split('-').map(Number)
+  return new Date(y, m - 1, d)
+}
+
+function dayKeyFromDate(date: Date): string {
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
+}
+
+function addDaysToDayKey(dayKey: string, amount: number): string {
+  const date = dateFromDayKey(dayKey)
+  date.setDate(date.getDate() + amount)
+  return dayKeyFromDate(date)
+}
+
+function formatAppointmentTime(iso: string): string {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/Santo_Domingo',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  }).formatToParts(new Date(iso))
+  const map: Record<string, string> = {}
+  for (const part of parts) map[part.type] = part.value
+  return `${map.hour}:${map.minute} ${map.dayPeriod === 'AM' ? 'a. m.' : 'p. m.'}`
+}
+
 function AppointmentRow({ appt, onClick }: { appt: AppointmentWithDetails; onClick: () => void }) {
+  const serviceName = appt.service?.name ?? 'Servicio sin asignar'
+  const paymentLabel = PAYMENT_LABELS[appt.payment_status] ?? appt.payment_status
+  const appointmentLabel = APPOINTMENT_STATUS_LABELS[appt.status] ?? appt.status
+
   return (
-    <button onClick={onClick} className="w-full py-2.5 flex items-center gap-3 text-left">
-      <div className="flex-1 min-w-0">
-        <p className="font-medium text-[var(--text-1)] truncate">
-          {appt.client?.name ?? 'Cliente sin identificar'}
-        </p>
-        <p className="text-xs text-[var(--text-3)] truncate">
-          {formatDateTime(appt.scheduled_at)}
-          {appt.service ? ` · ${appt.service.name}` : ''}
-        </p>
+    <button onClick={onClick} className="w-full py-3 text-left group">
+      <div className="flex items-center sm:items-start gap-3">
+        <div className="hidden sm:flex w-16 shrink-0 flex-col items-start">
+          <span className="text-sm font-semibold text-[var(--teal-700)]">{formatAppointmentTime(appt.scheduled_at)}</span>
+          {appt.service?.duration_minutes && (
+            <span className="text-[10px] text-[var(--text-4)]">{appt.service.duration_minutes} min</span>
+          )}
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="font-medium text-[var(--text-1)] truncate">
+            {appt.client?.name ?? 'Cliente sin identificar'}
+          </p>
+          <p className="text-xs text-[var(--text-3)] truncate">
+            {formatDateTime(appt.scheduled_at)}
+            {appt.listing ? ` - ${appt.listing.title}` : ''}
+          </p>
+          <div className="mt-1.5 hidden sm:flex flex-wrap items-center gap-2">
+            <span className="inline-flex items-center gap-1 rounded-full bg-[var(--bg-raised)] px-2 py-0.5 text-[11px] font-medium text-[var(--text-2)]">
+              <BriefcaseBusiness className="w-3 h-3 text-[var(--teal-700)]" />
+              {serviceName}
+            </span>
+            <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium ${PAYMENT_STYLES[appt.payment_status] ?? ''}`}>
+              <CreditCard className="w-3 h-3" />
+              {paymentLabel}
+            </span>
+          </div>
+        </div>
+        <div className="flex flex-col sm:flex-row items-end sm:items-center gap-1.5 shrink-0">
+          <span className={`badge border-transparent sm:hidden ${PAYMENT_STYLES[appt.payment_status] ?? ''}`}>
+            {paymentLabel}
+          </span>
+          <span className={`badge border-transparent ${APPOINTMENT_STATUS_STYLES[appt.status] ?? ''}`}>
+            {appointmentLabel}
+          </span>
+        </div>
       </div>
-      <span className={`badge border-transparent shrink-0 ${PAYMENT_STYLES[appt.payment_status] ?? ''}`}>
-        {PAYMENT_LABELS[appt.payment_status] ?? appt.payment_status}
-      </span>
-      <span className={`badge border-transparent shrink-0 ${APPOINTMENT_STATUS_STYLES[appt.status] ?? ''}`}>
-        {APPOINTMENT_STATUS_LABELS[appt.status] ?? appt.status}
-      </span>
     </button>
   )
 }
@@ -222,8 +273,8 @@ export function ScheduleCalendar({
   const [appointments, setAppointments] = useState(initialAppointments)
   const [selected, setSelected] = useState<AppointmentWithDetails | null>(null)
 
-  const todayKey = dayKeyInBusinessTZ(todayIso)
-  const todayDate = new Date(todayIso)
+  const todayKey = useMemo(() => dayKeyInBusinessTZ(todayIso), [todayIso])
+  const todayDate = useMemo(() => new Date(todayIso), [todayIso])
   const [viewYear, setViewYear] = useState(todayDate.getFullYear())
   const [viewMonth, setViewMonth] = useState(todayDate.getMonth())
   const [selectedDayKey, setSelectedDayKey] = useState(todayKey)
@@ -280,6 +331,18 @@ export function ScheduleCalendar({
     setViewYear(todayDate.getFullYear())
     setViewMonth(todayDate.getMonth())
     setSelectedDayKey(todayKey)
+  }
+  function setVisibleDay(dayKey: string) {
+    const date = dateFromDayKey(dayKey)
+    setSelectedDayKey(dayKey)
+    setViewYear(date.getFullYear())
+    setViewMonth(date.getMonth())
+  }
+  function goPreviousDay() {
+    setVisibleDay(addDaysToDayKey(selectedDayKey, -1))
+  }
+  function goNextDay() {
+    setVisibleDay(addDaysToDayKey(selectedDayKey, 1))
   }
   function selectDay(cell: DayCell) {
     setSelectedDayKey(cell.dayKey)
@@ -374,10 +437,32 @@ export function ScheduleCalendar({
         </div>
 
         <div className="card-surface p-4">
-          <p className="font-display font-semibold text-[var(--text-1)] capitalize">{formatDayHeader(selectedDayKey)}</p>
-          <p className="text-xs text-[var(--text-3)] mb-2">
-            {selectedDayAppointments.length} {selectedDayAppointments.length === 1 ? 'cita' : 'citas'}
-          </p>
+          <div className="flex items-start justify-between gap-3 mb-2">
+            <div>
+              <p className="font-display font-semibold text-[var(--text-1)] capitalize">{formatDayHeader(selectedDayKey)}</p>
+              <p className="text-xs text-[var(--text-3)]">
+                {selectedDayAppointments.length} {selectedDayAppointments.length === 1 ? 'cita' : 'citas'}
+              </p>
+            </div>
+            <div className="hidden sm:flex items-center gap-1">
+              <button
+                type="button"
+                onClick={goPreviousDay}
+                aria-label="Ver dia anterior"
+                className="p-1.5 rounded-lg bg-[var(--bg-raised)] text-[var(--text-2)] hover:text-[var(--teal-700)]"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <button
+                type="button"
+                onClick={goNextDay}
+                aria-label="Ver dia siguiente"
+                className="p-1.5 rounded-lg bg-[var(--bg-raised)] text-[var(--text-2)] hover:text-[var(--teal-700)]"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
           <div className="divide-y divide-[var(--border)]">
             {selectedDayAppointments.map((appt) => (
               <AppointmentRow key={appt.id} appt={appt} onClick={() => setSelected(appt)} />

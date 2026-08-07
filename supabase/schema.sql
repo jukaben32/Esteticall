@@ -352,6 +352,7 @@ create table if not exists knowledge_documents (
   title         text not null,
   content       text not null,
   source_url    text,
+  is_active     boolean not null default true,
   created_at    timestamptz not null default now(),
   updated_at    timestamptz not null default now()
 );
@@ -618,8 +619,10 @@ create index if not exists idx_business_services_catalog_key on business_service
 -- "Ya está en tu base de conocimiento" instead of creating duplicates.
 alter table knowledge_documents add column if not exists category text;
 alter table knowledge_documents add column if not exists catalog_key text;
+alter table knowledge_documents add column if not exists is_active boolean not null default true;
 
 create index if not exists idx_knowledge_documents_catalog_key on knowledge_documents (business_id, catalog_key);
+create index if not exists idx_knowledge_documents_active on knowledge_documents (business_id, is_active);
 
 -- 25. WEBSITES — full site-builder rebuild (matches the reference template's
 -- Website Builder: template picker, primary/secondary color, font, AI agent

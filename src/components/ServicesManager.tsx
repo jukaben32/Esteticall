@@ -17,6 +17,7 @@ export function ServicesManager({ initialServices }: { initialServices: Business
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState<BusinessService | undefined>(undefined)
   const [dragIndex, setDragIndex] = useState<number | null>(null)
+  const [deactivating, setDeactivating] = useState<BusinessService | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [toasts, setToasts] = useState<ToastMsg[]>([])
 
@@ -26,6 +27,9 @@ export function ServicesManager({ initialServices }: { initialServices: Business
     setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), 2500)
   }
 
+  const activeServices = services.filter((s) => s.is_active)
+  const inactiveServices = services.filter((s) => !s.is_active)
+  const activeCount = activeServices.length
   const addedCatalogKeys = new Set(services.map((s) => s.catalog_key).filter(Boolean) as string[])
 
   function openCreate() {
@@ -58,12 +62,20 @@ export function ServicesManager({ initialServices }: { initialServices: Business
     }
   }
 
-  async function remove(serviceId: string) {
-    if (!confirm('¿Eliminar este servicio? Ya no estará disponible para tus agentes.')) return
-    const res = await fetch(`/api/services/${serviceId}`, { method: 'DELETE' })
+  async function deactivate(service: BusinessService) {
+    const res = await fetch(`/api/services/${service.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ is_active: false }),
+    })
     if (res.ok) {
-      setServices((prev) => prev.filter((s) => s.id !== serviceId))
-      pushToast('Servicio eliminado')
+      const { service: updated } = await res.json()
+      setServices((prev) => prev.map((s) => (s.id === updated.id ? updated : s)))
+      setDeactivating(null)
+      pushToast('Servicio desactivado')
+    } else {
+      const body = await res.json().catch(() => ({}))
+      setError(body.error ?? 'No se pudo desactivar el servicio')
     }
   }
 
@@ -100,7 +112,7 @@ export function ServicesManager({ initialServices }: { initialServices: Business
       const next = [...prev]
       const [moved] = next.splice(dragIndex, 1)
       next.splice(targetIndex, 0, moved)
-      // Persist new order in the background — one PATCH per row that moved.
+      // Persist new order in the background - one PATCH per row that moved.
       next.forEach((s, i) => {
         if (s.sort_order !== i) {
           fetch(`/api/services/${s.id}`, {
@@ -118,10 +130,10 @@ export function ServicesManager({ initialServices }: { initialServices: Business
   return (
     <div className="space-y-6">
       <section className="card-surface p-5">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-4 gap-3">
           <div>
             <h2 className="font-display font-semibold text-[var(--text-1)]">Servicios de la agencia</h2>
-            <p className="text-sm text-[var(--text-3)]">{services.length} servicios en tu catálogo</p>
+            <p className="text-sm text-[var(--text-3)]">{activeCount} activos de {services.length} servicios en tu catalogo</p>
           </div>
           <button className="btn-primary" onClick={openCreate}>
             <Sparkles className="w-3.5 h-3.5" />
@@ -132,62 +144,95 @@ export function ServicesManager({ initialServices }: { initialServices: Business
         {error && <p className="text-sm text-red-600 mb-3">{error}</p>}
 
         <div className="space-y-2">
-          {services.map((service, i) => (
-            <div
-              key={service.id}
-              draggable
-              onDragStart={() => setDragIndex(i)}
-              onDragOver={(e) => e.preventDefault()}
-              onDrop={() => handleDrop(i)}
-              className="card-surface p-3 flex items-center gap-3"
-            >
-              <GripVertical className="w-4 h-4 text-[var(--text-4)] cursor-grab shrink-0" />
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <p className="font-medium text-[var(--text-1)]">{service.name}</p>
-                  <span className="text-xs text-[var(--text-3)]">
-                    {service.duration_minutes} min · {formatServicePrice(service)}
-                  </span>
-                </div>
-                {service.description && <p className="text-xs text-[var(--text-3)] mt-0.5">{service.description}</p>}
-              </div>
-              <button
-                onClick={() => toggleActive(service)}
-                className={`badge border-transparent shrink-0 ${
-                  service.is_active ? 'bg-[var(--teal-50)] text-[var(--teal-800)]' : 'bg-[var(--bg-raised)] text-[var(--text-3)]'
-                }`}
+          {activeServices.map((service) => {
+            const serviceIndex = services.findIndex((s) => s.id === service.id)
+            return (
+              <div
+                key={service.id}
+                draggable
+                onDragStart={() => setDragIndex(serviceIndex)}
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={() => handleDrop(serviceIndex)}
+                className="card-surface p-3 flex items-center gap-3"
               >
-                {service.is_active ? 'Activo' : 'Inactivo'}
-              </button>
-              <div className="flex items-center gap-1 shrink-0">
+                <GripVertical className="w-4 h-4 text-[var(--text-4)] cursor-grab shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <p className="font-medium text-[var(--text-1)]">{service.name}</p>
+                    <span className="text-xs text-[var(--text-3)]">
+                      {service.duration_minutes} min - {formatServicePrice(service)}
+                    </span>
+                  </div>
+                  {service.description && <p className="text-xs text-[var(--text-3)] mt-0.5">{service.description}</p>}
+                </div>
                 <button
-                  onClick={() => openEdit(service)}
-                  aria-label="Editar"
-                  className="p-2 rounded-lg text-[var(--text-3)] hover:text-[var(--teal-700)] hover:bg-[var(--teal-50)]"
+                  onClick={() => toggleActive(service)}
+                  className="badge border-transparent shrink-0 bg-[var(--teal-50)] text-[var(--teal-800)]"
                 >
-                  <Pencil className="w-4 h-4" />
+                  Activo
                 </button>
-                <button
-                  onClick={() => remove(service.id)}
-                  aria-label="Eliminar"
-                  className="p-2 rounded-lg text-[var(--text-3)] hover:text-red-600 hover:bg-red-50"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
+                <div className="flex items-center gap-1 shrink-0">
+                  <button
+                    onClick={() => openEdit(service)}
+                    aria-label="Editar"
+                    className="p-2 rounded-lg text-[var(--text-3)] hover:text-[var(--teal-700)] hover:bg-[var(--teal-50)]"
+                  >
+                    <Pencil className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => setDeactivating(service)}
+                    aria-label="Desactivar servicio"
+                    className="p-2 rounded-lg text-[var(--text-3)] hover:text-red-600 hover:bg-red-50"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
-            </div>
-          ))}
-          {services.length === 0 && (
+            )
+          })}
+          {activeServices.length === 0 && (
             <div className="flex flex-col items-center justify-center gap-2 py-8 text-center">
               <span className="w-10 h-10 rounded-full bg-[var(--bg-subtle)] text-[var(--text-4)] grid place-items-center">
                 <Briefcase className="w-5 h-5" />
               </span>
               <p className="text-sm text-[var(--text-3)]">
-                Todavía no hay servicios — agrega uno del catálogo abajo o crea el tuyo.
+                No hay servicios activos. Activa uno de la lista de inactivos o agrega uno del catalogo.
               </p>
             </div>
           )}
         </div>
+
+        {inactiveServices.length > 0 && (
+          <div className="mt-5 border-t border-[var(--border)] pt-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-[var(--text-3)] mb-2">Servicios inactivos</p>
+            <div className="space-y-2">
+              {inactiveServices.map((service) => (
+                <div key={service.id} className="rounded-xl border border-[var(--border)] bg-[var(--bg-raised)]/45 p-3 flex items-center gap-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="font-medium text-[var(--text-2)]">{service.name}</p>
+                      <span className="text-xs text-[var(--text-4)]">{service.duration_minutes} min - {formatServicePrice(service)}</span>
+                    </div>
+                    {service.description && <p className="text-xs text-[var(--text-3)] mt-0.5">{service.description}</p>}
+                  </div>
+                  <button
+                    onClick={() => toggleActive(service)}
+                    className="badge border-transparent shrink-0 bg-white text-[var(--teal-700)] hover:bg-[var(--teal-50)]"
+                  >
+                    Activar
+                  </button>
+                  <button
+                    onClick={() => openEdit(service)}
+                    aria-label="Editar"
+                    className="p-2 rounded-lg text-[var(--text-3)] hover:text-[var(--teal-700)] hover:bg-[var(--teal-50)] shrink-0"
+                  >
+                    <Pencil className="w-4 h-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </section>
 
       <ServiceCatalogGallery
@@ -199,7 +244,32 @@ export function ServicesManager({ initialServices }: { initialServices: Business
         <ServiceEditModal service={editing} onClose={() => setModalOpen(false)} onSaved={handleSaved} />
       )}
 
-      {/* Toasts */}
+      {deactivating && (
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setDeactivating(null)}>
+          <div onClick={(e) => e.stopPropagation()} className="card-raised w-full max-w-sm p-5 space-y-4">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h3 className="font-display font-semibold text-lg text-[var(--text-1)]">Desactivar servicio</h3>
+                <p className="text-sm text-[var(--text-3)] mt-1">
+                  Este servicio saldra de los servicios activos y ya no estara disponible para tus agentes. Las citas existentes no se veran afectadas.
+                </p>
+              </div>
+              <button onClick={() => setDeactivating(null)} className="text-[var(--text-3)] hover:text-[var(--text-1)]" aria-label="Cerrar">
+                &times;
+              </button>
+            </div>
+            <div className="rounded-xl bg-[var(--bg-raised)] p-3">
+              <p className="text-sm font-semibold text-[var(--text-1)]">{deactivating.name}</p>
+              <p className="text-xs text-[var(--text-3)] mt-0.5">{deactivating.duration_minutes} min - {formatServicePrice(deactivating)}</p>
+            </div>
+            <div className="flex justify-end gap-2">
+              <button className="btn-secondary" onClick={() => setDeactivating(null)}>Cancelar</button>
+              <button className="btn-primary !bg-red-600 hover:!bg-red-700" onClick={() => deactivate(deactivating)}>Desactivar</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="fixed bottom-5 right-5 z-[60] space-y-2">
         {toasts.map((t) => (
           <div
