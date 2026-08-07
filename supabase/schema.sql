@@ -837,3 +837,39 @@ create policy "Public can view services of published websites"
   on website_services for select using (
     exists (select 1 from websites where websites.business_id = website_services.business_id and websites.is_published)
   );
+
+-- 35. SUPPORT TICKETS/MESSAGES — RLS bug fix. The original client policies
+-- compared auth.uid() directly to client_id, but client_id is a foreign key
+-- to clients.id (the row's own primary key), not to clients.auth_user_id —
+-- those are different values, so the check could never pass and no client
+-- could ever read or create their own tickets. Match the lookup pattern
+-- already used correctly by the appointments/clients policies.
+drop policy if exists "Clients can view their own tickets" on support_tickets;
+create policy "Clients can view their own tickets"
+  on support_tickets for select using (
+    exists (select 1 from clients c where c.id = client_id and c.auth_user_id = auth.uid())
+  );
+drop policy if exists "Clients can create tickets" on support_tickets;
+create policy "Clients can create tickets"
+  on support_tickets for insert with check (
+    exists (select 1 from clients c where c.id = client_id and c.auth_user_id = auth.uid())
+  );
+
+drop policy if exists "Clients can view messages on their own tickets" on support_messages;
+create policy "Clients can view messages on their own tickets"
+  on support_messages for select using (
+    exists (
+      select 1 from support_tickets t
+      join clients c on c.id = t.client_id
+      where t.id = ticket_id and c.auth_user_id = auth.uid()
+    )
+  );
+drop policy if exists "Clients can send messages on their own tickets" on support_messages;
+create policy "Clients can send messages on their own tickets"
+  on support_messages for insert with check (
+    exists (
+      select 1 from support_tickets t
+      join clients c on c.id = t.client_id
+      where t.id = ticket_id and c.auth_user_id = auth.uid()
+    )
+  );

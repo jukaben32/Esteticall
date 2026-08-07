@@ -71,6 +71,17 @@ export interface AppointmentWithDetails extends Appointment {
   listing: Pick<Listing, 'id' | 'title' | 'listing_code'> | null
 }
 
+// Client Portal — same shape, plus which business it's with (a client can
+// have booked with more than one business, so this can't be inferred from
+// a single logged-in "account" the way the dashboard's businessId is).
+export interface PortalAppointment extends AppointmentWithDetails {
+  business: Pick<Business, 'id' | 'name' | 'phone' | 'contact_email'> | null
+}
+
+export interface PortalSupportTicket extends SupportTicketWithClient {
+  business_name: string | null
+}
+
 // ─── Scheduling ───────────────────────────────────────────────────────────
 export interface AvailableSlot {
   date: string // YYYY-MM-DD

@@ -10,6 +10,8 @@ import {
   Bot,
   Bed,
   Bath,
+  Settings,
+  ArrowRight,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { getBusinessForOwner, getDashboardAnalytics } from '@/services/businesses'
@@ -17,6 +19,7 @@ import { listListingsForBusiness } from '@/services/listings'
 import { listAppointmentsForBusiness } from '@/services/appointments'
 import { listConversationsForBusiness } from '@/services/conversations'
 import { listAgentsForBusiness } from '@/services/aiAgents'
+import { listAvailabilityForBusiness } from '@/services/schedule'
 import { formatDateTime } from '@/lib/formatDate'
 import { APPOINTMENT_STATUS_LABELS, APPOINTMENT_STATUS_STYLES } from '@/lib/appointmentFormat'
 import { listingPriceSuffix } from '@/lib/listingFormat'
@@ -55,13 +58,20 @@ export default async function OverviewPage() {
   const business = await getBusinessForOwner(supabase, user!.id)
   if (!business) return null
 
-  const [analytics, listings, appointments, conversations, agents] = await Promise.all([
+  const [analytics, listings, appointments, conversations, agents, availability] = await Promise.all([
     getDashboardAnalytics(supabase, business.id),
     listListingsForBusiness(supabase, business.id),
     listAppointmentsForBusiness(supabase, business.id),
     listConversationsForBusiness(supabase, business.id),
     listAgentsForBusiness(supabase, business.id),
+    listAvailabilityForBusiness(supabase, business.id),
   ])
+
+  // Nudges a brand-new business toward Settings until the basics are in
+  // place — matches the reference dashboard's "Setup" prompt. Phone/address
+  // are what the AI agent quotes callers, and without at least one active
+  // availability day, check_availability always comes back empty.
+  const setupIncomplete = !business.phone || !business.address || !availability.some((a) => a.is_active)
 
   const available = listings.filter((l) => l.status === 'available')
   const liveAgents = agents.filter((a) => a.status === 'live')
@@ -121,6 +131,30 @@ export default async function OverviewPage() {
           <RefreshButton />
         </div>
       </div>
+
+      {setupIncomplete && (
+        <Link
+          href="/dashboard/settings"
+          className="card-surface p-4 flex items-center justify-between gap-4 flex-wrap border-[var(--gold)]/40 bg-[var(--gold)]/8 hover:bg-[var(--gold)]/12 transition"
+        >
+          <div className="flex items-center gap-3">
+            <span className="w-9 h-9 rounded-full bg-[var(--gold)]/20 text-[var(--gold)] grid place-items-center shrink-0">
+              <Settings className="w-4 h-4" />
+            </span>
+            <div>
+              <p className="font-semibold text-[var(--text-1)]">Completa la configuración de tu negocio</p>
+              <p className="text-sm text-[var(--text-3)]">
+                Falta el perfil del negocio o el horario de atención — tu agente IA los necesita para responder
+                llamadas y agendar visitas.
+              </p>
+            </div>
+          </div>
+          <span className="btn-secondary shrink-0">
+            Ir a Configuración
+            <ArrowRight className="w-3.5 h-3.5" />
+          </span>
+        </Link>
+      )}
 
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         <StatCard icon={House} label="Propiedades activas" value={available.length} />

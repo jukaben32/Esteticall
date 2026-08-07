@@ -5,7 +5,12 @@ import type { Database } from '@/types/database'
 type CookieToSet = { name: string; value: string; options: CookieOptions }
 
 const DASHBOARD_PREFIX = '/dashboard'
-const PORTAL_PREFIX = '/portal'
+// Only "My Appointments" and "Support" need a client session — the
+// magic-link booking page (/portal/[appointmentId]) and the client
+// login/signup pages must stay public, so we can't just match the whole
+// /portal prefix (that was the previous bug: it silently redirected the
+// booking-confirmation email link to the *business* /login page).
+const PROTECTED_PORTAL_PATHS = ['/portal', '/portal/support']
 
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request })
@@ -34,13 +39,14 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser()
 
   const path = request.nextUrl.pathname
-  const isProtected = path.startsWith(DASHBOARD_PREFIX) || path.startsWith(PORTAL_PREFIX)
+  const isDashboardProtected = path.startsWith(DASHBOARD_PREFIX)
+  const isPortalProtected = PROTECTED_PORTAL_PATHS.some((p) => path === p || path.startsWith(`${p}/`))
 
-  if (!user && isProtected) {
-    const loginUrl = request.nextUrl.clone()
-    loginUrl.pathname = '/login'
-    loginUrl.searchParams.set('redirect', path)
-    return NextResponse.redirect(loginUrl)
+  if (!user && (isDashboardProtected || isPortalProtected)) {
+    const redirectUrl = request.nextUrl.clone()
+    redirectUrl.pathname = isPortalProtected ? '/portal/login' : '/login'
+    redirectUrl.searchParams.set('redirect', path)
+    return NextResponse.redirect(redirectUrl)
   }
 
   return response

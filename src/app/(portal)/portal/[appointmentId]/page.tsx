@@ -101,8 +101,12 @@ export default async function ClientPortalPage({ params }: { params: { appointme
           </div>
 
           <p className="text-xs text-[var(--text-3)] border-t border-[var(--border)] pt-4">
-            If you need to reschedule or cancel, please contact us at least 24 hours in advance.
+            If you need to reschedule or cancel, please contact us at least 24 hours in advance — or manage it
+            yourself from your Client Portal account.
           </p>
+          <a href="/portal/signup" className="btn-primary w-full justify-center">
+            Create Client Account
+          </a>
         </div>
       </div>
     </main>

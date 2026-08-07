@@ -243,6 +243,34 @@ export const supportTicketSchema = z.object({
 })
 export type SupportTicketInput = z.infer<typeof supportTicketSchema>
 
+// Client Portal — account creation is gated on already having a clients row
+// (created by the AI agent or public booking flow) with a matching email;
+// see /api/portal/signup.
+export const portalSignupSchema = z.object({
+  name: z.string().min(2, 'El nombre es muy corto'),
+  email: z.string().email(),
+  phone: z.string().optional().or(z.literal('')),
+  password: z.string().min(8, 'La contraseña debe tener al menos 8 caracteres'),
+})
+export type PortalSignupInput = z.infer<typeof portalSignupSchema>
+
+export const portalRescheduleSchema = z.object({
+  scheduledAt: z.string().min(1, 'Elige un horario'),
+})
+export type PortalRescheduleInput = z.infer<typeof portalRescheduleSchema>
+
+export const portalCancelSchema = z.object({
+  reason: z.string().optional(),
+})
+export type PortalCancelInput = z.infer<typeof portalCancelSchema>
+
+export const portalSupportTicketSchema = z.object({
+  businessId: z.string().uuid(),
+  subject: z.string().min(3).default('Support Request'),
+  body: z.string().min(3),
+})
+export type PortalSupportTicketInput = z.infer<typeof portalSupportTicketSchema>
+
 export const availabilitySchema = z.object({
   dayOfWeek: z.coerce.number().int().min(0).max(6),
   startTime: z.string().regex(/^\d{2}:\d{2}$/, 'Use HH:MM'),

@@ -1,10 +1,10 @@
 # INMOBILIACALL — ESTADO DEL PROYECTO
 
-> Última actualización: 2 agosto 2026. Rebranding de "EstateCall" a
-> "InmobilIACall" aplicado en landing, login/signup/onboarding, sidebar del
-> dashboard, metadata y `package.json`. Producto funcionalmente completo y en
-> producción (ver "PENDIENTES" — todo resuelto salvo rotar credenciales expuestas
-> en el chat).
+> Última actualización: 7 agosto 2026. Se auditó la app completa contra la
+> transcripción del video de referencia: cumple prácticamente el 100% de lo
+> que muestra el tutorial. Se construyó el único bloque grande que faltaba
+> (Client Portal — cuentas de cliente) — ver "PENDIENTES" punto 16. Sigue
+> pendiente rotar credenciales expuestas en el chat (punto 7).
 
 ## RESUMEN RÁPIDO
 
@@ -408,6 +408,79 @@ funcionen en producción — mientras tanto esas partes fallarán en el sitio en
 existían).
 
 `npx tsc --noEmit` y `npm run build` verificados sin errores antes de entregar.
+
+### 16. Client Portal — cuentas de cliente (7 ago 2026)
+Auditoría completa contra la transcripción del video de referencia (ver mensaje
+del 7 ago): la app ya cumplía casi todo lo que muestra el tutorial. El único
+bloque grande que faltaba era el sistema de cuentas de cliente — hasta ahora
+`/portal/[appointmentId]` era una página pública de una sola cita (el link
+mágico del correo), sin login, sin ver historial, sin poder reprogramar/
+cancelar por su cuenta. Se construyó completo:
+
+- **`/portal/signup`**: el cliente crea su cuenta con el mismo correo que usó
+  al reservar. El backend (`POST /api/portal/signup`) valida que exista al
+  menos una fila en `clients` con ese correo (si no, rechaza — no se puede
+  crear una cuenta de la nada) y la crea con `supabase.auth.admin.createUser`
+  (`email_confirm: true`, sin ida y vuelta de verificación), enlazando
+  **todas** las filas de `clients` con ese correo (`auth_user_id`) — una
+  persona puede ser cliente de más de un negocio.
+- **`/portal/login`** y **`/portal`** ("My Appointments"): todas las citas del
+  cliente logueado, agrupadas Upcoming/Past, con Reschedule (jala horarios
+  reales de `/api/widget/public/[businessId]/slots`, deja la cita en
+  `pending_confirmation` hasta que el negocio la confirme desde Viewings —
+  eso ya mandaba el correo de confirmación, no hizo falta tocarlo) y Cancel
+  (ambos mandan correo y notifican al negocio).
+- **`/portal/support`**: tickets de soporte del cliente (uno o más negocios),
+  con hilo de mensajes — reutiliza `support_tickets`/`support_messages`.
+- **Nuevo servicio** `src/services/clientPortal.ts`: todo corre con el
+  cliente admin (service role) + verificación de dueño en código, mismo
+  patrón que ya usan las rutas públicas de reserva — no hacía falta RLS para
+  las escrituras.
+- **Bug de RLS corregido** (migración 35): las políticas de `support_tickets`/
+  `support_messages` para clientes comparaban `auth.uid()` directo contra
+  `client_id` (el id de la fila en `clients`, no el `auth_user_id`) — nunca
+  podían coincidir, así que ningún cliente podía ver ni crear sus tickets.
+  Estaba así desde el schema original, nunca se había ejercitado porque no
+  existía ningún flujo de login de cliente hasta ahora.
+- **Bug de middleware corregido**: `updateSession` protegía *todo* el prefijo
+  `/portal`, incluyendo `/portal/[appointmentId]` — el link mágico del correo
+  de confirmación mandaba al cliente (sin sesión) a hacer login como negocio
+  antes de poder ver su cita. Ahora solo `/portal` y `/portal/support`
+  requieren sesión de cliente (y redirigen a `/portal/login`, no a `/login`).
+- **Fuera de alcance a propósito**: pago en línea por cita ("Pay Now" del
+  video). Stripe no tiene procesamiento de pagos en República Dominicana —
+  Juan evaluará más adelante integrar Cardnet. El portal muestra el estado
+  del pago (badge) pero no intenta cobrar; el dashboard sigue teniendo
+  "marcar pagado en efectivo" para el negocio.
+- Se agregó también el aviso "Setup" en el Overview (`/dashboard`) que
+  faltaba: aparece cuando el perfil del negocio (teléfono/dirección) o el
+  horario de atención están incompletos, con botón directo a Configuración.
+
+**Requiere migración pendiente**: correr `schema.sql` completo (sección 35,
+solo corrige las 4 políticas de RLS de soporte — no agrega tablas nuevas, el
+Client Portal reutiliza `clients.auth_user_id` y las tablas existentes).
+
+`npx tsc --noEmit` y `npm run build` verificados sin errores antes de entregar.
+
+## INTEGRACIONES FUTURAS (planeadas, NO implementadas — 7 ago 2026)
+
+Confirmado por auditoría del repo (no hay `CLAUDE.md`; ni `README.md` ni este
+archivo las mencionaban antes de hoy): estas dos integraciones que Juan tiene
+en mente **todavía no existen en el código**. Se documentan aquí para no
+perderlas y activarlas cuando corresponda:
+
+- **WhatsApp vía Evolution API**: sin empezar. Implicaría un canal nuevo
+  paralelo a la voz/widget actual — probablemente un webhook entrante
+  (`/api/whatsapp/webhook` o similar) que reciba mensajes de Evolution API,
+  los enrute al mismo `src/ai/tools.ts`/`REALTIME_TOOLS` que ya usa la voz
+  (o una versión de texto de esas herramientas), y un canal `whatsapp` nuevo
+  en `conversations.channel` (hoy solo admite `widget_voice`/`widget_chat`/
+  `phone`).
+- **Base de conocimiento de CONFOTUR**: sin empezar. Encajaría como
+  documentos nuevos en `knowledge_documents` (la tabla ya soporta contenido
+  libre por categoría, igual que las plantillas de FAQ) — sería agregar el
+  contenido de CONFOTUR como una categoría/plantilla más en
+  `KnowledgeManager.tsx`, sin cambios de esquema.
 
 ## VISIÓN A LARGO PLAZO (clave, no perder)
 

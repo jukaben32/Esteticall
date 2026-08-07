@@ -104,6 +104,51 @@ export async function sendAppointmentCancelledEmail(opts: {
   })
 }
 
+// Sent to the business when a client requests a reschedule through the
+// Client Portal — the appointment moves to 'pending_confirmation' and stays
+// there until the business picks a new status (typically back to
+// 'scheduled'), which is what actually sends the client their confirmation
+// (see the appointments PATCH route's existing sendAppointmentConfirmationEmail).
+export async function sendAppointmentRescheduleRequestedEmail(opts: {
+  to: string
+  businessName: string
+  clientName: string
+  previousScheduledAt: string
+  requestedScheduledAt: string
+}) {
+  return sendEmail({
+    to: opts.to,
+    subject: `Solicitud de reprogramación — ${opts.clientName}`,
+    html: `
+      <p><strong>${opts.clientName}</strong> solicitó reprogramar su cita con <strong>${opts.businessName}</strong>.</p>
+      <p>Horario anterior: ${formatEmailDateTime(opts.previousScheduledAt)}</p>
+      <p>Nuevo horario solicitado: <strong>${formatEmailDateTime(opts.requestedScheduledAt)}</strong></p>
+      <p>Confirma o ajusta esta cita desde tu panel de Citas.</p>
+    `,
+  })
+}
+
+// Sent to the client right after they submit a reschedule request — sets
+// the expectation that it's pending, not yet final (the business still has
+// to confirm it).
+export async function sendAppointmentRescheduleReceivedEmail(opts: {
+  to: string
+  clientName: string
+  businessName: string
+  requestedScheduledAt: string
+}) {
+  return sendEmail({
+    to: opts.to,
+    subject: `Tu solicitud de reprogramación con ${opts.businessName} fue recibida`,
+    html: `
+      <p>Hola ${opts.clientName},</p>
+      <p>Recibimos tu solicitud para reprogramar tu cita con <strong>${opts.businessName}</strong> para el
+      <strong>${formatEmailDateTime(opts.requestedScheduledAt)}</strong>.</p>
+      <p>Está pendiente de confirmación por parte de la agencia — te avisaremos por correo en cuanto la confirmen.</p>
+    `,
+  })
+}
+
 export async function sendNewLeadEmail(opts: {
   to: string
   clientName: string
