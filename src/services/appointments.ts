@@ -30,7 +30,7 @@ function santoDomingoInstant(dateKey: string, hours: number, minutes: number): D
 
 type AppointmentJoinRow = Appointment & {
   clients: Pick<Client, 'id' | 'name' | 'phone' | 'email' | 'budget' | 'pre_approval_number'> | null
-  business_services: Pick<BusinessService, 'id' | 'name' | 'price'> | null
+  business_services: Pick<BusinessService, 'id' | 'name' | 'price' | 'duration_minutes'> | null
   listings: Pick<Listing, 'id' | 'title' | 'listing_code'> | null
 }
 
@@ -50,7 +50,7 @@ export async function listAppointmentsForBusiness(
 ): Promise<AppointmentWithDetails[]> {
   let query = supabase
     .from('appointments')
-    .select('*, clients(id, name, phone, email, budget, pre_approval_number), business_services(id, name, price), listings(id, title, listing_code)')
+    .select('*, clients(id, name, phone, email, budget, pre_approval_number), business_services(id, name, price, duration_minutes), listings(id, title, listing_code)')
     .eq('business_id', businessId)
     .order('scheduled_at', { ascending: false })
 
@@ -70,7 +70,7 @@ export async function getAppointmentWithDetails(
 ): Promise<AppointmentWithDetails | null> {
   const { data, error } = await supabase
     .from('appointments')
-    .select('*, clients(id, name, phone, email, budget, pre_approval_number), business_services(id, name, price), listings(id, title, listing_code)')
+    .select('*, clients(id, name, phone, email, budget, pre_approval_number), business_services(id, name, price, duration_minutes), listings(id, title, listing_code)')
     .eq('business_id', businessId)
     .eq('id', appointmentId)
     .maybeSingle()
@@ -90,7 +90,7 @@ export async function getAppointmentPublic(
   const { data, error } = await supabase
     .from('appointments')
     .select(
-      '*, clients(id, name, phone, email, budget, pre_approval_number), business_services(id, name, price), listings(id, title, listing_code), businesses(name, phone, contact_email, address)'
+      '*, clients(id, name, phone, email, budget, pre_approval_number), business_services(id, name, price, duration_minutes), listings(id, title, listing_code), businesses(name, phone, contact_email, address)'
     )
     .eq('id', appointmentId)
     .maybeSingle()
