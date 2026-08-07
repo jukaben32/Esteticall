@@ -244,6 +244,7 @@ export const knowledgeDocumentSchema = z.object({
   sourceUrl: z.string().url().optional().or(z.literal('')),
   category: z.string().optional().or(z.literal('')),
   catalogKey: z.string().optional().or(z.literal('')),
+  isActive: z.boolean().optional(),
 })
 export type KnowledgeDocumentInput = z.infer<typeof knowledgeDocumentSchema>
 

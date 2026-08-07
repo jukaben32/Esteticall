@@ -1,7 +1,20 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { Pencil, Trash2, ChevronDown, Plus, Sparkles, Search, Check, X, CheckCircle2, BookOpen } from 'lucide-react'
+import {
+  Pencil,
+  Trash2,
+  ChevronDown,
+  Plus,
+  Sparkles,
+  Search,
+  Check,
+  X,
+  CheckCircle2,
+  BookOpen,
+  AlertTriangle,
+  RotateCcw,
+} from 'lucide-react'
 import type { KnowledgeDocument } from '@/types'
 import { FAQ_CATEGORIES, FAQ_TEMPLATES, type FaqTemplate } from '@/data/faqTemplates'
 
@@ -115,6 +128,7 @@ export function KnowledgeManager({ initialDocuments }: { initialDocuments: Knowl
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [editingDoc, setEditingDoc] = useState<KnowledgeDocument | null>(null)
   const [addingCustom, setAddingCustom] = useState(false)
+  const [actionDoc, setActionDoc] = useState<KnowledgeDocument | null>(null)
   const [addingKeys, setAddingKeys] = useState<Set<string>>(new Set())
 
   const [templatesOpen, setTemplatesOpen] = useState(true)
@@ -134,6 +148,9 @@ export function KnowledgeManager({ initialDocuments }: { initialDocuments: Knowl
     () => new Set(documents.map((d) => d.catalog_key).filter((k): k is string => !!k)),
     [documents]
   )
+
+  const activeDocuments = useMemo(() => documents.filter((d) => d.is_active !== false), [documents])
+  const inactiveDocuments = useMemo(() => documents.filter((d) => d.is_active === false), [documents])
 
   const templateCountByCategory = useMemo(() => {
     const counts = new Map<string, number>()
@@ -244,12 +261,26 @@ export function KnowledgeManager({ initialDocuments }: { initialDocuments: Knowl
     }
   }
 
-  async function removeDoc(documentId: string) {
-    if (!confirm('¿Eliminar esta pregunta de tu base de conocimiento?')) return
-    const res = await fetch(`/api/knowledge/${documentId}`, { method: 'DELETE' })
+  async function setDocActive(doc: KnowledgeDocument, isActive: boolean) {
+    const res = await fetch(`/api/knowledge/${doc.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ isActive }),
+    })
     if (res.ok) {
-      setDocuments((prev) => prev.filter((d) => d.id !== documentId))
-      pushToast('FAQ eliminada')
+      const { document } = await res.json()
+      setDocuments((prev) => prev.map((d) => (d.id === document.id ? document : d)))
+      setActionDoc(null)
+      pushToast(isActive ? 'FAQ activada' : 'FAQ desactivada')
+    }
+  }
+
+  async function permanentlyDeleteDoc(doc: KnowledgeDocument) {
+    const res = await fetch(`/api/knowledge/${doc.id}`, { method: 'DELETE' })
+    if (res.ok) {
+      setDocuments((prev) => prev.filter((d) => d.id !== doc.id))
+      setActionDoc(null)
+      pushToast('FAQ eliminada permanentemente')
     }
   }
 
@@ -265,7 +296,7 @@ export function KnowledgeManager({ initialDocuments }: { initialDocuments: Knowl
 
       {/* Main FAQ list */}
       <div className="space-y-2 mb-6">
-        {documents.map((doc) => {
+        {activeDocuments.map((doc) => {
           const expanded = expandedId === doc.id
           return (
             <div key={doc.id} className="card-surface p-3.5">
@@ -292,8 +323,8 @@ export function KnowledgeManager({ initialDocuments }: { initialDocuments: Knowl
                     <Pencil className="w-4 h-4" />
                   </button>
                   <button
-                    onClick={() => removeDoc(doc.id)}
-                    title="Eliminar"
+                    onClick={() => setActionDoc(doc)}
+                    title="Opciones"
                     className="p-1.5 rounded-lg text-[var(--text-3)] hover:bg-red-50 hover:text-red-600"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -306,18 +337,57 @@ export function KnowledgeManager({ initialDocuments }: { initialDocuments: Knowl
             </div>
           )
         })}
-        {documents.length === 0 && (
+        {activeDocuments.length === 0 && (
           <div className="card-surface p-6 flex flex-col items-center justify-center gap-2 text-center">
             <span className="w-10 h-10 rounded-full bg-[var(--bg-subtle)] text-[var(--text-4)] grid place-items-center">
               <BookOpen className="w-5 h-5" />
             </span>
             <p className="text-sm text-[var(--text-3)]">
-              Todavía no hay conocimiento cargado — agrega preguntas frecuentes desde las plantillas de abajo o crea una
-              personalizada.
+              No hay FAQs activas. Agrega preguntas frecuentes desde las plantillas de abajo, crea una personalizada o reactiva una anterior.
             </p>
           </div>
         )}
       </div>
+
+      {inactiveDocuments.length > 0 && (
+        <div className="card-surface p-4 mb-6">
+          <div className="flex items-center justify-between gap-3 mb-3">
+            <div>
+              <p className="font-display font-semibold text-[var(--text-1)]">FAQs desactivadas</p>
+              <p className="text-xs text-[var(--text-3)]">No se muestran a tus agentes hasta que las actives otra vez.</p>
+            </div>
+            <span className="badge bg-[var(--bg-raised)] text-[var(--text-3)] border-transparent">
+              {inactiveDocuments.length} inactivas
+            </span>
+          </div>
+          <div className="space-y-2">
+            {inactiveDocuments.map((doc) => (
+              <div key={doc.id} className="rounded-xl border border-[var(--border)] bg-[var(--bg-subtle)] p-3 flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="font-medium text-[var(--text-1)] truncate">{doc.title}</p>
+                  {doc.category && <p className="text-xs text-[var(--text-3)] truncate">{doc.category}</p>}
+                </div>
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <button
+                    onClick={() => setDocActive(doc, true)}
+                    title="Activar"
+                    className="p-1.5 rounded-lg text-[var(--teal-700)] hover:bg-[var(--teal-50)]"
+                  >
+                    <RotateCcw className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => setActionDoc(doc)}
+                    title="Eliminar permanente"
+                    className="p-1.5 rounded-lg text-[var(--text-3)] hover:bg-red-50 hover:text-red-600"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* FAQ Templates library */}
       <div className="card-surface overflow-hidden">
@@ -445,6 +515,58 @@ export function KnowledgeManager({ initialDocuments }: { initialDocuments: Knowl
           </div>
         )}
       </div>
+
+      {actionDoc && (
+        <div className="fixed inset-0 z-50 bg-black/45 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setActionDoc(null)}>
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="bg-[var(--bg-page)] rounded-2xl shadow-2xl w-full max-w-md p-5 space-y-4 border border-[var(--border)]"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-start gap-3">
+                <span className="w-9 h-9 rounded-full bg-amber-50 text-amber-700 grid place-items-center shrink-0">
+                  <AlertTriangle className="w-5 h-5" />
+                </span>
+                <div>
+                  <h3 className="font-display font-semibold text-lg text-[var(--text-1)]">Gestionar FAQ</h3>
+                  <p className="text-sm text-[var(--text-2)] mt-1">
+                    Elige si quieres quitarla de tus agentes o borrarla de forma permanente.
+                  </p>
+                </div>
+              </div>
+              <button type="button" onClick={() => setActionDoc(null)} className="text-[var(--text-3)] hover:text-[var(--text-1)]">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-subtle)] p-3">
+              <p className="font-medium text-[var(--text-1)] line-clamp-2">{actionDoc.title}</p>
+              {actionDoc.category && <p className="text-xs text-[var(--text-3)] mt-1">{actionDoc.category}</p>}
+            </div>
+
+            <div className="flex flex-col sm:flex-row justify-end gap-2 pt-1">
+              <button type="button" onClick={() => setActionDoc(null)} className="btn-secondary">
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={() => setDocActive(actionDoc, false)}
+                disabled={actionDoc.is_active === false}
+                className="btn-secondary disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Desactivar
+              </button>
+              <button
+                type="button"
+                onClick={() => permanentlyDeleteDoc(actionDoc)}
+                className="btn-primary !bg-red-600 hover:!bg-red-700"
+              >
+                Eliminar permanente
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {editingDoc && (
         <FaqFormModal

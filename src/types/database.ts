@@ -293,6 +293,7 @@ export interface Database {
           title: string
           content: string
           source_url: string | null
+          is_active: boolean
           category: string | null
           catalog_key: string | null
           created_at: string
