@@ -884,6 +884,54 @@ en vez de también matchear por prefijo.
 `npx tsc --noEmit`, `eslint` y `npm run build` verificados sin errores antes
 de subir (commit `6330561`).
 
+### 21. Client Portal: "Pay Now" y correo al agente al cancelar (8 ago 2026)
+
+Siguiendo con las pruebas contra las 40 capturas de referencia, Juan encontró
+dos huecos reales más una vez que el login del portal quedó arreglado:
+
+1. **Cancelar no emailaba al agente.** El route de cancelación solo mandaba
+   correo al cliente y creaba una notificación in-app para el negocio —
+   nunca un correo. Reserva y reprogramación sí notifican por correo a
+   ambas partes; cancelación quedó inconsistente. Se agregó
+   `sendAppointmentCancelledOwnerEmail` en `src/services/email.ts` y se
+   llama junto al resto en el route de cancel.
+
+2. **"Pay Now" nunca aparecía.** `appointments.payment_status` se quedaba
+   siempre en `'not_required'` porque `createAppointment()` nunca lo
+   calculaba a partir del precio del servicio reservado — a pesar de que
+   las columnas `payment_amount`/`payment_currency`/`stripe_checkout_session_id`
+   ya existían en el schema desde antes (funcionalidad a medio construir,
+   probablemente heredada del template original). Ahora, si el servicio
+   reservado tiene un precio `'fixed'` o `'starting_at'`, la cita nace con
+   `payment_status='pending'` y `payment_amount` = precio del servicio —
+   `'price_range'` y `'call_for_price'` se dejan en `'not_required'` porque
+   no hay un monto único que cobrar.
+
+**Con eso resuelto, se construyó el botón "Pay Now" completo** en
+`PortalAppointmentsList.tsx` / `PortalPayModal.tsx`, con dos opciones:
+
+- **Pagar en efectivo** (`/api/portal/appointments/[id]/pay-cash`): mismo
+  efecto que ya tenía el lado del negocio en `/dashboard/viewings` (marcar
+  `payment_status='cash'`), ahora también disparable por el cliente —
+  emails a ambas partes.
+- **Pagar en línea** (`/api/portal/appointments/[id]/pay-online` +
+  `.../pay-online/confirm`): cada negocio cobra con su **propia** cuenta de
+  Stripe — las llaves que ya guardan en Configuración vía
+  `StripePaymentsForm` (distintas de las llaves de suscripción de la
+  plataforma, que solo cobran a los NEGOCIOS, no a sus clientes). Se crea un
+  Checkout Session con esa llave por el monto del servicio. Como no hay un
+  webhook por negocio (solo el de la plataforma, para su propia cuenta), la
+  vuelta desde Stripe (`?paid=<id>&session_id=...`) se verifica del lado del
+  servidor contra la cuenta de ese negocio específico antes de marcar
+  pagado — evita que alguien falsifique el query param y se marque como
+  pagado sin pagar. Emails a ambas partes también.
+
+`npx tsc --noEmit`, `eslint` y `npm run build` verificados sin errores antes
+de subir (commit `7718c46`). No se pudo probar el pago en línea real
+end-to-end desde este entorno (sin acceso de red a Stripe ni una cuenta de
+Stripe conectada de prueba) — verificar en producción con una cuenta de
+Stripe real conectada en Configuración.
+
 ## VISIÓN A LARGO PLAZO (clave, no perder)
 
 InmobilIACall no debe ser solo "SaaS de bienes raíces", sino una **base reutilizable
