@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getOwnedAppointmentForClientUser } from '@/services/clientPortal'
 import { updateAppointmentStatus } from '@/services/appointments'
-import { sendAppointmentCancelledEmail } from '@/services/email'
+import { sendAppointmentCancelledEmail, sendAppointmentCancelledOwnerEmail } from '@/services/email'
 import { portalCancelSchema } from '@/validations'
 
 export async function PATCH(request: Request, { params }: { params: { appointmentId: string } }) {
@@ -39,6 +39,17 @@ export async function PATCH(request: Request, { params }: { params: { appointmen
       to: clientEmail,
       clientName,
       businessName,
+      scheduledAt: appointment.scheduled_at,
+      listingTitle: appointment.listing?.title,
+      reason: parsed.data.reason,
+    }).catch(() => {})
+  }
+  const ownerEmail = appointment.business?.contact_email
+  if (ownerEmail) {
+    void sendAppointmentCancelledOwnerEmail({
+      to: ownerEmail,
+      businessName,
+      clientName,
       scheduledAt: appointment.scheduled_at,
       listingTitle: appointment.listing?.title,
       reason: parsed.data.reason,

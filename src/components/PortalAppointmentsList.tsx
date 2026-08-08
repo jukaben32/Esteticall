@@ -1,11 +1,13 @@
 'use client'
 
-import { useState } from 'react'
-import { ChevronDown, RefreshCw, CalendarClock, Ban, MapPin, Building2 } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { ChevronDown, RefreshCw, CalendarClock, Ban, MapPin, Building2, CreditCard } from 'lucide-react'
 import type { PortalAppointment } from '@/types'
 import { formatDateTime } from '@/lib/formatDate'
 import { APPOINTMENT_STATUS_LABELS, APPOINTMENT_STATUS_STYLES, PAYMENT_LABELS, PAYMENT_STYLES } from '@/lib/appointmentFormat'
 import { PortalRescheduleModal } from './PortalRescheduleModal'
+import { PortalPayModal } from './PortalPayModal'
 
 const MONTH_ABBR = ['ENE', 'FEB', 'MAR', 'ABR', 'MAY', 'JUN', 'JUL', 'AGO', 'SEP', 'OCT', 'NOV', 'DIC']
 
@@ -19,10 +21,13 @@ function dateBadgeParts(iso: string): { month: string; day: string } {
 }
 
 export function PortalAppointmentsList({ initialAppointments }: { initialAppointments: PortalAppointment[] }) {
+  const router = useRouter()
+  const searchParams = useSearchParams()
   const [appointments, setAppointments] = useState(initialAppointments)
   const [refreshing, setRefreshing] = useState(false)
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [rescheduling, setRescheduling] = useState<PortalAppointment | null>(null)
+  const [paying, setPaying] = useState<PortalAppointment | null>(null)
   const [cancellingId, setCancellingId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
@@ -35,6 +40,30 @@ export function PortalAppointmentsList({ initialAppointments }: { initialAppoint
     }
     setRefreshing(false)
   }
+
+  // Stripe redirects back here with ?paid=<appointmentId>&session_id=... after
+  // checkout — there's no per-business webhook, so this is what actually
+  // marks the payment (see the pay-online/confirm route for why).
+  useEffect(() => {
+    const paidId = searchParams.get('paid')
+    const sessionId = searchParams.get('session_id')
+    if (!paidId || !sessionId) return
+    fetch(`/api/portal/appointments/${paidId}/pay-online/confirm`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sessionId }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.appointment) {
+          setAppointments((prev) => prev.map((a) => (a.id === data.appointment.id ? { ...a, ...data.appointment } : a)))
+        }
+      })
+      .catch(() => {})
+      .finally(() => router.replace('/portal'))
+    // Only ever needs to run once, right after the redirect lands.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   async function handleCancel(appt: PortalAppointment) {
     const reason = window.prompt('¿Motivo de la cancelación? (opcional)') ?? undefined
@@ -89,6 +118,7 @@ export function PortalAppointmentsList({ initialAppointments }: { initialAppoint
               onToggle={() => setExpandedId((cur) => (cur === appt.id ? null : appt.id))}
               onReschedule={() => setRescheduling(appt)}
               onCancel={() => handleCancel(appt)}
+              onPay={() => setPaying(appt)}
               busy={cancellingId === appt.id}
             />
           ))}
@@ -106,6 +136,7 @@ export function PortalAppointmentsList({ initialAppointments }: { initialAppoint
               onToggle={() => setExpandedId((cur) => (cur === appt.id ? null : appt.id))}
               onReschedule={() => setRescheduling(appt)}
               onCancel={() => handleCancel(appt)}
+              onPay={() => setPaying(appt)}
               busy={cancellingId === appt.id}
             />
           ))}
@@ -122,6 +153,17 @@ export function PortalAppointmentsList({ initialAppointments }: { initialAppoint
           }}
         />
       )}
+
+      {paying && (
+        <PortalPayModal
+          appointment={paying}
+          onClose={() => setPaying(null)}
+          onPaid={(updated) => {
+            setAppointments((prev) => prev.map((a) => (a.id === updated.id ? { ...a, ...updated } : a)))
+            setPaying(null)
+          }}
+        />
+      )}
     </div>
   )
 }
@@ -132,6 +174,7 @@ function AppointmentCard({
   onToggle,
   onReschedule,
   onCancel,
+  onPay,
   busy,
 }: {
   appt: PortalAppointment
@@ -139,6 +182,7 @@ function AppointmentCard({
   onToggle: () => void
   onReschedule: () => void
   onCancel: () => void
+  onPay: () => void
   busy: boolean
 }) {
   const { month, day } = dateBadgeParts(appt.scheduled_at)
@@ -189,7 +233,13 @@ function AppointmentCard({
       )}
 
       {canAct && (
-        <div className="px-4 pb-4 flex items-center gap-2">
+        <div className="px-4 pb-4 flex items-center gap-2 flex-wrap">
+          {appt.payment_status === 'pending' && (
+            <button type="button" onClick={onPay} className="btn-secondary !text-xs">
+              <CreditCard className="w-3.5 h-3.5" />
+              Pay Now
+            </button>
+          )}
           <button type="button" onClick={onReschedule} className="btn-secondary !text-xs">
             <CalendarClock className="w-3.5 h-3.5" />
             Reschedule

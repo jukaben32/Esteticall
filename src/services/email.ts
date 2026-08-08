@@ -104,6 +104,75 @@ export async function sendAppointmentCancelledEmail(opts: {
   })
 }
 
+// Sent to the business when the client cancels through the Client Portal —
+// the cancel route also inserts an in-app `notifications` row for the
+// dashboard bell, but that alone doesn't reach an inbox, and every other
+// client-initiated action (booking, reschedule) already emails the owner.
+export async function sendAppointmentCancelledOwnerEmail(opts: {
+  to: string
+  businessName: string
+  clientName: string
+  scheduledAt: string
+  listingTitle?: string
+  reason?: string
+}) {
+  return sendEmail({
+    to: opts.to,
+    subject: `Cita cancelada por el cliente — ${opts.clientName}`,
+    html: `
+      <p><strong>${opts.clientName}</strong> canceló su cita con <strong>${opts.businessName}</strong>${
+      opts.listingTitle ? ` para <strong>${opts.listingTitle}</strong>` : ''
+    }, programada para el <strong>${formatEmailDateTime(opts.scheduledAt)}</strong>.</p>
+      ${opts.reason ? `<p>Motivo: ${opts.reason}</p>` : ''}
+    `,
+  })
+}
+
+// Sent to the client right after they mark an appointment as paid (cash or
+// online) through the Client Portal.
+export async function sendAppointmentPaidClientEmail(opts: {
+  to: string
+  clientName: string
+  businessName: string
+  method: 'cash' | 'card'
+  amount: number
+  scheduledAt: string
+}) {
+  const methodLabel = opts.method === 'cash' ? 'en efectivo, en la agencia' : 'en línea con tarjeta'
+  return sendEmail({
+    to: opts.to,
+    subject: `Pago registrado — ${opts.businessName}`,
+    html: `
+      <p>Hola ${opts.clientName},</p>
+      <p>Registramos tu pago de <strong>$${opts.amount.toLocaleString()}</strong> (${methodLabel}) para tu cita con
+      <strong>${opts.businessName}</strong> del <strong>${formatEmailDateTime(opts.scheduledAt)}</strong>.</p>
+      <p>¡Gracias!</p>
+    `,
+  })
+}
+
+// Sent to the business the moment a client marks a payment (cash or online)
+// through the Client Portal — same reasoning as sendAppointmentCancelledOwnerEmail.
+export async function sendAppointmentPaidOwnerEmail(opts: {
+  to: string
+  businessName: string
+  clientName: string
+  method: 'cash' | 'card'
+  amount: number
+  scheduledAt: string
+}) {
+  const methodLabel = opts.method === 'cash' ? 'Efectivo (a confirmar en la visita)' : 'Tarjeta (en línea)'
+  return sendEmail({
+    to: opts.to,
+    subject: `Pago recibido — ${opts.clientName}`,
+    html: `
+      <p><strong>${opts.clientName}</strong> registró un pago de <strong>$${opts.amount.toLocaleString()}</strong> para su cita
+      con <strong>${opts.businessName}</strong> del <strong>${formatEmailDateTime(opts.scheduledAt)}</strong>.</p>
+      <p>Método: ${methodLabel}</p>
+    `,
+  })
+}
+
 // Sent to the business when a client requests a reschedule through the
 // Client Portal — the appointment moves to 'pending_confirmation' and stays
 // there until the business picks a new status (typically back to

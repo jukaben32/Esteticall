@@ -77,7 +77,7 @@ export interface AppointmentWithDetails extends Appointment {
 // have booked with more than one business, so this can't be inferred from
 // a single logged-in "account" the way the dashboard's businessId is).
 export interface PortalAppointment extends AppointmentWithDetails {
-  business: Pick<Business, 'id' | 'name' | 'phone' | 'contact_email'> | null
+  business: Pick<Business, 'id' | 'name' | 'phone' | 'contact_email' | 'stripe_connected'> | null
 }
 
 export interface PortalSupportTicket extends SupportTicketWithClient {

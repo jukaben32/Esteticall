@@ -139,6 +139,25 @@ export async function createAppointment(
     throw new BookingLimitError(bookingLimit)
   }
 
+  // Only a 'fixed' or 'starting_at' price is a single determinate amount to
+  // charge — 'price_range' has no one number, and 'call_for_price' has none
+  // at all, so those stay 'not_required' rather than showing a Pay Now for
+  // an amount nobody actually agreed on.
+  let paymentFields: Pick<Appointment, 'payment_status' | 'payment_amount'> = {
+    payment_status: 'not_required',
+    payment_amount: null,
+  }
+  if (input.serviceId) {
+    const { data: service } = await supabase
+      .from('business_services')
+      .select('price, price_type')
+      .eq('id', input.serviceId)
+      .maybeSingle()
+    if (service?.price && (service.price_type === 'fixed' || service.price_type === 'starting_at')) {
+      paymentFields = { payment_status: 'pending', payment_amount: service.price }
+    }
+  }
+
   const { data, error } = await supabase
     .from('appointments')
     .insert({
@@ -150,6 +169,7 @@ export async function createAppointment(
       scheduled_at: input.scheduledAt,
       status: input.status,
       notes: input.notes,
+      ...paymentFields,
     })
     .select('*')
     .single()
