@@ -760,6 +760,63 @@ email) sigue intacto — WhatsApp es un canal más, no un reemplazo.
 las rutas existen; lo que no se pudo probar es la integración end-to-end real
 con un servidor Evolution API vivo, por no tener VPS todavía.
 
+### 18. Fase 2 completada: moneda, CONFOTUR y fecha de entrega en `listings` (8 ago 2026)
+
+Siguiente fase de la hoja de ruta de arriba, tal como estaba planificada. Antes
+de esto Cardnet se evaluó como reemplazo de Stripe (para pagos por cita y
+suscripción de la plataforma) y **se pospuso explícitamente** — no hay cuenta
+de Cardnet creada todavía y la documentación real de su API
+(`developers.cardnet.com.do`) no se pudo leer desde este entorno (sin acceso
+de red saliente a ese dominio). Queda pendiente para más adelante, con Hermes
+buscando la documentación real cuando Juan lo pida.
+
+**Qué se agregó, de punta a punta:**
+
+- `supabase/schema.sql` (sección 37, idempotente): `listings.currency` (`USD`/
+  `DOP`, default `'USD'`, con check constraint), `listings.confotur_eligible`
+  (boolean, default `false`), `listings.delivery_date` (date, nullable — para
+  proyectos en preventa/construcción).
+- `src/types/database.ts`, `src/constants/index.ts` (`CURRENCIES`),
+  `src/validations/index.ts` (`listingSchema` ampliado).
+- `src/lib/listingFormat.ts`: `formatListingPrice()` (antepone `$`/`RD$` según
+  la moneda del listing — antes todo precio se mostraba con `$` fijo, lo cual
+  era ambiguo para listings en DOP) y `formatDeliveryDate()` (formatea
+  `YYYY-MM-DD` a "mes año" en español **sin** `toLocaleDateString(locale)` —
+  esa combinación depende de los datos ICU del runtime, que difieren entre
+  Node (server render) y el navegador, y ya había causado un hydration
+  mismatch antes en `lib/formatDate.ts`; mismo patrón reutilizado aquí).
+- `src/services/listings.ts`: `createListing()` guarda los tres campos nuevos.
+- Formularios (`NewListingForm.tsx`, `EditListingModal.tsx`): selector de
+  moneda junto al precio, campo de fecha de entrega, checkbox CONFOTUR.
+- Vista de detalle (`PropertyDetailView.tsx`): badge dorado "Elegible
+  CONFOTUR" y badge teal con la fecha de entrega, cuando aplican.
+  `ListingsTable.tsx` y el overview del dashboard usan `formatListingPrice()`
+  en vez de un `$` fijo.
+- `src/ai/tools.ts` / `src/ai/executeTool.ts`: el resumen de cada propiedad en
+  el prompt del agente (voz y WhatsApp, comparten el mismo `buildSystemPrompt`)
+  ahora menciona "CONFOTUR-eligible (Ley 158-01 tax exemption)" y la fecha de
+  entrega cuando existen — son argumentos de cierre reales, no algo que el
+  agente deba inventar. Se agregó también `confoturOnly` como filtro opcional
+  a la tool `search_listings`, para cuando el cliente pregunta específicamente
+  por propiedades con exención fiscal.
+
+`npx tsc --noEmit`, `eslint` sobre los archivos tocados y `npm run build`
+verificados sin errores antes de subir (commit `0826755`).
+
+**Requiere, antes de que esto funcione en producción:** correr la sección 37
+de `schema.sql` en el SQL Editor de Supabase (ver bloque abajo). Sin esto los
+tres campos nuevos no existen en la base de datos real y cualquier alta/edición
+de propiedad que los toque fallará.
+
+```sql
+-- 37. LISTINGS — Dominican Republic market fields (roadmap Fase 2)
+alter table listings add column if not exists currency text not null default 'USD';
+alter table listings drop constraint if exists listings_currency_check;
+alter table listings add constraint listings_currency_check check (currency in ('USD', 'DOP'));
+alter table listings add column if not exists confotur_eligible boolean not null default false;
+alter table listings add column if not exists delivery_date date;
+```
+
 ## VISIÓN A LARGO PLAZO (clave, no perder)
 
 InmobilIACall no debe ser solo "SaaS de bienes raíces", sino una **base reutilizable
