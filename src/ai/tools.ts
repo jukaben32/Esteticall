@@ -1,5 +1,6 @@
-import type { AiAgent, Business, Listing, RealtimeTool } from '@/types'
+import type { AiAgent, Business, KnowledgeDocument, Listing, PlatformKnowledgeDocument, RealtimeTool } from '@/types'
 import { listingPriceSuffix, isLandListing } from '@/lib/listingFormat'
+import { formatKnowledgeForPrompt } from '@/services/knowledge'
 
 // Tool definitions handed to the OpenAI Realtime session. Execution happens
 // server-side in POST /api/ai/tools — the browser only ever holds an
@@ -97,8 +98,18 @@ export function buildSystemPrompt(opts: {
   business: Business
   agent: AiAgent
   listings: Listing[]
+  knowledgeDocs?: KnowledgeDocument[]
+  platformKnowledgeDocs?: PlatformKnowledgeDocument[]
+  channel?: 'voice' | 'text'
 }): string {
-  const { business, agent, listings } = opts
+  const { business, agent, listings, knowledgeDocs = [], platformKnowledgeDocs = [], channel = 'voice' } = opts
+  const knowledgeText = formatKnowledgeForPrompt(knowledgeDocs)
+  const platformKnowledgeText = formatKnowledgeForPrompt(platformKnowledgeDocs)
+  const mediumInstruction =
+    channel === 'voice'
+      ? 'Keep responses short and conversational — this is a phone call, not a chat.'
+      : 'Keep responses short — this is a WhatsApp chat. Use plain text (no markdown), short paragraphs, ' +
+        'and at most one relevant emoji per message, only when it fits naturally.'
 
   const listingSummaries = listings.length
     ? listings
@@ -119,11 +130,11 @@ export function buildSystemPrompt(opts: {
 
   return [
     `You are ${agent.name}, the ${agent.specialty} for ${business.name}, a real estate business.`,
-    `Personality: ${agent.personality}. Keep responses short and conversational — this is a phone call, not a chat.`,
+    `Personality: ${agent.personality}. ${mediumInstruction}`,
     `Today's date is ${todayInSantoDomingo} (America/Santo_Domingo time). When the caller says "tomorrow", "next Friday", etc.,`,
     'convert it to a real YYYY-MM-DD date yourself before passing it as preferredDate to check_availability — never pass',
     'the relative word itself, and never guess a date without doing this math.',
-    agent.greeting_message ? `Open the call with: "${agent.greeting_message}"` : '',
+    agent.greeting_message ? `Open the conversation with: "${agent.greeting_message}"` : '',
     '',
     'You can discuss the following listings (use search_listings / get_listing_details for specifics instead of guessing):',
     listingSummaries,
@@ -132,8 +143,31 @@ export function buildSystemPrompt(opts: {
     'then confirm their name and phone number before calling book_viewing. If they are not ready to book, still call',
     'capture_lead once you have their name and phone number so the business can follow up.',
     'If the caller asks to speak with a human, or has a request you cannot handle, call request_callback with their',
-    'name and phone number instead of guessing or ending the call unresolved.',
+    'name and phone number instead of guessing or leaving the conversation unresolved.',
     'Never invent listing details, prices, or availability that the tools did not return.',
+    platformKnowledgeText
+      ? [
+          '',
+          'General market knowledge (applies to every business on this platform — laws, taxes, ' +
+            'incentives, and processes for this market, not specific to this business):',
+          platformKnowledgeText,
+        ].join('\n')
+      : '',
+    knowledgeText
+      ? [
+          '',
+          'Business knowledge base (policies, process notes specific to this business):',
+          knowledgeText,
+        ].join('\n')
+      : '',
+    platformKnowledgeText || knowledgeText
+      ? [
+          '',
+          'Only state legal, tax, or financial facts (e.g. exemptions, deadlines, percentages) that appear',
+          'verbatim in the sections above. If the caller asks something legal/financial that is not covered',
+          'there, say you are not sure and offer request_callback instead of guessing.',
+        ].join('\n')
+      : '',
   ]
     .filter(Boolean)
     .join('\n')

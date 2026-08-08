@@ -14,6 +14,7 @@ import {
   Briefcase,
   BookOpen,
   MessagesSquare,
+  MessageCircle,
   Globe,
   CreditCard,
   BellRing,
@@ -23,6 +24,7 @@ import {
   X,
   LifeBuoy,
   Settings,
+  ShieldCheck,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
@@ -45,6 +47,7 @@ export const NAV_SECTIONS = [
       { href: '/dashboard/services', label: 'Servicios', icon: Briefcase },
       { href: '/dashboard/knowledge', label: 'Conocimiento', icon: BookOpen },
       { href: '/dashboard/widget', label: 'Widget', icon: MessagesSquare },
+      { href: '/dashboard/whatsapp', label: 'WhatsApp', icon: MessageCircle },
       { href: '/dashboard/website', label: 'Sitio Web', icon: Globe },
     ],
   },
@@ -59,7 +62,15 @@ export const NAV_SECTIONS = [
   },
 ]
 
-export function DashboardSidebar({ businessName, planName }: { businessName: string; planName: string }) {
+export function DashboardSidebar({
+  businessName,
+  planName,
+  showAdminLink = false,
+}: {
+  businessName: string
+  planName: string
+  showAdminLink?: boolean
+}) {
   const pathname = usePathname()
   const router = useRouter()
   const [mobileOpen, setMobileOpen] = useState(false)
@@ -157,6 +168,21 @@ export function DashboardSidebar({ businessName, planName }: { businessName: str
               </div>
             </div>
           ))}
+
+          {showAdminLink && (
+            <div>
+              <p className="section-label px-3 mb-2">Plataforma</p>
+              <div className="space-y-1">
+                <Link
+                  href="/admin/knowledge"
+                  className={pathname.startsWith('/admin') ? 'sidebar-link-active' : 'sidebar-link'}
+                >
+                  <ShieldCheck className="w-[18px] h-[18px]" />
+                  Admin de plataforma
+                </Link>
+              </div>
+            </div>
+          )}
         </nav>
 
         <div className="p-3 border-t border-white/10 shrink-0">

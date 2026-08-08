@@ -7,7 +7,7 @@ type DB = SupabaseClient<Database>
 export async function startConversation(
   supabase: DB,
   businessId: string,
-  input: { agentId: string; listingId?: string; channel?: Conversation['channel'] }
+  input: { agentId: string; listingId?: string; channel?: Conversation['channel']; clientId?: string }
 ): Promise<Conversation> {
   const { data, error } = await supabase
     .from('conversations')
@@ -15,6 +15,7 @@ export async function startConversation(
       business_id: businessId,
       agent_id: input.agentId,
       listing_id: input.listingId,
+      client_id: input.clientId,
       channel: input.channel ?? 'widget_voice',
       status: 'in_progress',
     })

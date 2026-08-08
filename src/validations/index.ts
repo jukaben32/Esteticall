@@ -290,6 +290,14 @@ export const knowledgeDocumentSchema = z.object({
 })
 export type KnowledgeDocumentInput = z.infer<typeof knowledgeDocumentSchema>
 
+export const platformKnowledgeDocumentSchema = z.object({
+  title: z.string().min(2),
+  content: z.string().min(1),
+  sourceUrl: z.string().url().optional().or(z.literal('')),
+  category: z.string().optional().or(z.literal('')),
+})
+export type PlatformKnowledgeDocumentInput = z.infer<typeof platformKnowledgeDocumentSchema>
+
 export const businessServiceSchema = z.object({
   name: z.string().min(2),
   description: z.string().optional(),

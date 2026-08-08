@@ -935,3 +935,83 @@ create policy "Clients can send messages on their own tickets"
       where t.id = ticket_id and c.auth_user_id = auth.uid()
     )
   );
+
+-- 36. PLATFORM KNOWLEDGE + WHATSAPP (Evolution API) — recovered from an
+-- orphaned branch (claude/new-user-home-page-0xjc4d, 4 ago 2026) that never
+-- got merged to main; ported here on 8 ago 2026 reconciled with everything
+-- built on main since (Client Portal, idempotent schema, etc).
+--
+-- Platform knowledge: country/market-level facts shared by every business on
+-- InmobilIACall (CONFOTUR/Ley 158-01, Ley 108-05) — as opposed to
+-- knowledge_documents, which is each business's own private FAQ/policy
+-- content. No business_id: one row here is read by every AI agent's system
+-- prompt, in every business, without needing to be copied into each
+-- tenant's own knowledge_documents. Managed from /admin/knowledge, gated by
+-- PLATFORM_ADMIN_EMAILS (src/lib/platformAdmin.ts).
+create table if not exists platform_knowledge_documents (
+  id            uuid primary key default gen_random_uuid(),
+  title         text not null,
+  content       text not null,
+  category      text,
+  source_url    text,
+  created_at    timestamptz not null default now(),
+  updated_at    timestamptz not null default now()
+);
+
+drop trigger if exists update_platform_knowledge_documents_updated_at on platform_knowledge_documents;
+create trigger update_platform_knowledge_documents_updated_at
+  before update on platform_knowledge_documents
+  for each row execute function update_updated_at_column();
+
+alter table platform_knowledge_documents enable row level security;
+
+-- Non-sensitive, published market knowledge — safe for every business (and
+-- the public-facing AI agent) to read. Writes happen via the service role
+-- only (see /api/admin/knowledge), since RLS here only grants public SELECT.
+drop policy if exists "Anyone can view platform knowledge" on platform_knowledge_documents;
+create policy "Anyone can view platform knowledge"
+  on platform_knowledge_documents for select using (true);
+
+-- WhatsApp: adds 'whatsapp' as a channel/source value so Call Log,
+-- Analytics, and Clients — which already read from
+-- conversations/conversation_messages/clients without filtering by channel —
+-- work for WhatsApp automatically, exactly like they did for the widget.
+alter table conversations drop constraint if exists conversations_channel_check;
+alter table conversations add constraint conversations_channel_check
+  check (channel in ('widget_voice','widget_chat','phone','whatsapp'));
+
+alter table clients drop constraint if exists clients_source_check;
+alter table clients add constraint clients_source_check
+  check (source in ('ai_call','widget_chat','manual','website_form','whatsapp'));
+
+-- One WhatsApp connection per business (own number, own instance on the
+-- Evolution API server). instance_token is the per-instance token Evolution
+-- API issues on creation — separate from the global EVOLUTION_API_KEY, which
+-- only manages instance lifecycle (create/delete), never sends messages.
+create table if not exists whatsapp_connections (
+  id              uuid primary key default gen_random_uuid(),
+  business_id     uuid not null references businesses(id) on delete cascade unique,
+  agent_id        uuid references ai_agents(id) on delete set null,
+  provider        text not null default 'evolution' check (provider in ('evolution')),
+  instance_name   text not null unique,
+  instance_token  text,
+  phone_number    text,
+  status          text not null default 'disconnected'
+    check (status in ('disconnected','connecting','connected')),
+  is_enabled      boolean not null default true,
+  created_at      timestamptz not null default now(),
+  updated_at      timestamptz not null default now()
+);
+
+create index if not exists idx_whatsapp_connections_business_id on whatsapp_connections (business_id);
+
+drop trigger if exists update_whatsapp_connections_updated_at on whatsapp_connections;
+create trigger update_whatsapp_connections_updated_at
+  before update on whatsapp_connections
+  for each row execute function update_updated_at_column();
+
+alter table whatsapp_connections enable row level security;
+
+drop policy if exists "Business owners can manage their whatsapp connection" on whatsapp_connections;
+create policy "Business owners can manage their whatsapp connection"
+  on whatsapp_connections for all using (is_business_owner(business_id));

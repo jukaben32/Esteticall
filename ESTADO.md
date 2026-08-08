@@ -1,10 +1,10 @@
 # INMOBILIACALL — ESTADO DEL PROYECTO
 
-> Última actualización: 7 agosto 2026. Se auditó la app completa contra la
-> transcripción del video de referencia: cumple prácticamente el 100% de lo
-> que muestra el tutorial. Se construyó el único bloque grande que faltaba
-> (Client Portal — cuentas de cliente) — ver "PENDIENTES" punto 16. Sigue
-> pendiente rotar credenciales expuestas en el chat (punto 7).
+> Última actualización: 8 agosto 2026. Se recuperó y fusionó a `main` el
+> trabajo de adaptación a República Dominicana (WhatsApp/Evolution API +
+> base de conocimiento CONFOTUR) que había quedado en una rama sin fusionar
+> — ver "PENDIENTES" punto 17. Sigue pendiente rotar credenciales expuestas
+> en el chat (punto 7).
 
 ## RESUMEN RÁPIDO
 
@@ -462,25 +462,303 @@ Client Portal reutiliza `clients.auth_user_id` y las tablas existentes).
 
 `npx tsc --noEmit` y `npm run build` verificados sin errores antes de entregar.
 
-## INTEGRACIONES FUTURAS (planeadas, NO implementadas — 7 ago 2026)
+### 17. Adaptación a República Dominicana recuperada de una rama huérfana (8 ago 2026)
 
-Confirmado por auditoría del repo (no hay `CLAUDE.md`; ni `README.md` ni este
-archivo las mencionaban antes de hoy): estas dos integraciones que Juan tiene
-en mente **todavía no existen en el código**. Se documentan aquí para no
-perderlas y activarlas cuando corresponda:
+**Corrección a la entrada anterior de este mismo archivo** ("INTEGRACIONES
+FUTURAS, 7 ago 2026"): decía que WhatsApp/Evolution API y la base de
+conocimiento de CONFOTUR no existían. Eso era cierto para lo que estaba en
+`main`, pero **no era cierto en general** — el trabajo sí se había hecho, en
+una sesión del 4 de agosto, sobre una rama (`claude/new-user-home-page-0xjc4d`)
+que nunca se fusionó a `main` (y que además no comparte historia de git con
+`main` — el repo se reinició en algún punto). Juan pasó el mismo documento
+estratégico de Gemini que ya se había evaluado esa vez, preguntando por qué
+no se veía nada — la respuesta fue esta: no se perdió, se recuperó y se
+fusionó ahora, reconciliado a mano (sin merge base posible) con todo lo
+construido en `main` desde entonces (Client Portal, Website Builder, el
+`schema.sql` idempotente).
 
-- **WhatsApp vía Evolution API**: sin empezar. Implicaría un canal nuevo
-  paralelo a la voz/widget actual — probablemente un webhook entrante
-  (`/api/whatsapp/webhook` o similar) que reciba mensajes de Evolution API,
-  los enrute al mismo `src/ai/tools.ts`/`REALTIME_TOOLS` que ya usa la voz
-  (o una versión de texto de esas herramientas), y un canal `whatsapp` nuevo
-  en `conversations.channel` (hoy solo admite `widget_voice`/`widget_chat`/
-  `phone`).
-- **Base de conocimiento de CONFOTUR**: sin empezar. Encajaría como
-  documentos nuevos en `knowledge_documents` (la tabla ya soporta contenido
-  libre por categoría, igual que las plantillas de FAQ) — sería agregar el
-  contenido de CONFOTUR como una categoría/plantilla más en
-  `KnowledgeManager.tsx`, sin cambios de esquema.
+**Reafirmado, no cambiado:** la decisión de esa sesión de *no* construir
+pgvector/Pinecone ni el enrutamiento multi-agente del documento de Gemini
+sigue en pie — es complejidad de infraestructura que el tamaño actual del
+producto no necesita. Ver el razonamiento completo en la sección "Fase 0"
+más abajo (se conservó tal cual).
+
+**Qué se recuperó y cómo quedó reconciliado:**
+
+- **WhatsApp vía Evolution API (Fase 1 completa):** cliente REST
+  (`src/lib/evolutionApi.ts`), capa de negocio (`src/services/whatsapp.ts`) y
+  tabla `whatsapp_connections` (una por negocio). `/dashboard/whatsapp` +
+  `WhatsappManager.tsx` para conectar por QR, elegir agente, activar/
+  desactivar. Webhook `POST /api/whatsapp/webhook/[businessId]` con delay
+  aleatorio anti-detección de bot.
+  - **Refactor clave:** la ejecución de tools del agente (`search_listings`,
+    `book_viewing`, etc.) se extrajo de `/api/ai/tools/route.ts` a
+    `src/ai/executeTool.ts`, parametrizada por `clientSource`, para que voz
+    y WhatsApp **compartan exactamente la misma lógica de negocio** — nunca
+    puede divergir por canal. Al extraerla se preservaron todos los fixes
+    que main ya tenía y la rama vieja no (guard de fecha inválida en
+    `check_availability`, `.catch()` silencioso en el email de confirmación,
+    logging de errores) — la rama vieja era de antes de esos fixes.
+  - `src/ai/textAgent.ts`: agente en modo texto (Chat Completions +
+    function-calling, `gpt-4o-mini` — deliberadamente el modelo más barato,
+    ver la nota contra enrutamiento de modelos prematuro más abajo),
+    reutilizando las mismas tools vía `executeAiTool`.
+  - **Solo falta contratar un VPS y desplegar Evolution API ahí** — el
+    código de la app ya está listo; sin `EVOLUTION_API_URL`/
+    `EVOLUTION_API_KEY` configuradas, `/dashboard/whatsapp` muestra un
+    mensaje claro de "falta el servidor" en vez de fallar.
+- **Base de conocimiento de plataforma + CONFOTUR:** `buildSystemPrompt()`
+  ahora inyecta tanto `knowledge_documents` (privado por negocio) como
+  `platform_knowledge_documents` (compartido por todos los negocios
+  afiliados — CONFOTUR/Ley 158-01, Ley 108-05 — nuevo, migración 36).
+  Administrado desde `/admin/knowledge`, visible solo para
+  `PLATFORM_ADMIN_EMAILS` (`src/lib/platformAdmin.ts`, allowlist por env var
+  — no hay rol de "admin de plataforma" en el esquema, deliberado mientras
+  InmobilIACall tenga un solo operador).
+  - **Las 9 FAQs de CONFOTUR/Ley 108-05 que se cargaron el 4 de agosto** (vía
+    REST API directo contra Supabase) puede que ya no estén en la base de
+    datos actual — no hay forma de confirmarlo desde este entorno (sin
+    acceso de red a Supabase). Verificar en `/admin/knowledge` una vez
+    desplegado y volver a cargarlas si hace falta; el contenido verificado
+    contra la DGII debería estar en el historial de esa sesión si hay que
+    reconstruirlo.
+
+**Requiere, antes de que esto funcione en producción:**
+1. Correr `schema.sql` completo en el SQL Editor de Supabase (migración 36:
+   `platform_knowledge_documents`, `whatsapp_connections`, amplía los checks
+   de `conversations.channel`/`clients.source` con `'whatsapp'`).
+2. Cargar en Vercel (production/preview/development): `PLATFORM_ADMIN_EMAILS`
+   (tu email, para poder entrar a `/admin/knowledge`). `EVOLUTION_API_URL` y
+   `EVOLUTION_API_KEY` solo cuando haya un VPS con Evolution API desplegado —
+   mientras tanto el dashboard de WhatsApp funciona igual, solo no conecta.
+
+`npx tsc --noEmit` y `npm run build` verificados sin errores antes de subir.
+
+Documento de planificación original de esa sesión (4 ago 2026), preservado
+tal cual por el detalle técnico que trae (payloads del webhook, razonamiento
+completo contra pgvector/enrutamiento multi-agente, contenido de CONFOTUR
+verificado):
+
+#### HOJA DE RUTA: Adaptación al mercado de República Dominicana (4 ago 2026)
+
+Contexto de negocio: más del 90% de los leads en RD llegan por WhatsApp (no email),
+hay diáspora/inversionistas extranjeros comprando proyectos turísticos (Punta Cana,
+Samaná, Las Terrenas), y existen beneficios legales que son argumento de cierre (Ley
+CONFOTUR 158-01, Ley 108-05 de Registro Inmobiliario). Se evaluó un documento
+estratégico con propuestas más ambiciosas (pgvector/Pinecone día uno, 4 "agentes"
+especializados con enrutamiento de modelos, notas de voz y PDFs desde el arranque) y
+se decidió **no** construir esa versión todavía — es complejidad de infraestructura
+que el tamaño actual del producto no necesita. El plan de abajo reutiliza al máximo
+la arquitectura de "1 agente + tools" que ya existe, y cada fase es aditiva: no
+depende de deshacer nada de una fase anterior.
+
+- **Fase 0 — Conectar la base de conocimiento al agente IA.** ✅ hecho (detalle abajo).
+- **Fase 1 — WhatsApp vía Evolution API** (fase 2 futura: Twilio WhatsApp Business
+  API oficial). Planificado, ver sección "Integración de WhatsApp" más abajo.
+  Pendiente de decidir: dónde hostear Evolution API y si cada agencia conecta su
+  propio número o se usa uno compartido de la plataforma.
+- **Fase 2 — Campos de mercado dominicano en `listings`**: `currency` (hoy no
+  existe — gran parte del inventario en RD se cotiza en USD), `confotur_eligible`,
+  `delivery_date` (proyectos en plano/pre-construcción).
+- **Fase 3 — Tool `calculate_roi`** para el agente: cálculo determinístico de
+  retorno sobre listings `vacation_rental` (que ya existen desde antes) — no un LLM
+  "adivinando" cifras financieras.
+- **Fase 4 — Generador de fichas/copy con IA** en el dashboard de Propiedades: una
+  herramienta interna (botón "Generar con IA"), no un agente conversacional — así no
+  compite en complejidad con el agente de WhatsApp/voz.
+- **Fase 5 — Notas de voz y PDFs por WhatsApp.** Se deja para después de que el
+  flujo de texto de la Fase 1 esté probado en producción; agregan trabajo real
+  (transcripción de audio, generación de PDF) que no es necesario para validar el
+  mercado.
+
+Por qué este orden no rompe nada: Fase 0 no toca WhatsApp ni listings; Fase 1 no
+toca listings ni el agente de voz existente (es un canal nuevo); Fase 2 son columnas
+nuevas con default, que Fase 1 y Fase 3 pueden usar después pero no necesitan de
+entrada; Fase 3 depende solo de datos que ya existen; Fase 4 es independiente de
+todo lo anterior; Fase 5 es la única que depende de que la Fase 1 ya esté en
+producción.
+
+##### Fase 0 — Base de conocimiento conectada al agente IA (4 ago 2026) ✅
+
+`knowledge_documents` ya existía completo (dashboard "Conocimiento", CRUD, categorías)
+pero **nunca se leía en la sesión del agente** — `buildSystemPrompt()`
+(`src/ai/tools.ts`) solo recibía `business`, `agent` y `listings`. Tampoco existía ya
+una función `formatKnowledgeForPrompt` en `src/services/knowledge.ts` con un
+comentario diciendo que se usaba en el prompt del agente — pero no se llamaba desde
+ningún lado. Se conectó:
+
+- `src/app/api/agents/[agentId]/session/route.ts`: ahora también trae los documentos
+  de conocimiento del negocio (`listKnowledgeDocuments`) en paralelo a los listings,
+  y se los pasa a `buildSystemPrompt`.
+- `src/ai/tools.ts`: `buildSystemPrompt` acepta `knowledgeDocs` y los inyecta en el
+  prompt (reutilizando `formatKnowledgeForPrompt`) con una instrucción explícita de
+  que el agente solo puede afirmar datos legales/fiscales que estén en esos
+  documentos — pensado para poder cargar ahí el contenido sobre CONFOTUR (Ley 158-01)
+  y Ley 108-05 sin que el modelo invente cifras, plazos o porcentajes de exención.
+
+Se optó por **inyección directa en el prompt** (mismo patrón que ya se usa con
+`listings`) en vez de agregar una tool de búsqueda: con el volumen de documentos
+esperado por negocio (decenas, no miles) es más simple y más confiable — el modelo
+no puede "olvidarse" de llamar a una tool para buscar algo que ya está siempre
+presente. Si el volumen de conocimiento crece mucho (varias desarrolladoras, muchos
+proyectos), ahí se justifica agregar `pgvector` (extensión nativa de Postgres/
+Supabase, no un vendor externo como Pinecone) + una tool de búsqueda semántica — no
+antes.
+
+No requiere migración de esquema — usa `knowledge_documents` tal cual ya existía.
+`npx tsc --noEmit` y `npm run build` verificados sin errores.
+
+**Contenido real cargado de prueba (4 ago 2026):** se investigaron 9 FAQs sobre
+CONFOTUR/Ley 158-01 y Ley 108-05 (Registro Inmobiliario) — verificadas contra DGII,
+el texto oficial de las leyes y la firma Guzmán Ariza. **Es contenido informativo,
+no asesoría legal/fiscal — recomendado que un abogado/contador dominicano lo
+revise** antes de confiar en él para clientes reales; los montos y porcentajes
+pueden cambiar si se modifica la ley.
+
+##### Fase 0b — Conocimiento de plataforma (compartido entre todos los negocios) (4 ago 2026) ✅
+
+Las 9 FAQs de CONFOTUR/Ley 108-05 se cargaron primero en `knowledge_documents` del
+negocio `sophia.tec` (el negocio propio de Juan, afiliado a InmobilIACall para
+practicar y para su propia operación de corretaje) — pero eso las dejaba **privadas
+de ese único negocio**, porque `knowledge_documents.business_id` está aislado por
+RLS (correcto para el FAQ propio de cada agencia, incorrecto para hechos legales de
+todo el mercado dominicano). InmobilIACall es la plataforma (el SaaS); `sophia.tec`
+es apenas el primer negocio afiliado — cualquier agencia nueva que se registre debe
+heredar automáticamente el conocimiento de mercado (CONFOTUR, Ley 108-05, y lo que
+se agregue después) sin tener que volver a cargarlo a mano, y si la ley cambia debe
+bastar con actualizarlo una sola vez.
+
+Se agregó una tabla nueva, separada de `knowledge_documents`, **sin `business_id`**:
+
+- `supabase/schema.sql` — migración 31: `platform_knowledge_documents` (`title`,
+  `content`, `category`, `source_url`). RLS habilitado con política de lectura
+  pública (`for select using (true)`) — es información no sensible y ya publicada;
+  todavía no hay UI de dashboard para editarla, así que por ahora se escribe solo
+  vía `service_role` (aplicado directo a producción con el Management API de
+  Supabase, ya que el conector MCP de Supabase de esta sesión apunta a otra cuenta
+  sin acceso a este proyecto).
+- Las 9 FAQs se movieron de `sophia.tec` a `platform_knowledge_documents` (ya no
+  están duplicadas — `sophia.tec` solo conserva su única FAQ realmente propia,
+  "¿Cómo agendo una visita a una propiedad?").
+- `src/services/knowledge.ts`: nueva `listPlatformKnowledgeDocuments()` (sin filtro
+  de negocio); `formatKnowledgeForPrompt()` ahora acepta también el tipo de
+  plataforma.
+- `src/ai/tools.ts`: `buildSystemPrompt()` recibe `platformKnowledgeDocs` además de
+  `knowledgeDocs` e inyecta **dos secciones separadas y rotuladas** en el prompt
+  ("conocimiento general del mercado, aplica a todo negocio en esta plataforma" vs.
+  "base de conocimiento propia de este negocio") — así el agente sabe distinguir
+  origen si hace falta, aunque la instrucción de no inventar cifras aplica a ambas.
+- `src/app/api/agents/[agentId]/session/route.ts`: trae `platformKnowledgeDocs` en
+  paralelo a todo lo demás y se lo pasa al prompt — **todo negocio, presente o
+  futuro, recibe este conocimiento automáticamente**, sin que Juan tenga que
+  cargarlo de nuevo cada vez que afilie una nueva agencia.
+- `src/types/database.ts` / `src/types/index.ts`: tipo `PlatformKnowledgeDocument`.
+
+`npx tsc --noEmit` y `npm run build` verificados sin errores.
+
+**Pantalla de administración agregada (4 ago 2026) ✅ — Fase 0b cerrada.**
+`/admin/knowledge`, fuera del dashboard de cada negocio (no confundir con
+`/dashboard`, que es por negocio afiliado). Protegida por
+`PLATFORM_ADMIN_EMAILS` (allowlist por variable de entorno — no existe un rol de
+"admin de plataforma" en el esquema, y no hacía falta construir uno para dos
+cuentas). Ya cargada en Vercel (production/preview/development) con
+`jcbjm03@gmail.com,casilla.bethania@gmail.com` — los dos correos confirmados.
+CRUD completo (crear/editar/eliminar) contra `platform_knowledge_documents` desde
+`src/components/PlatformKnowledgeManager.tsx`; las rutas API
+(`/api/admin/knowledge`, `/api/admin/knowledge/[documentId]`) verifican el email
+antes de escribir con el cliente admin (service role), porque la tabla solo tiene
+RLS de lectura pública. Enlace "Admin de plataforma" visible en el sidebar del
+dashboard solo para esas dos cuentas.
+
+#### Fase 1 — Integración de WhatsApp (4 ago 2026) — código completo, falta el VPS
+
+Implementada de punta a punta contra Evolution API (self-hosted). **No probada
+en vivo todavía** — Juan no tiene VPS aún; en cuanto lo contrate y despliegue
+Evolution API ahí, solo falta cargar `EVOLUTION_API_URL`/`EVOLUTION_API_KEY` en
+Vercel y probar el flujo real de conexión/mensajes. Todo lo demás (voz, widget,
+email) sigue intacto — WhatsApp es un canal más, no un reemplazo.
+
+##### Esquema (migración 32, ya aplicada en producción)
+
+- `conversations.channel` y `clients.source` ahora incluyen `'whatsapp'`. Call
+  Log, Analítica y Clientes ya funcionan para WhatsApp sin ningún cambio —
+  leen de `conversations`/`conversation_messages`/`clients` sin filtrar por
+  canal, igual que ya pasaba con el widget.
+- Nueva tabla `whatsapp_connections`: una conexión por negocio (`business_id`
+  único), `agent_id` (qué agente IA responde), `instance_name` +
+  `instance_token` (credenciales de la instancia en Evolution API — separadas
+  del `EVOLUTION_API_KEY` global, que solo crea/borra instancias), `status`
+  (`disconnected`/`connecting`/`connected`), `is_enabled`. RLS igual patrón
+  que `widgets` (`is_business_owner`).
+
+##### Backend
+
+- `src/lib/evolutionApi.ts`: cliente REST de Evolution API v2 (crear
+  instancia, QR, estado de conexión, configurar webhook, enviar texto, borrar
+  instancia). Verificado contra la documentación oficial y ejemplos de la
+  comunidad — Evolution API ha cambiado contratos entre versiones mayores
+  antes, así que si algo falla al probar contra el VPS real, lo primero es
+  comparar contra `https://doc.evolution-api.com/v2`. Lanza
+  `EvolutionApiNotConfiguredError` si `EVOLUTION_API_URL`/`EVOLUTION_API_KEY`
+  no están seteadas, para que el dashboard muestre un mensaje claro en vez de
+  romperse.
+- `src/services/whatsapp.ts`: capa de negocio sobre esa tabla + ese cliente
+  (`connectWhatsapp`, `refreshWhatsappStatus`, `disconnectWhatsapp`,
+  `sendWhatsappMessage`, etc.).
+- **Refactor sin cambio de comportamiento**: la ejecución de tools del agente
+  (`search_listings`, `book_viewing`, `capture_lead`, `request_callback`,
+  etc.) se extrajo de `/api/ai/tools/route.ts` a `src/ai/executeTool.ts`
+  (`executeAiTool()`), para que la llamada de voz/widget y WhatsApp compartan
+  exactamente la misma lógica de negocio — nunca puede divergir por canal.
+  `clients.source` ahora se pasa como parámetro (`ai_call` para voz,
+  `whatsapp` para WhatsApp) en vez de estar hardcodeado.
+- `src/ai/textAgent.ts`: el agente en **modo texto** — un loop de function-
+  calling contra OpenAI Chat Completions (`gpt-4o-mini`, sin necesidad de
+  enrutamiento de modelos) que reutiliza las mismas `REALTIME_TOOLS` (convertidas
+  al formato de Chat Completions) y el mismo `executeAiTool()` que la voz.
+- `POST /api/whatsapp/webhook/[businessId]`: recibe `MESSAGES_UPSERT` de
+  Evolution API, resuelve/crea el `client` por teléfono, reutiliza la
+  conversación de WhatsApp abierta si el último mensaje fue hace menos de 6h
+  (si no, cierra la anterior como `completed` y abre una nueva — como una
+  llamada nueva), guarda el mensaje entrante, corre el agente de texto, guarda
+  y envía la respuesta. Incluye un delay aleatorio de 2-5s antes de responder
+  (reduce la señal de "esto es un bot" — mismo criterio anti-baneo que ya
+  estaba planificado). Sin verificación de firma (Evolution API no firma sus
+  webhooks) — el `businessId` en la URL más validar que la conexión existe y
+  está activa es el límite de confianza aceptado para esta fase.
+- `buildSystemPrompt()` ahora recibe `channel: 'voice' | 'text'` para no
+  decirle a un chat de WhatsApp "esto es una llamada telefónica".
+
+##### Dashboard
+
+- `/dashboard/whatsapp` + `src/components/WhatsappManager.tsx`: selector de
+  agente IA → "Conectar WhatsApp" → QR (se refresca solo cada 4s hasta quedar
+  `connected`) → una vez conectado, número vinculado, cambiar de agente,
+  activar/desactivar respuesta automática, desconectar. Si
+  `EVOLUTION_API_URL`/`EVOLUTION_API_KEY` no están configuradas, el botón
+  "Conectar" muestra una tarjeta explicando exactamente eso (falta el VPS) en
+  vez de fallar en silencio.
+- Nuevo ítem "WhatsApp" en el sidebar, junto a Widget.
+
+##### Pendiente — lo único que falta para que esto funcione en producción
+
+1. **Contratar un VPS** (Railway, Fly.io, un droplet de DigitalOcean — lo que
+   sea, necesita Docker y estar prendido 24/7; Vercel no sirve porque
+   Evolution API mantiene viva la sesión de WhatsApp Web) y desplegar
+   Evolution API ahí.
+2. Cargar `EVOLUTION_API_URL` y `EVOLUTION_API_KEY` en Vercel
+   (production/preview/development) — mismo patrón que las demás API keys.
+3. Probar el flujo real una vez: conectar (escanear QR), mandar un mensaje de
+   WhatsApp de prueba, confirmar que el agente responde y que
+   `conversations`/`clients` se llenan igual que con el widget.
+4. Verificar los payloads reales del webhook de Evolution API contra lo que
+   asume `src/app/api/whatsapp/webhook/[businessId]/route.ts`
+   (`event`/`data.key.remoteJid`/`data.message.conversation`) — se armó a
+   partir de la documentación pública, no de una instancia real corriendo.
+
+`npx tsc --noEmit` y `npm run build` verificados sin errores — todo compila y
+las rutas existen; lo que no se pudo probar es la integración end-to-end real
+con un servidor Evolution API vivo, por no tener VPS todavía.
 
 ## VISIÓN A LARGO PLAZO (clave, no perder)
 

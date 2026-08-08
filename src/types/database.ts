@@ -180,7 +180,7 @@ export interface Database {
           email: string | null
           budget: number | null
           pre_approval_number: string | null
-          source: 'ai_call' | 'widget_chat' | 'manual' | 'website_form'
+          source: 'ai_call' | 'widget_chat' | 'manual' | 'website_form' | 'whatsapp'
           notes: string | null
           created_at: string
           updated_at: string
@@ -198,7 +198,7 @@ export interface Database {
           agent_id: string | null
           client_id: string | null
           listing_id: string | null
-          channel: 'widget_voice' | 'widget_chat' | 'phone'
+          channel: 'widget_voice' | 'widget_chat' | 'phone' | 'whatsapp'
           status: 'in_progress' | 'completed' | 'failed'
           duration_seconds: number
           outcome: 'booked_viewing' | 'qualified_lead' | 'no_action' | 'escalated' | null
@@ -305,6 +305,44 @@ export interface Database {
           content: string
         }
         Update: Partial<Database['public']['Tables']['knowledge_documents']['Row']>
+        Relationships: []
+      }
+      platform_knowledge_documents: {
+        Row: {
+          id: string
+          title: string
+          content: string
+          category: string | null
+          source_url: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: Partial<Database['public']['Tables']['platform_knowledge_documents']['Row']> & {
+          title: string
+          content: string
+        }
+        Update: Partial<Database['public']['Tables']['platform_knowledge_documents']['Row']>
+        Relationships: []
+      }
+      whatsapp_connections: {
+        Row: {
+          id: string
+          business_id: string
+          agent_id: string | null
+          provider: 'evolution'
+          instance_name: string
+          instance_token: string | null
+          phone_number: string | null
+          status: 'disconnected' | 'connecting' | 'connected'
+          is_enabled: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: Partial<Database['public']['Tables']['whatsapp_connections']['Row']> & {
+          business_id: string
+          instance_name: string
+        }
+        Update: Partial<Database['public']['Tables']['whatsapp_connections']['Row']>
         Relationships: []
       }
       widgets: {
