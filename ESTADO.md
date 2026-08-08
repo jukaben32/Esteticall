@@ -861,6 +861,29 @@ end-to-end desde este entorno (sin acceso de red a Stripe ni tarjeta de
 prueba) — verificar en producción que Publish ya no pierde el contenido al
 pagar el add-on por primera vez.
 
+### 20. Bucle infinito de redirección en /portal/login (8 ago 2026)
+
+Juan probó el flujo completo del Client Portal (booking → email → "View in
+Client Portal") siguiendo las 40 capturas de referencia que mandó del video
+del tutorial, y encontró que el enlace del correo terminaba en
+`/portal/login?redirect=/portal/login` en bucle infinito
+(`ERR_TOO_MANY_REDIRECTS`).
+
+**Causa:** `src/lib/supabase/middleware.ts` protegía cualquier ruta que
+empezara con `/portal/` (`path.startsWith(`${p}/`)` para `p='/portal'`),
+lo cual incluía `/portal/login`, `/portal/signup` y `/portal/[appointmentId]`
+— justo las rutas que el propio comentario del archivo decía que debían
+quedar públicas. Un visitante sin sesión en `/portal/login` se redirigía a
+sí mismo sin fin, y de paso el signup y el enlace mágico de confirmación
+de cita también quedaban bloqueados detrás de un login que no debían tener.
+
+**Arreglado:** como `/portal` y `/portal/support` son páginas hoja sin rutas
+anidadas, ahora se comparan con match exacto (`PROTECTED_PORTAL_PATHS.includes(path)`)
+en vez de también matchear por prefijo.
+
+`npx tsc --noEmit`, `eslint` y `npm run build` verificados sin errores antes
+de subir (commit `6330561`).
+
 ## VISIÓN A LARGO PLAZO (clave, no perder)
 
 InmobilIACall no debe ser solo "SaaS de bienes raíces", sino una **base reutilizable
