@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import type { AiAgent, ListingWithPhotos } from '@/types'
-import { PROPERTY_TYPES, LISTING_TYPES, LISTING_STATUSES, AMENITIES, PRICE_DISPLAY_OPTIONS, RENTAL_PERIODS } from '@/constants'
+import { PROPERTY_TYPES, LISTING_TYPES, LISTING_STATUSES, AMENITIES, PRICE_DISPLAY_OPTIONS, RENTAL_PERIODS, CURRENCIES } from '@/constants'
 
 const LISTING_STATUS_LABELS: Record<string, string> = {
   available: 'Disponible',
@@ -49,8 +49,11 @@ export function EditListingModal({ listing, agents, onSaved, onClose }: EditList
     state: listing.state ?? '',
     zip: listing.zip ?? '',
     price: String(listing.price),
+    currency: listing.currency,
     priceDisplay: listing.price_display,
     rentalPeriod: listing.rental_period ?? 'night',
+    confoturEligible: listing.confotur_eligible,
+    deliveryDate: listing.delivery_date ?? '',
     bedrooms: String(listing.bedrooms),
     bathrooms: String(listing.bathrooms),
     areaSqft: String(listing.area_sqft),
@@ -140,7 +143,10 @@ export function EditListingModal({ listing, agents, onSaved, onClose }: EditList
         state: form.state || null,
         zip: form.zip || null,
         price: Number(form.price) || 0,
+        currency: form.currency,
         price_display: form.priceDisplay,
+        confotur_eligible: form.confoturEligible,
+        delivery_date: form.deliveryDate || null,
         rental_period: form.listingType === 'vacation_rental' ? form.rentalPeriod : null,
         bedrooms: Number(form.bedrooms) || 0,
         bathrooms: Number(form.bathrooms) || 0,
@@ -297,7 +303,7 @@ export function EditListingModal({ listing, agents, onSaved, onClose }: EditList
           className="input-field w-full"
         />
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <input
             placeholder="Precio"
             type="number"
@@ -307,6 +313,15 @@ export function EditListingModal({ listing, agents, onSaved, onClose }: EditList
             required
           />
           <select
+            value={form.currency}
+            onChange={(e) => setForm({ ...form, currency: e.target.value as typeof form.currency })}
+            className="input-field"
+          >
+            {CURRENCIES.map((c) => (
+              <option key={c.value} value={c.value}>{c.value}</option>
+            ))}
+          </select>
+          <select
             value={form.priceDisplay}
             onChange={(e) => setForm({ ...form, priceDisplay: e.target.value as typeof form.priceDisplay })}
             className="input-field"
@@ -315,6 +330,26 @@ export function EditListingModal({ listing, agents, onSaved, onClose }: EditList
               <option key={p.value} value={p.value}>{p.label}</option>
             ))}
           </select>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-center">
+          <div>
+            <label className="text-xs text-[var(--text-3)]">Fecha de entrega (proyectos en plano)</label>
+            <input
+              type="date"
+              value={form.deliveryDate}
+              onChange={(e) => setForm({ ...form, deliveryDate: e.target.value })}
+              className="input-field w-full"
+            />
+          </div>
+          <label className="flex items-center gap-2 text-sm text-[var(--text-2)]">
+            <input
+              type="checkbox"
+              checked={form.confoturEligible}
+              onChange={(e) => setForm({ ...form, confoturEligible: e.target.checked })}
+            />
+            Elegible para exención CONFOTUR (Ley 158-01)
+          </label>
         </div>
 
         {form.listingType === 'vacation_rental' && (

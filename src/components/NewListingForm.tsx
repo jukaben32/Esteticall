@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import type { Listing } from '@/types'
-import { PROPERTY_TYPES, LISTING_TYPES, RENTAL_PERIODS } from '@/constants'
+import { PROPERTY_TYPES, LISTING_TYPES, RENTAL_PERIODS, CURRENCIES } from '@/constants'
 
 const PROPERTY_TYPE_LABELS: Record<string, string> = {
   house: 'Casa',
@@ -32,12 +32,15 @@ export function NewListingForm({ onCreated, onClose }: NewListingFormProps) {
     listingType: 'sale',
     propertyType: 'house',
     price: '',
+    currency: 'USD',
     bedrooms: '',
     bathrooms: '',
     areaSqft: '',
     yearBuilt: '',
     city: '',
     rentalPeriod: 'night',
+    confoturEligible: false,
+    deliveryDate: '',
   })
   const [photo, setPhoto] = useState<File | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -113,14 +116,25 @@ export function NewListingForm({ onCreated, onClose }: NewListingFormProps) {
           </option>
         ))}
       </select>
-      <input
-        placeholder="Precio"
-        type="number"
-        value={form.price}
-        onChange={(e) => setForm({ ...form, price: e.target.value })}
-        className="input-field"
-        required
-      />
+      <div className="flex gap-2">
+        <input
+          placeholder="Precio"
+          type="number"
+          value={form.price}
+          onChange={(e) => setForm({ ...form, price: e.target.value })}
+          className="input-field flex-1"
+          required
+        />
+        <select
+          value={form.currency}
+          onChange={(e) => setForm({ ...form, currency: e.target.value })}
+          className="input-field w-28"
+        >
+          {CURRENCIES.map((c) => (
+            <option key={c.value} value={c.value}>{c.value}</option>
+          ))}
+        </select>
+      </div>
       {form.listingType === 'vacation_rental' && (
         <select
           value={form.rentalPeriod}
@@ -172,6 +186,23 @@ export function NewListingForm({ onCreated, onClose }: NewListingFormProps) {
           className="input-field"
         />
       )}
+      <div>
+        <label className="text-xs text-[var(--text-3)]">Fecha de entrega (proyectos en plano)</label>
+        <input
+          type="date"
+          value={form.deliveryDate}
+          onChange={(e) => setForm({ ...form, deliveryDate: e.target.value })}
+          className="input-field w-full"
+        />
+      </div>
+      <label className="flex items-center gap-2 text-sm text-[var(--text-2)]">
+        <input
+          type="checkbox"
+          checked={form.confoturEligible}
+          onChange={(e) => setForm({ ...form, confoturEligible: e.target.checked })}
+        />
+        Elegible para exención CONFOTUR (Ley 158-01)
+      </label>
       <div className="col-span-2">
         <label className="text-xs text-[var(--text-3)]">Foto de portada (opcional)</label>
         <input

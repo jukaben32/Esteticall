@@ -95,6 +95,9 @@ export interface Database {
           rental_period: 'night' | 'week' | 'month' | null
           status: 'available' | 'pending' | 'sold' | 'rented' | 'withdrawn'
           price: number
+          currency: 'USD' | 'DOP'
+          confotur_eligible: boolean
+          delivery_date: string | null
           bedrooms: number
           bathrooms: number
           area_sqft: number

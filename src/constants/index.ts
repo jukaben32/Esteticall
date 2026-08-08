@@ -74,6 +74,13 @@ export const LISTING_STATUSES = [
   { value: 'withdrawn', label: 'Withdrawn', color: 'red' },
 ] as const
 
+// Most Dominican Republic real estate inventory is quoted in USD even
+// though the local currency is DOP — price alone was ambiguous without this.
+export const CURRENCIES = [
+  { value: 'USD', label: 'USD ($)' },
+  { value: 'DOP', label: 'DOP (RD$)' },
+] as const
+
 export const PRICE_DISPLAY_OPTIONS = [
   { value: 'fixed', label: 'Precio fijo' },
   { value: 'negotiable', label: 'Negociable' },

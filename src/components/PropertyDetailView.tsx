@@ -9,7 +9,7 @@ import { LISTING_STATUSES } from '@/constants'
 import { EditListingModal } from '@/components/EditListingModal'
 import { FloatingWidgetLauncher, type WidgetVisualConfig } from '@/components/FloatingWidgetLauncher'
 import { formatDate } from '@/lib/formatDate'
-import { listingPriceSuffix, isLandListing } from '@/lib/listingFormat'
+import { listingPriceSuffix, isLandListing, formatListingPrice, formatDeliveryDate } from '@/lib/listingFormat'
 
 const LISTING_STATUS_LABELS: Record<string, string> = {
   available: 'Disponible',
@@ -270,10 +270,25 @@ export function PropertyDetailView({
                 <p className="text-sm text-[var(--text-3)] mt-0.5">{addressText || 'Sin dirección'}</p>
               </div>
               <p className="text-2xl font-bold text-gradient-teal">
-                ${listing.price.toLocaleString()}
+                {formatListingPrice(listing)}
                 {listingPriceSuffix(listing)}
               </p>
             </div>
+
+            {(listing.confotur_eligible || listing.delivery_date) && (
+              <div className="flex flex-wrap gap-2 mt-3">
+                {listing.confotur_eligible && (
+                  <span className="badge border-transparent bg-[var(--gold)]/15 text-[var(--gold)]">
+                    Elegible CONFOTUR (Ley 158-01)
+                  </span>
+                )}
+                {listing.delivery_date && (
+                  <span className="badge border-transparent bg-[var(--teal-50)] text-[var(--teal-700)]">
+                    Entrega: {formatDeliveryDate(listing.delivery_date)}
+                  </span>
+                )}
+              </div>
+            )}
 
             <div className="flex flex-wrap gap-2 mt-4">
               {isLandListing(listing) ? (

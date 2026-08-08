@@ -22,7 +22,7 @@ import { listAgentsForBusiness } from '@/services/aiAgents'
 import { listAvailabilityForBusiness } from '@/services/schedule'
 import { formatDateTime } from '@/lib/formatDate'
 import { APPOINTMENT_STATUS_LABELS, APPOINTMENT_STATUS_STYLES } from '@/lib/appointmentFormat'
-import { listingPriceSuffix } from '@/lib/listingFormat'
+import { listingPriceSuffix, formatListingPrice } from '@/lib/listingFormat'
 import { OverviewTrendChart, type OverviewTrendPoint } from '@/components/OverviewTrendChart'
 import { RefreshButton } from '@/components/RefreshButton'
 
@@ -247,7 +247,7 @@ export default async function OverviewPage() {
                 <p className="text-sm font-medium truncate">{listing.title}</p>
                 <p className="text-xs text-[var(--text-3)] truncate">{listing.city ?? listing.area_name}</p>
                 <p className="text-sm font-semibold mt-1 text-[var(--teal-700)]">
-                  ${listing.price.toLocaleString()}
+                  {formatListingPrice(listing)}
                   {listingPriceSuffix(listing)}
                 </p>
                 <div className="flex items-center gap-3 mt-1.5 text-xs text-[var(--text-3)]">

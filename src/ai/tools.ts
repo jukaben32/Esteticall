@@ -1,5 +1,5 @@
 import type { AiAgent, Business, KnowledgeDocument, Listing, PlatformKnowledgeDocument, RealtimeTool } from '@/types'
-import { listingPriceSuffix, isLandListing } from '@/lib/listingFormat'
+import { listingPriceSuffix, isLandListing, formatListingPrice, formatDeliveryDate } from '@/lib/listingFormat'
 import { formatKnowledgeForPrompt } from '@/services/knowledge'
 
 // Tool definitions handed to the OpenAI Realtime session. Execution happens
@@ -21,6 +21,10 @@ export const REALTIME_TOOLS: RealtimeTool[] = [
         maxPrice: { type: 'number' },
         minBedrooms: { type: 'number' },
         city: { type: 'string' },
+        confoturOnly: {
+          type: 'boolean',
+          description: 'Only return properties eligible for the CONFOTUR tax exemption (Ley 158-01)',
+        },
       },
     },
   },
@@ -117,8 +121,10 @@ export function buildSystemPrompt(opts: {
           const specs = isLandListing(l) ? `${l.area_sqft}sqft lot` : `${l.bedrooms}bd/${l.bathrooms}ba, ${l.area_sqft}sqft`
           return (
             `- ${l.listing_code}: ${l.title} — ${l.property_type} (${l.listing_type}), ${specs}, ` +
-            `$${l.price.toLocaleString()}${listingPriceSuffix(l)}, ` +
-            `${l.city ?? l.area_name ?? 'location on file'}`
+            `${formatListingPrice(l)}${listingPriceSuffix(l)}, ` +
+            `${l.city ?? l.area_name ?? 'location on file'}` +
+            (l.confotur_eligible ? ' · CONFOTUR-eligible (Ley 158-01 tax exemption)' : '') +
+            (l.delivery_date ? ` · delivery ${formatDeliveryDate(l.delivery_date)}` : '')
           )
         })
         .join('\n')

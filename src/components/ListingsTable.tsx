@@ -7,7 +7,7 @@ import type { AiAgent, ListingWithPhotos } from '@/types'
 import { LISTING_STATUSES, PROPERTY_TYPES } from '@/constants'
 import { NewListingForm } from '@/components/NewListingForm'
 import { EditListingModal } from '@/components/EditListingModal'
-import { listingPriceSuffix, isLandListing } from '@/lib/listingFormat'
+import { listingPriceSuffix, isLandListing, formatListingPrice } from '@/lib/listingFormat'
 
 const PROPERTY_TYPE_LABELS: Record<string, string> = {
   house: 'Casa',
@@ -172,7 +172,7 @@ export function ListingsTable({
             </div>
             <div className="flex flex-wrap items-center gap-3 pl-[68px] sm:pl-0">
               <p className="font-semibold sm:w-28 sm:text-right text-[var(--teal-700)]">
-                ${listing.price.toLocaleString()}
+                {formatListingPrice(listing)}
                 {listingPriceSuffix(listing)}
               </p>
               <span className="badge bg-[var(--teal-50)] border-transparent text-[var(--teal-800)] capitalize">

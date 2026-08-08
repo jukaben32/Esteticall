@@ -37,6 +37,7 @@ export async function executeAiTool(
       if (args.maxPrice) query = query.lte('price', args.maxPrice as number)
       if (args.minBedrooms) query = query.gte('bedrooms', args.minBedrooms as number)
       if (args.city) query = query.ilike('city', `%${args.city}%`)
+      if (args.confoturOnly) query = query.eq('confotur_eligible', true)
 
       const { data, error: searchError } = await query.limit(5)
       if (searchError) throw searchError

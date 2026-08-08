@@ -1015,3 +1015,15 @@ alter table whatsapp_connections enable row level security;
 drop policy if exists "Business owners can manage their whatsapp connection" on whatsapp_connections;
 create policy "Business owners can manage their whatsapp connection"
   on whatsapp_connections for all using (is_business_owner(business_id));
+
+-- 37. LISTINGS — Dominican Republic market fields (roadmap Fase 2):
+-- currency (most RD inventory is quoted in USD, not always DOP — price
+-- alone was ambiguous), confotur_eligible (Ley 158-01 tax exemption, a real
+-- closing argument the AI agent should be able to mention), delivery_date
+-- (expected completion date for pre-construction / off-plan projects,
+-- common in the RD market).
+alter table listings add column if not exists currency text not null default 'USD';
+alter table listings drop constraint if exists listings_currency_check;
+alter table listings add constraint listings_currency_check check (currency in ('USD', 'DOP'));
+alter table listings add column if not exists confotur_eligible boolean not null default false;
+alter table listings add column if not exists delivery_date date;
