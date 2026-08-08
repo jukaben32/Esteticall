@@ -69,6 +69,7 @@ export function EditListingModal({ listing, agents, onSaved, onClose }: EditList
   const [photos, setPhotos] = useState(listing.photos)
   const [saving, setSaving] = useState(false)
   const [photoBusy, setPhotoBusy] = useState(false)
+  const [generatingCopy, setGeneratingCopy] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   function toggleAmenity(name: string) {
@@ -121,6 +122,23 @@ export function EditListingModal({ listing, agents, onSaved, onClose }: EditList
       })
     }
     setPhotoBusy(false)
+  }
+
+  async function handleGenerateCopy() {
+    setGeneratingCopy(true)
+    setError(null)
+    const res = await fetch(`/api/listings/${listing.id}/generate-copy`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...form, amenities }),
+    })
+    const data = await res.json()
+    setGeneratingCopy(false)
+    if (!res.ok) {
+      setError(data.error ?? 'No se pudo generar la descripción')
+      return
+    }
+    setForm((f) => ({ ...f, description: data.description }))
   }
 
   async function handleSave(e: React.FormEvent) {
@@ -385,13 +403,26 @@ export function EditListingModal({ listing, agents, onSaved, onClose }: EditList
           </>
         )}
 
-        <textarea
-          placeholder="Descripción"
-          value={form.description}
-          onChange={(e) => setForm({ ...form, description: e.target.value })}
-          className="input-field w-full"
-          rows={3}
-        />
+        <div>
+          <div className="flex items-center justify-between mb-1">
+            <label className="text-xs text-[var(--text-3)]">Descripción</label>
+            <button
+              type="button"
+              onClick={handleGenerateCopy}
+              disabled={generatingCopy}
+              className="btn-secondary !px-2.5 !py-1 !text-[11px]"
+            >
+              {generatingCopy ? 'Generando…' : 'Generar con IA'}
+            </button>
+          </div>
+          <textarea
+            placeholder="Descripción"
+            value={form.description}
+            onChange={(e) => setForm({ ...form, description: e.target.value })}
+            className="input-field w-full"
+            rows={3}
+          />
+        </div>
 
         <div>
           <label className="text-xs text-[var(--text-3)]">Características y comodidades</label>
