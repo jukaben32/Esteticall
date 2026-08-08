@@ -40,6 +40,27 @@ export const REALTIME_TOOLS: RealtimeTool[] = [
   },
   {
     type: 'function',
+    name: 'calculate_roi',
+    description:
+      'Calculate a deterministic return-on-investment estimate for a vacation_rental listing, given a hypothetical ' +
+      'purchase price. Never estimate ROI or rental income yourself — always call this tool so the math is exact, ' +
+      'and always state the occupancy/expenses assumptions it returns when you share the result.',
+    parameters: {
+      type: 'object',
+      properties: {
+        listingCode: { type: 'string' },
+        purchasePrice: { type: 'number', description: 'Hypothetical purchase price the caller mentioned' },
+        occupancyPct: { type: 'number', description: 'Expected occupancy 0-100, optional — defaults to a conservative estimate' },
+        annualExpensesPct: {
+          type: 'number',
+          description: 'Expenses as % of gross rental revenue (management, maintenance, taxes), optional — defaults to a conservative estimate',
+        },
+      },
+      required: ['listingCode', 'purchasePrice'],
+    },
+  },
+  {
+    type: 'function',
     name: 'check_availability',
     description: 'Check the next available viewing slots for this business, optionally near a preferred date.',
     parameters: {
@@ -150,6 +171,9 @@ export function buildSystemPrompt(opts: {
     'capture_lead once you have their name and phone number so the business can follow up.',
     'If the caller asks to speak with a human, or has a request you cannot handle, call request_callback with their',
     'name and phone number instead of guessing or leaving the conversation unresolved.',
+    'If the caller asks about return on investment, rental income, or cap rate for a vacation_rental listing, call',
+    'calculate_roi instead of doing that math yourself — state the occupancy/expenses assumptions it returns so the',
+    "caller knows those are estimates, not the property's actual performance.",
     'Never invent listing details, prices, or availability that the tools did not return.',
     platformKnowledgeText
       ? [

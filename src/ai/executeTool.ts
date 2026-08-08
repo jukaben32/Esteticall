@@ -63,6 +63,52 @@ export async function executeAiTool(
       return { listing: data ?? null }
     }
 
+    case 'calculate_roi': {
+      const { data: listing, error: listingError } = await supabase
+        .from('listings')
+        .select('listing_code, title, listing_type, price, rental_period')
+        .eq('business_id', businessId)
+        .eq('listing_code', args.listingCode as string)
+        .maybeSingle()
+      if (listingError) throw listingError
+      if (!listing) return { error: 'Listing not found' }
+      if (listing.listing_type !== 'vacation_rental') {
+        return { error: 'ROI can only be calculated for vacation_rental listings' }
+      }
+
+      const purchasePrice = args.purchasePrice as number
+      if (!purchasePrice || purchasePrice <= 0) {
+        return { error: 'purchasePrice must be a positive number' }
+      }
+
+      const PERIODS_PER_YEAR: Record<string, number> = { night: 365, week: 52, month: 12 }
+      const periodsPerYear = listing.rental_period ? PERIODS_PER_YEAR[listing.rental_period] : undefined
+      if (!periodsPerYear) return { error: 'This listing has no rental_period set — cannot annualize its rate' }
+
+      // Both assumptions are deliberately conservative, and always echoed back
+      // in the result so the caller (and buildSystemPrompt's instruction) can
+      // state them explicitly instead of presenting the ROI as a guaranteed
+      // number — the caller only ever gave us a purchase price, the rest is
+      // this tool's own estimate, not fact.
+      const DEFAULT_OCCUPANCY_PCT = 65
+      const DEFAULT_EXPENSES_PCT = 25
+      const occupancyPct = Math.min(100, Math.max(0, (args.occupancyPct as number) ?? DEFAULT_OCCUPANCY_PCT))
+      const expensesPct = Math.min(100, Math.max(0, (args.annualExpensesPct as number) ?? DEFAULT_EXPENSES_PCT))
+
+      const grossAnnualRevenue = listing.price * periodsPerYear * (occupancyPct / 100)
+      const netAnnualRevenue = grossAnnualRevenue * (1 - expensesPct / 100)
+
+      return {
+        listingCode: listing.listing_code,
+        purchasePrice,
+        assumptions: { occupancyPct, annualExpensesPct: expensesPct },
+        grossAnnualRevenue: Math.round(grossAnnualRevenue),
+        netAnnualRevenue: Math.round(netAnnualRevenue),
+        grossRoiPercent: Math.round((grossAnnualRevenue / purchasePrice) * 1000) / 10,
+        netRoiPercent: Math.round((netAnnualRevenue / purchasePrice) * 1000) / 10,
+      }
+    }
+
     case 'check_availability': {
       // The model is instructed to convert relative dates ("mañana") to
       // YYYY-MM-DD itself, but it's still free-text from a live voice/WhatsApp
