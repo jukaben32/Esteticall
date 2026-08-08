@@ -5,11 +5,15 @@ import type { Database } from '@/types/database'
 type CookieToSet = { name: string; value: string; options: CookieOptions }
 
 const DASHBOARD_PREFIX = '/dashboard'
-// Only "My Appointments" and "Support" need a client session — the
-// magic-link booking page (/portal/[appointmentId]) and the client
-// login/signup pages must stay public, so we can't just match the whole
-// /portal prefix (that was the previous bug: it silently redirected the
-// booking-confirmation email link to the *business* /login page).
+// Only "My Appointments" (/portal) and "Support" (/portal/support) need a
+// client session — the magic-link booking page (/portal/[appointmentId])
+// and the client login/signup pages must stay public. Both protected routes
+// are leaf pages with no nested children, so an EXACT match is required
+// here: a startsWith(`${p}/`) check (as this used to do) matches every
+// path under /portal, including /portal/login itself — which redirects an
+// unauthenticated visit to /portal/login back to /portal/login in an
+// infinite loop (ERR_TOO_MANY_REDIRECTS), and also wrongly gated the public
+// /portal/[appointmentId] and /portal/signup pages behind login.
 const PROTECTED_PORTAL_PATHS = ['/portal', '/portal/support']
 
 export async function updateSession(request: NextRequest) {
@@ -40,7 +44,7 @@ export async function updateSession(request: NextRequest) {
 
   const path = request.nextUrl.pathname
   const isDashboardProtected = path.startsWith(DASHBOARD_PREFIX)
-  const isPortalProtected = PROTECTED_PORTAL_PATHS.some((p) => path === p || path.startsWith(`${p}/`))
+  const isPortalProtected = PROTECTED_PORTAL_PATHS.includes(path)
 
   if (!user && (isDashboardProtected || isPortalProtected)) {
     const redirectUrl = request.nextUrl.clone()
