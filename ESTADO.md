@@ -817,6 +817,50 @@ alter table listings add column if not exists confotur_eligible boolean not null
 alter table listings add column if not exists delivery_date date;
 ```
 
+### 19. Website Builder: bug real de pérdida de contenido al publicar (8 ago 2026)
+
+Juan reportó que al llenar la landing del builder por completo y darle a **Publish**,
+todo el contenido desaparecía — no podía avanzar a probar nada de lo que viene
+después (reservas desde el sitio público, el widget embebido, etc.). Mandó 40
+capturas de la demo de referencia (video del tutorial) con transcripción marcada
+por tiempo para documentar qué debía pasar; no hizo falta usarlas todas porque
+la causa se encontró leyendo el código directamente.
+
+**Causa real:** `handlePublishClick()` en `WebsiteEditor.tsx`, cuando el negocio
+todavía no tiene el add-on Website Builder ($29/mes) activo, redirigía
+directo a Stripe Checkout (`window.location.href = ...`) **sin guardar antes**.
+Todo lo escrito en el formulario vivía solo en estado local de React — al
+salir de la página para pagar, se perdía. Cuando Stripe redirigía de vuelta,
+la página se volvía a renderizar desde cero con lo que hubiera en la base de
+datos (nada nuevo), así que el usuario volvía a un formulario vacío.
+
+**Arreglado:** `handlePublishClick` ahora siempre guarda el borrador primero
+(`await save()`) y solo redirige a Stripe si ese guardado tuvo éxito; si el
+add-on ya está activo, guarda y publica en un solo paso como antes.
+
+**Dos causas relacionadas, arregladas de paso:**
+- Logo y Hero Image guardaban la imagen como base64 embebido directamente en
+  el formulario, en vez de subirla a Storage como ya hacían About Photo y
+  Team Photo (arreglado el 8 ago 2026 antes en esta misma sesión). Una imagen
+  de varios MB podía hacer que el `PUT /api/website` completo superara el
+  límite de tamaño de payload de la función serverless (Vercel: ~4.5MB) y
+  fallara — y como cada Save subsiguiente reenviaba ese mismo base64 completo
+  otra vez, el problema no era solo al subir la imagen sino en cualquier guardado
+  después. Ahora usan `/api/website/photo` (`kind=logo` / `kind=hero`), con
+  estado de carga y error visibles, igual que About/Team.
+- `save()` no envolvía el `fetch` en try/catch: una respuesta no-JSON (por
+  ejemplo un 413 de la plataforma) hacía que `res.json()` lanzara una excepción
+  sin capturar, dejando el botón trabado en "Saving..." sin ningún mensaje de
+  error — parecía que el contenido "se borraba solo" cuando en realidad nunca
+  se había guardado y tampoco había forma de saberlo. Ahora se captura y se
+  muestra un error claro.
+
+`npx tsc --noEmit`, `eslint` y `npm run build` verificados sin errores antes
+de subir (commit `21a8fbb`). No se pudo probar el flujo de pago real de Stripe
+end-to-end desde este entorno (sin acceso de red a Stripe ni tarjeta de
+prueba) — verificar en producción que Publish ya no pierde el contenido al
+pagar el add-on por primera vez.
+
 ## VISIÓN A LARGO PLAZO (clave, no perder)
 
 InmobilIACall no debe ser solo "SaaS de bienes raíces", sino una **base reutilizable
