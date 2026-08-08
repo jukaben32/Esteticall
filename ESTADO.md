@@ -562,7 +562,7 @@ depende de deshacer nada de una fase anterior.
   `delivery_date` (proyectos en plano/pre-construcción).
 - **Fase 3 — Tool `calculate_roi`** para el agente: cálculo determinístico de
   retorno sobre listings `vacation_rental` (que ya existen desde antes) — no un LLM
-  "adivinando" cifras financieras.
+  "adivinando" cifras financieras. ✅ hecho (8 ago 2026, ver sección 22 más abajo).
 - **Fase 4 — Generador de fichas/copy con IA** en el dashboard de Propiedades: una
   herramienta interna (botón "Generar con IA"), no un agente conversacional — así no
   compite en complejidad con el agente de WhatsApp/voz.
@@ -931,6 +931,34 @@ de subir (commit `7718c46`). No se pudo probar el pago en línea real
 end-to-end desde este entorno (sin acceso de red a Stripe ni una cuenta de
 Stripe conectada de prueba) — verificar en producción con una cuenta de
 Stripe real conectada en Configuración.
+
+### 22. Fase 3 del roadmap: tool `calculate_roi` (8 ago 2026)
+
+Siguiente fase de la hoja de ruta (ver "Por qué este orden no rompe nada" más
+abajo). Cambio puramente aditivo — un tool nuevo en `REALTIME_TOOLS` y un
+`case` nuevo en `executeAiTool` (`src/ai/executeTool.ts`) — no toca ninguna
+tool ni ruta existente.
+
+**Cómo funciona:** el agente (voz o WhatsApp, comparten la misma
+`executeAiTool`) llama a `calculate_roi` con el `listingCode` y el precio de
+compra hipotético que el cliente mencione en la conversación — ese precio no
+existe en la base de datos porque el listing es `vacation_rental` (categoría
+distinta de `sale`), así que tiene que venir de lo que diga el cliente. El
+tool anualiza la tarifa de renta ya conocida del listing según su
+`rental_period` (365 noches / 52 semanas / 12 meses) y aplica dos supuestos
+conservadores por defecto — 65% de ocupación, 25% de gastos sobre el ingreso
+bruto (administración, mantenimiento, impuestos) — que el que llama puede
+sobreescribir. Ambos supuestos se devuelven explícitos en el resultado
+(`assumptions: { occupancyPct, annualExpensesPct }`) y `buildSystemPrompt`
+instruye al agente a declararlos siempre al compartir el ROI, para que quede
+claro que son una estimación y no el desempeño real de la propiedad.
+
+Solo aplica a listings `vacation_rental` con `rental_period` definido — un
+listing de venta no tiene una tarifa de renta que anualizar, y el tool
+devuelve un error legible en vez de inventar un número si no aplica.
+
+`npx tsc --noEmit`, `eslint` y `npm run build` verificados sin errores antes
+de subir (commit `145811c`).
 
 ## VISIÓN A LARGO PLAZO (clave, no perder)
 
