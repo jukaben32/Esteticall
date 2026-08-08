@@ -565,7 +565,8 @@ depende de deshacer nada de una fase anterior.
   "adivinando" cifras financieras. ✅ hecho (8 ago 2026, ver sección 22 más abajo).
 - **Fase 4 — Generador de fichas/copy con IA** en el dashboard de Propiedades: una
   herramienta interna (botón "Generar con IA"), no un agente conversacional — así no
-  compite en complejidad con el agente de WhatsApp/voz.
+  compite en complejidad con el agente de WhatsApp/voz. ✅ hecho (8 ago 2026, ver
+  sección 23 más abajo).
 - **Fase 5 — Notas de voz y PDFs por WhatsApp.** Se deja para después de que el
   flujo de texto de la Fase 1 esté probado en producción; agregan trabajo real
   (transcripción de audio, generación de PDF) que no es necesario para validar el
@@ -959,6 +960,27 @@ devuelve un error legible en vez de inventar un número si no aplica.
 
 `npx tsc --noEmit`, `eslint` y `npm run build` verificados sin errores antes
 de subir (commit `145811c`).
+
+### 23. Fase 4 del roadmap: generador de descripciones con IA (8 ago 2026)
+
+Botón "Generar con IA" junto al campo Descripción en `EditListingModal` —
+herramienta interna del dashboard (un solo llamado a Chat Completions, sin
+tools ni estado de conversación), no un agente conversacional, tal como
+especificaba la hoja de ruta.
+
+Nuevo endpoint `POST /api/listings/[listingId]/generate-copy`: toma los
+campos que el usuario ya llenó en el formulario (tipo, precio, specs,
+comodidades, CONFOTUR, fecha de entrega) — no requiere que la propiedad esté
+guardada todavía, solo que exista (el botón vive en Editar, no en Crear,
+porque el formulario de creación no tiene campo de descripción) — y genera
+un párrafo de 3-5 oraciones en español, instruido explícitamente a usar solo
+los datos dados y no inventar comodidades, ubicaciones o cifras. El
+resultado llena el campo pero no se guarda solo; el usuario lo revisa y
+edita antes de darle Guardar, igual que si lo hubiera escrito a mano.
+
+Cambio aditivo: nueva ruta + un botón nuevo en un formulario existente, sin
+tocar ningún flujo de guardado existente. `npx tsc --noEmit`, `eslint` y
+`npm run build` verificados sin errores antes de subir (commit `6355806`).
 
 ## VISIÓN A LARGO PLAZO (clave, no perder)
 
