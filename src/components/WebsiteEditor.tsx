@@ -260,6 +260,10 @@ export function WebsiteEditor({
   const [aboutPhotoError, setAboutPhotoError] = useState<string | null>(null)
   const [teamPhotoBusyIndex, setTeamPhotoBusyIndex] = useState<number | null>(null)
   const [teamPhotoError, setTeamPhotoError] = useState<string | null>(null)
+  const [logoBusy, setLogoBusy] = useState(false)
+  const [logoError, setLogoError] = useState<string | null>(null)
+  const [heroBusy, setHeroBusy] = useState(false)
+  const [heroError, setHeroError] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   function patch(p: Partial<FormState>) {
@@ -304,26 +308,37 @@ export function WebsiteEditor({
     }
   }
 
-  function handleLogoFile(file: File | undefined) {
+  // Uploads to storage and stores the returned URL — a raw base64 data URI
+  // (the previous approach) rode along in the JSON body of every future
+  // Save/Publish click, not just the upload itself, and a multi-MB image
+  // could push that body past the serverless function's request size limit
+  // and fail the whole save silently (no JSON error body to show the user).
+  async function handleLogoFile(file: File | undefined) {
     if (!file || !file.type.startsWith('image/')) return
-    if (file.size > 5 * 1024 * 1024) {
-      setError('El logo no puede superar 5 MB')
-      return
+    setLogoBusy(true)
+    setLogoError(null)
+    try {
+      const url = await uploadWebsitePhoto(file, 'logo')
+      patch({ logoUrl: url ?? '' })
+    } catch (err) {
+      setLogoError(err instanceof Error ? err.message : 'No se pudo subir el logo')
+    } finally {
+      setLogoBusy(false)
     }
-    const reader = new FileReader()
-    reader.onload = () => patch({ logoUrl: typeof reader.result === 'string' ? reader.result : form.logoUrl })
-    reader.readAsDataURL(file)
   }
 
-  function handleHeroFile(file: File | undefined) {
+  async function handleHeroFile(file: File | undefined) {
     if (!file || !file.type.startsWith('image/')) return
-    if (file.size > 5 * 1024 * 1024) {
-      setError('La imagen del hero no puede superar 5 MB')
-      return
+    setHeroBusy(true)
+    setHeroError(null)
+    try {
+      const url = await uploadWebsitePhoto(file, 'hero')
+      patch({ heroImageUrl: url ?? '' })
+    } catch (err) {
+      setHeroError(err instanceof Error ? err.message : 'No se pudo subir la imagen')
+    } finally {
+      setHeroBusy(false)
     }
-    const reader = new FileReader()
-    reader.onload = () => patch({ heroImageUrl: typeof reader.result === 'string' ? reader.result : form.heroImageUrl })
-    reader.readAsDataURL(file)
   }
 
   const siteUrl = useMemo(
@@ -424,7 +439,11 @@ export function WebsiteEditor({
     [initialContent.website, form, websiteServices, teamMembers, testimonials, specialties, faqs, business.id]
   )
 
-  async function save(publish?: boolean) {
+  // Returns whether the save actually persisted — callers that chain another
+  // step after saving (e.g. handlePublishClick before redirecting to Stripe)
+  // must not proceed on failure, or they'd carry the user away from an
+  // unsaved draft.
+  async function save(publish?: boolean): Promise<boolean> {
     setSaving(true)
     setSaved(false)
     setError(null)
@@ -481,21 +500,35 @@ export function WebsiteEditor({
       specialties: specialties.map((s, i) => ({ ...s, sortOrder: i })),
       faqs: faqs.map((f, i) => ({ ...f, sortOrder: i })),
     }
-    const res = await fetch('/api/website', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    })
-    const data = await res.json()
+    let res: Response
+    let data: { error?: string; slug?: string } = {}
+    try {
+      res = await fetch('/api/website', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      })
+      // A request rejected before it reaches our route (e.g. 413 Payload Too
+      // Large from the platform) comes back as an HTML/plain-text body, not
+      // JSON — res.json() would throw and leave the button stuck on "Saving…"
+      // with no explanation, which is exactly what looked like "my content
+      // vanished" when it was actually never saved in the first place.
+      data = await res.json().catch(() => ({}))
+    } catch {
+      setSaving(false)
+      setError('No se pudo conectar para guardar. Revisa tu conexión e intenta de nuevo.')
+      return false
+    }
     setSaving(false)
     if (!res.ok) {
-      setError(data.error ?? 'No se pudo guardar')
-      return
+      setError(data.error ?? 'No se pudo guardar (puede que una imagen sea demasiado grande)')
+      return false
     }
     if (publish !== undefined) patch({ isPublished: publish })
     setSlug(data.slug ?? slug)
     setSaved(true)
     setTimeout(() => setSaved(false), 1500)
+    return true
   }
 
   function toggle(id: string) {
@@ -523,11 +556,19 @@ export function WebsiteEditor({
     }
   }
 
-  function handlePublishClick() {
+  // Publish used to jump straight to Stripe Checkout (window.location.href)
+  // without saving first when the add-on wasn't enabled yet — any edits
+  // still sitting in local state (headline, hero image, services…) were
+  // never sent to the server, so they were gone by the time the user paid
+  // and got redirected back to a fresh server-rendered page. Now the draft
+  // is always saved (unpublished) before we ever navigate away, so the
+  // payment round-trip can't lose anything.
+  async function handlePublishClick() {
     if (websiteBuilderEnabled) {
-      save(true)
+      await save(true)
     } else {
-      startWebsiteBuilderCheckout()
+      const savedOk = await save()
+      if (savedOk) await startWebsiteBuilderCheckout()
     }
   }
 
@@ -555,9 +596,9 @@ export function WebsiteEditor({
               Unpublish
             </button>
           ) : (
-            <button onClick={handlePublishClick} disabled={checkingOut} className="btn-primary !px-2.5 !py-1.5 !text-[11px]">
+            <button onClick={handlePublishClick} disabled={checkingOut || saving} className="btn-primary !px-2.5 !py-1.5 !text-[11px]">
               {!websiteBuilderEnabled && <Lock className="h-3.5 w-3.5" />}
-              {checkingOut ? 'Redirecting...' : 'Publish'}
+              {checkingOut ? 'Redirecting...' : saving ? 'Saving...' : 'Publish'}
             </button>
           )}
           <a href={siteUrl} target="_blank" rel="noreferrer" className="btn-secondary !px-2.5 !py-1.5 !text-[11px]">
@@ -725,18 +766,24 @@ export function WebsiteEditor({
                       <span className="grid h-9 w-9 place-items-center rounded-lg bg-[var(--teal-50)] text-[var(--teal-700)]">
                         <UploadCloud className="h-4 w-4" />
                       </span>
-                      <span className="text-xs font-semibold text-[var(--teal-700)]">Click or drag to upload</span>
+                      <span className="text-xs font-semibold text-[var(--teal-700)]">
+                        {logoBusy ? 'Uploading…' : 'Click or drag to upload'}
+                      </span>
                       <span className="text-[10px] text-[var(--text-3)]">PNG, JPG, WEBP - max 5 MB</span>
                     </span>
                   )}
-                  <input type="file" accept="image/png,image/jpeg,image/webp" className="sr-only" onChange={(e) => handleLogoFile(e.target.files?.[0])} />
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    className="sr-only"
+                    disabled={logoBusy}
+                    onChange={(e) => {
+                      void handleLogoFile(e.target.files?.[0])
+                      e.target.value = ''
+                    }}
+                  />
                 </label>
-                <input
-                  value={form.logoUrl}
-                  onChange={(e) => patch({ logoUrl: e.target.value })}
-                  className="input-field mt-2 h-8 w-full !rounded-lg !px-2.5 !py-1 text-xs"
-                  placeholder="https://..."
-                />
+                {logoError && <p className="text-xs text-red-600 mt-1">{logoError}</p>}
               </div>
 
               <Field label="Site Title">
@@ -796,18 +843,38 @@ export function WebsiteEditor({
                         <span className="grid h-9 w-9 place-items-center rounded-lg bg-[var(--teal-50)] text-[var(--teal-700)]">
                           <UploadCloud className="h-4 w-4" />
                         </span>
-                        <span className="text-xs font-semibold text-[var(--teal-700)]">Click or drag to upload</span>
+                        <span className="text-xs font-semibold text-[var(--teal-700)]">
+                          {heroBusy ? 'Uploading…' : 'Click or drag to upload'}
+                        </span>
                         <span className="text-[10px] text-[var(--text-3)]">PNG, JPG, WEBP - max 5 MB</span>
                       </span>
                     )}
-                    <input type="file" accept="image/png,image/jpeg,image/webp" className="sr-only" onChange={(e) => handleHeroFile(e.target.files?.[0])} />
+                    <input
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp"
+                      className="sr-only"
+                      disabled={heroBusy}
+                      onChange={(e) => {
+                        void handleHeroFile(e.target.files?.[0])
+                        e.target.value = ''
+                      }}
+                    />
                   </label>
 
                   {form.heroImageUrl && (
                     <div className="absolute right-2 top-2 flex items-center gap-1">
                       <label className="grid h-7 w-7 cursor-pointer place-items-center rounded-full bg-white/90 text-[var(--teal-700)] shadow-sm hover:bg-white">
                         <UploadCloud className="h-3.5 w-3.5" />
-                        <input type="file" accept="image/png,image/jpeg,image/webp" className="sr-only" onChange={(e) => handleHeroFile(e.target.files?.[0])} />
+                        <input
+                          type="file"
+                          accept="image/png,image/jpeg,image/webp"
+                          className="sr-only"
+                          disabled={heroBusy}
+                          onChange={(e) => {
+                            void handleHeroFile(e.target.files?.[0])
+                            e.target.value = ''
+                          }}
+                        />
                       </label>
                       <button
                         type="button"
@@ -820,12 +887,7 @@ export function WebsiteEditor({
                     </div>
                   )}
                 </div>
-                <input
-                  value={form.heroImageUrl}
-                  onChange={(e) => patch({ heroImageUrl: e.target.value })}
-                  className="input-field mt-2 h-8 w-full !rounded-lg !px-2.5 !py-1 text-xs"
-                  placeholder="https://..."
-                />
+                {heroError && <p className="text-xs text-red-600 mt-1">{heroError}</p>}
               </div>
 
               <div className="grid grid-cols-2 gap-2">
