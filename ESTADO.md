@@ -1010,3 +1010,16 @@ plantilla adaptable.**
 - Commit y push proactivos para no perder trabajo.
 - El backend Express anterior sigue siendo recuperable desde el historial de `main`,
   en el commit `ee3a7d9`.
+## ACTUALIZACION 9 DE AGOSTO DE 2026
+
+Se dejo preparado el proyecto de referencia para quedar al mismo nivel
+funcional que el SaaS medico usado como fuente de verdad visual y funcional.
+
+- Se compararon ambos proyectos para tomar como referencia la estructura del
+  dashboard, Knowledge, Widget, WhatsApp y Website.
+- Se genero y ejecuto la migracion SQL de Supabase necesaria para cerrar la
+  brecha de esquema entre ambos proyectos.
+- La migracion incluyo tablas nuevas, cambios `ALTER`, RLS, policies y grants
+  para soportar la capa clinica/operativa y la integracion de WhatsApp.
+- Se confirmo que el SQL corrio sin errores en Supabase.
+- Queda pendiente seguir con las pruebas reales cuando el VPS este disponible.
