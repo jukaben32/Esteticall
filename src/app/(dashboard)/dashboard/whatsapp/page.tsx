@@ -14,7 +14,7 @@ const IMPLEMENTATION_NOTES: Array<{
   {
     icon: MessageCircle,
     title: 'Same assistant, new channel',
-    text: 'WhatsApp uses the same business tools, FAQs and booking logic as the voice flow.',
+    text: 'WhatsApp uses the same clinic tools, FAQs and appointment logic as the voice flow.',
   },
   {
     icon: ShieldCheck,
@@ -58,8 +58,8 @@ export default async function WhatsappPage() {
         <p className="section-label text-[var(--text-4)]">Setup</p>
         <h1 className="font-display text-3xl font-semibold tracking-[-0.04em] text-[var(--text-1)]">WhatsApp</h1>
         <p className="max-w-3xl text-sm leading-6 text-[var(--text-3)]">
-          Conecta Evolution API para que el mismo asistente inmobiliario responda, califique prospectos y agende
-          visitas por WhatsApp.
+          Connect Evolution API so the same clinic assistant can answer WhatsApp, qualify patients and book
+          appointments.
         </p>
       </div>
 
@@ -73,7 +73,7 @@ export default async function WhatsappPage() {
                 Implementation notes
               </p>
               <h2 className="mt-2 font-display text-2xl font-semibold tracking-[-0.04em] text-[var(--text-1)]">
-                How WhatsApp fits the business stack
+                How WhatsApp fits the clinic stack
               </h2>
             </div>
             <span className={`badge border-transparent ${statusBadgeClass(connection?.status)}`}>
