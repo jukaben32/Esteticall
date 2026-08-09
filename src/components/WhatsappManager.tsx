@@ -1,14 +1,15 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { MessageCircle, QrCode, Power, ServerCrash } from 'lucide-react'
+import { MessageCircle, Power, QrCode, ServerCrash } from 'lucide-react'
 import type { AiAgent, WhatsappConnection } from '@/types'
 
 const STATUS_LABEL: Record<WhatsappConnection['status'], string> = {
   connected: 'Conectado',
-  connecting: 'Conectando…',
+  connecting: 'Conectando...',
   disconnected: 'Desconectado',
 }
+
 const STATUS_BADGE: Record<WhatsappConnection['status'], string> = {
   connected: 'bg-[var(--teal-50)] text-[var(--teal-700)]',
   connecting: 'bg-amber-50 text-amber-700',
@@ -54,9 +55,10 @@ export function WhatsappManager({
 
   async function handleConnect() {
     if (!agentId) {
-      setError('Selecciona qué agente IA va a responder por WhatsApp')
+      setError('Selecciona que agente IA va a responder por WhatsApp')
       return
     }
+
     setError(null)
     setNotConfigured(false)
     setLoading(true)
@@ -72,6 +74,7 @@ export function WhatsappManager({
         setError(body.error ?? 'No se pudo conectar WhatsApp')
         return
       }
+
       setConnection(body.connection)
       setQrCode(body.qrCode)
       startPolling()
@@ -90,6 +93,7 @@ export function WhatsappManager({
         setError(body.error ?? 'No se pudo desconectar')
         return
       }
+
       setConnection(null)
       setQrCode(null)
       if (pollRef.current) {
@@ -113,17 +117,17 @@ export function WhatsappManager({
 
   if (notConfigured) {
     return (
-      <div className="card-surface p-6 text-center space-y-3">
-        <div className="mx-auto grid place-items-center w-12 h-12 rounded-xl bg-amber-50">
-          <ServerCrash className="w-6 h-6 text-amber-600" />
+      <div className="card-surface space-y-3 p-6 text-center">
+        <div className="mx-auto grid h-12 w-12 place-items-center rounded-xl bg-amber-50">
+          <ServerCrash className="h-6 w-6 text-amber-600" />
         </div>
         <div>
           <h2 className="font-display font-semibold text-[var(--text-1)]">Falta el servidor de WhatsApp</h2>
-          <p className="text-sm text-[var(--text-3)] mt-1 max-w-md mx-auto">
-            WhatsApp usa Evolution API, que corre en tu propio servidor (VPS) — no en Vercel. Contrata un VPS,
-            despliega Evolution API ahí, y agrega <code className="text-xs">EVOLUTION_API_URL</code> y{' '}
-            <code className="text-xs">EVOLUTION_API_KEY</code> como variables de entorno. En cuanto estén
-            configuradas, este mismo botón conecta tu número.
+          <p className="mx-auto mt-1 max-w-md text-sm text-[var(--text-3)]">
+            WhatsApp usa Evolution API, que corre en tu propio servidor (VPS) y no en Vercel. Despliega Evolution API
+            ahi y agrega <code className="text-xs">EVOLUTION_API_URL</code> y{' '}
+            <code className="text-xs">EVOLUTION_API_KEY</code> como variables de entorno. En cuanto esten
+            configuradas, este mismo boton conecta tu numero.
           </p>
         </div>
         <button onClick={() => setNotConfigured(false)} className="btn-secondary">
@@ -135,15 +139,16 @@ export function WhatsappManager({
 
   if (!connection) {
     return (
-      <div className="card-surface p-6 space-y-4">
+      <div className="card-surface space-y-4 p-6">
         <div className="flex items-center gap-3">
-          <div className="grid place-items-center w-12 h-12 rounded-xl bg-[var(--teal-50)]">
-            <MessageCircle className="w-6 h-6 text-[var(--teal-700)]" />
+          <div className="grid h-12 w-12 place-items-center rounded-xl bg-[var(--teal-50)]">
+            <MessageCircle className="h-6 w-6 text-[var(--teal-700)]" />
           </div>
           <div>
             <h2 className="font-display font-semibold text-[var(--text-1)]">Conecta tu WhatsApp</h2>
             <p className="text-sm text-[var(--text-3)]">
-              Tu agente IA responderá, cualificará y agendará por WhatsApp automáticamente.
+              Tu asistente inmobiliario respondera, calificara prospectos y agendara visitas por WhatsApp
+              automaticamente.
             </p>
           </div>
         </div>
@@ -152,19 +157,19 @@ export function WhatsappManager({
 
         <div>
           <label className="text-xs font-semibold text-[var(--text-2)]">Agente IA que va a responder</label>
-          <select value={agentId} onChange={(e) => setAgentId(e.target.value)} className="input-field w-full mt-1">
-            <option value="">Selecciona un agente…</option>
+          <select value={agentId} onChange={(e) => setAgentId(e.target.value)} className="input-field mt-1 w-full">
+            <option value="">Selecciona un agente...</option>
             {agents.map((a) => (
               <option key={a.id} value={a.id}>
-                {a.name} {a.status !== 'live' ? '(no está en vivo todavía)' : ''}
+                {a.name} {a.status !== 'live' ? '(no esta en vivo todavia)' : ''}
               </option>
             ))}
           </select>
         </div>
 
         <button onClick={handleConnect} disabled={loading} className="btn-primary">
-          <QrCode className="w-4 h-4" />
-          {loading ? 'Conectando…' : 'Conectar WhatsApp'}
+          <QrCode className="h-4 w-4" />
+          {loading ? 'Conectando...' : 'Conectar WhatsApp'}
         </button>
       </div>
     )
@@ -173,11 +178,11 @@ export function WhatsappManager({
   const currentAgent = agents.find((a) => a.id === connection.agent_id)
 
   return (
-    <div className="card-surface p-6 space-y-4">
-      <div className="flex items-start justify-between gap-4 flex-wrap">
+    <div className="card-surface space-y-4 p-6">
+      <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="grid place-items-center w-12 h-12 rounded-xl bg-[var(--teal-50)]">
-            <MessageCircle className="w-6 h-6 text-[var(--teal-700)]" />
+          <div className="grid h-12 w-12 place-items-center rounded-xl bg-[var(--teal-50)]">
+            <MessageCircle className="h-6 w-6 text-[var(--teal-700)]" />
           </div>
           <div>
             <div className="flex items-center gap-2">
@@ -187,12 +192,13 @@ export function WhatsappManager({
               </span>
             </div>
             <p className="text-sm text-[var(--text-3)]">
-              {connection.phone_number ?? (connection.status === 'connecting' ? 'Escanea el código para vincular' : 'Sin número vinculado')}
+              {connection.phone_number ??
+                (connection.status === 'connecting' ? 'Escanea el codigo para vincular' : 'Sin numero vinculado')}
             </p>
           </div>
         </div>
         <button onClick={handleDisconnect} disabled={loading} className="btn-secondary">
-          <Power className="w-4 h-4" />
+          <Power className="h-4 w-4" />
           Desconectar
         </button>
       </div>
@@ -200,23 +206,22 @@ export function WhatsappManager({
       {error && <p className="text-sm text-red-600">{error}</p>}
 
       {connection.status === 'connecting' && qrCode && (
-        <div className="text-center py-4 border border-dashed border-[var(--border)] rounded-xl">
+        <div className="rounded-xl border border-dashed border-[var(--border)] py-4 text-center">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={qrCode} alt="Código QR de WhatsApp" className="w-48 h-48 mx-auto rounded-lg" />
-          <p className="text-sm text-[var(--text-3)] mt-3">
-            Abre WhatsApp en tu teléfono → Dispositivos vinculados → Vincular un dispositivo, y escanea este
-            código.
+          <img src={qrCode} alt="Codigo QR de WhatsApp" className="mx-auto h-48 w-48 rounded-lg" />
+          <p className="mt-3 text-sm text-[var(--text-3)]">
+            Abre WhatsApp en tu telefono -> Dispositivos vinculados -> Vincular un dispositivo, y escanea este codigo.
           </p>
         </div>
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
           <label className="text-xs font-semibold text-[var(--text-2)]">Agente IA asignado</label>
           <select
             value={connection.agent_id ?? ''}
             onChange={(e) => handleUpdate({ agentId: e.target.value })}
-            className="input-field w-full mt-1"
+            className="input-field mt-1 w-full"
           >
             <option value="">Sin agente asignado</option>
             {agents.map((a) => (
@@ -226,20 +231,20 @@ export function WhatsappManager({
             ))}
           </select>
           {currentAgent && currentAgent.status !== 'live' && (
-            <p className="text-xs text-amber-600 mt-1">Este agente no está en vivo — actívalo en Agentes IA.</p>
+            <p className="mt-1 text-xs text-amber-600">Este agente no esta en vivo - activalo en Agentes IA.</p>
           )}
         </div>
 
         <div>
-          <label className="text-xs font-semibold text-[var(--text-2)] block mb-1">Estado</label>
-          <label className="inline-flex items-center gap-2 cursor-pointer">
+          <label className="mb-1 block text-xs font-semibold text-[var(--text-2)]">Estado</label>
+          <label className="inline-flex cursor-pointer items-center gap-2">
             <input
               type="checkbox"
               checked={connection.is_enabled}
               onChange={(e) => handleUpdate({ isEnabled: e.target.checked })}
-              className="w-4 h-4"
+              className="h-4 w-4"
             />
-            <span className="text-sm text-[var(--text-2)]">Responder automáticamente</span>
+            <span className="text-sm text-[var(--text-2)]">Responder automaticamente</span>
           </label>
         </div>
       </div>
