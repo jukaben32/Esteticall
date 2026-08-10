@@ -149,8 +149,24 @@ export const websiteSchema = z.object({
   contactAddress: z.string().optional(),
   contactHours: z.string().optional(),
   contactMapsUrl: z.string().optional(),
+  socialYoutube: z.string().optional(),
+  socialFacebook: z.string().optional(),
+  socialInstagram: z.string().optional(),
+  socialTiktok: z.string().optional(),
+  socialLinkedin: z.string().optional(),
+  socialPinterest: z.string().optional(),
 })
 export type WebsiteInput = z.infer<typeof websiteSchema>
+
+export const websiteSubscriberSchema = z.object({
+  businessId: z.string().uuid(),
+  email: z.string().email(),
+  name: z.string().max(120).optional(),
+  phone: z.string().max(40).optional(),
+  message: z.string().max(4000).optional(),
+  source: z.string().max(80).default('website'),
+})
+export type WebsiteSubscriberInput = z.infer<typeof websiteSubscriberSchema>
 
 export const websiteSlugSchema = z.object({
   slug: z

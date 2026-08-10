@@ -60,5 +60,14 @@ export async function PATCH(request: Request, { params }: { params: { appointmen
     }).catch(() => {})
   }
 
+  await admin.from('notifications').insert({
+    business_id: appointment.business_id,
+    type: 'system',
+    title: 'Reprogramación solicitada por el cliente',
+    body: `${clientName} solicitó mover su cita al ${new Date(updated.scheduled_at).toLocaleString('es-DO', {
+      timeZone: 'America/Santo_Domingo',
+    })}`,
+  })
+
   return NextResponse.json({ appointment: updated })
 }

@@ -407,6 +407,12 @@ export interface Database {
           contact_address: string | null
           contact_hours: string | null
           contact_maps_url: string | null
+          social_youtube: string | null
+          social_facebook: string | null
+          social_instagram: string | null
+          social_tiktok: string | null
+          social_linkedin: string | null
+          social_pinterest: string | null
           created_at: string
           updated_at: string
         }
@@ -414,6 +420,24 @@ export interface Database {
           business_id: string
         }
         Update: Partial<Database['public']['Tables']['websites']['Row']>
+        Relationships: []
+      }
+      website_subscribers: {
+        Row: {
+          id: string
+          business_id: string
+          email: string
+          name: string | null
+          phone: string | null
+          message: string | null
+          source: string
+          created_at: string
+        }
+        Insert: Partial<Database['public']['Tables']['website_subscribers']['Row']> & {
+          business_id: string
+          email: string
+        }
+        Update: Partial<Database['public']['Tables']['website_subscribers']['Row']>
         Relationships: []
       }
       website_team_members: {

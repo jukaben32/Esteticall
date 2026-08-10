@@ -4,7 +4,7 @@ import { getAvailableSlots, createAppointment } from '@/services/appointments'
 import { findOrCreateClientByPhone } from '@/services/clients'
 import { getSubscription } from '@/services/businesses'
 import { appendMessage, recordConversationOutcome } from '@/services/conversations'
-import { sendAppointmentConfirmationEmail } from '@/services/email'
+import { sendAppointmentConfirmationEmail, sendNewAppointmentOwnerEmail } from '@/services/email'
 import type { Client, PlanId } from '@/types'
 
 type DB = SupabaseClient<Database>
@@ -152,17 +152,32 @@ export async function executeAiTool(
 
       await recordConversationOutcome(supabase, conversationId, { clientId: client.id, outcome: 'booked_viewing' })
 
-      if (client.email) {
-        const { data: business } = await supabase.from('businesses').select('name').eq('id', businessId).maybeSingle()
-        if (business?.name) {
-          void sendAppointmentConfirmationEmail({
-            to: client.email,
-            clientName: client.name,
-            businessName: business.name,
-            scheduledAt: appointment.scheduled_at,
-            listingTitle,
-          }).catch(() => {})
-        }
+      const { data: business } = await supabase
+        .from('businesses')
+        .select('name, contact_email')
+        .eq('id', businessId)
+        .maybeSingle()
+
+      if (client.email && business?.name) {
+        void sendAppointmentConfirmationEmail({
+          to: client.email,
+          clientName: client.name,
+          businessName: business.name,
+          scheduledAt: appointment.scheduled_at,
+          listingTitle,
+        }).catch(() => {})
+      }
+
+      if (business?.contact_email && business?.name) {
+        void sendNewAppointmentOwnerEmail({
+          to: business.contact_email,
+          businessName: business.name,
+          clientName: client.name,
+          clientPhone: client.phone ?? undefined,
+          clientEmail: client.email ?? undefined,
+          serviceName: listingTitle,
+          scheduledAt: appointment.scheduled_at,
+        }).catch(() => {})
       }
 
       return { booked: true, appointment }

@@ -271,6 +271,39 @@ export async function sendNewAppointmentOwnerEmail(opts: {
   })
 }
 
+// Sent to the business owner (businesses.contact_email) when a visitor
+// submits the public website's Contact lead form.
+export async function sendNewWebsiteLeadEmail(opts: {
+  to: string
+  businessName: string
+  name?: string
+  email: string
+  phone?: string
+  message?: string
+}) {
+  return sendEmail({
+    to: opts.to,
+    subject: `New website lead — ${opts.name || opts.email}`,
+    html: `
+      <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
+        <div style="background:#166534;color:#fff;padding:20px;border-radius:12px 12px 0 0;">
+          <p style="margin:0;font-size:18px;font-weight:600;">📬 New Website Lead</p>
+          <p style="margin:4px 0 0;opacity:0.85;">${opts.businessName}</p>
+        </div>
+        <div style="border:1px solid #e5e7eb;border-top:none;border-radius:0 0 12px 12px;padding:20px;">
+          <p>Someone just submitted your website's contact form:</p>
+          <table style="width:100%;font-size:14px;border-collapse:collapse;">
+            ${opts.name ? `<tr><td style="padding:6px 0;color:#6b7280;">Name</td><td style="padding:6px 0;font-weight:600;">${opts.name}</td></tr>` : ''}
+            <tr><td style="padding:6px 0;color:#6b7280;">Email</td><td style="padding:6px 0;font-weight:600;">${opts.email}</td></tr>
+            ${opts.phone ? `<tr><td style="padding:6px 0;color:#6b7280;">Phone</td><td style="padding:6px 0;font-weight:600;">${opts.phone}</td></tr>` : ''}
+          </table>
+          ${opts.message ? `<p style="margin-top:12px;">${opts.message}</p>` : ''}
+        </div>
+      </div>
+    `,
+  })
+}
+
 // Sent to the client right after a public-site booking. Points to the
 // unauthenticated /portal/[appointmentId] page so the client can revisit
 // their booking details without an account — matches the reference video's

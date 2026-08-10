@@ -16,6 +16,7 @@ export type WhatsappConnection = Tables<'whatsapp_connections'>
 export type Widget = Tables<'widgets'>
 export type WidgetWithAgent = Widget & { agent_name: string | null }
 export type Website = Tables<'websites'>
+export type WebsiteSubscriber = Tables<'website_subscribers'>
 export type WebsiteService = Tables<'website_services'>
 export type WebsiteTeamMember = Tables<'website_team_members'>
 export type WebsiteTestimonial = Tables<'website_testimonials'>

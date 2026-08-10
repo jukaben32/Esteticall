@@ -28,10 +28,12 @@ import {
   TrendingUp,
   Building2,
   Key,
+  Share2,
 } from 'lucide-react'
 import type { Business, AiAgent, WebsiteContent } from '@/types'
 import { WEBSITE_BUILDER_PRICE_USD, WEBSITE_BUILDER_FEATURES } from '@/constants'
 import { WebsiteTemplateRenderer } from './WebsiteTemplateRenderer'
+import { SOCIAL_PLATFORMS } from './socialLinks'
 
 // Keep in sync with SERVICE_ICONS in WebsiteTemplateRenderer — same fixed
 // icon set, keyed so the choice survives a save/reload instead of being
@@ -49,6 +51,23 @@ const TEMPLATES = [
   { id: 'pulse', name: 'Pulse', tagline: 'Bold · Dark · Modern' },
   { id: 'serenity', name: 'Serenity', tagline: 'Warm · Soft · Elegant' },
 ] as const
+
+type SocialFormKey =
+  | 'socialYoutube'
+  | 'socialFacebook'
+  | 'socialInstagram'
+  | 'socialTiktok'
+  | 'socialLinkedin'
+  | 'socialPinterest'
+
+const SOCIAL_FORM_KEYS: Record<string, SocialFormKey> = {
+  social_youtube: 'socialYoutube',
+  social_facebook: 'socialFacebook',
+  social_instagram: 'socialInstagram',
+  social_tiktok: 'socialTiktok',
+  social_linkedin: 'socialLinkedin',
+  social_pinterest: 'socialPinterest',
+}
 
 const FONTS = [
   { id: 'inter', label: 'Inter (Sans)' },
@@ -108,6 +127,12 @@ interface FormState {
   contactAddress: string
   contactHours: string
   contactMapsUrl: string
+  socialYoutube: string
+  socialFacebook: string
+  socialInstagram: string
+  socialTiktok: string
+  socialLinkedin: string
+  socialPinterest: string
 }
 
 function toForm(content: WebsiteContent): FormState {
@@ -143,6 +168,12 @@ function toForm(content: WebsiteContent): FormState {
     contactAddress: w.contact_address ?? '',
     contactHours: w.contact_hours ?? '',
     contactMapsUrl: w.contact_maps_url ?? '',
+    socialYoutube: w.social_youtube ?? '',
+    socialFacebook: w.social_facebook ?? '',
+    socialInstagram: w.social_instagram ?? '',
+    socialTiktok: w.social_tiktok ?? '',
+    socialLinkedin: w.social_linkedin ?? '',
+    socialPinterest: w.social_pinterest ?? '',
   }
 }
 
@@ -156,6 +187,7 @@ const SECTION_ICONS: Record<string, React.ComponentType<{ className?: string }>>
   specialties: Handshake,
   faq: HelpCircle,
   contact: Phone,
+  social: Share2,
   footer: PanelBottom,
 }
 
@@ -383,6 +415,12 @@ export function WebsiteEditor({
         contact_address: form.contactAddress || null,
         contact_hours: form.contactHours || null,
         contact_maps_url: form.contactMapsUrl || null,
+        social_youtube: form.socialYoutube || null,
+        social_facebook: form.socialFacebook || null,
+        social_instagram: form.socialInstagram || null,
+        social_tiktok: form.socialTiktok || null,
+        social_linkedin: form.socialLinkedin || null,
+        social_pinterest: form.socialPinterest || null,
       },
       services: websiteServices.map((s, i) => ({
         id: s.id ?? `tmp-${i}`,
@@ -483,6 +521,12 @@ export function WebsiteEditor({
         contactAddress: form.contactAddress,
         contactHours: form.contactHours,
         contactMapsUrl: form.contactMapsUrl,
+        socialYoutube: form.socialYoutube,
+        socialFacebook: form.socialFacebook,
+        socialInstagram: form.socialInstagram,
+        socialTiktok: form.socialTiktok,
+        socialLinkedin: form.socialLinkedin,
+        socialPinterest: form.socialPinterest,
       },
       services: websiteServices.map((s, i) => ({
         ...s,
@@ -1319,6 +1363,33 @@ export function WebsiteEditor({
             >
               <Plus className="w-3.5 h-3.5" /> Add FAQ
             </button>
+          </Section>
+
+          <Section title="Social Media" id="social" open={openSection === 'social'} onToggle={toggle}>
+            <p className="text-xs text-[var(--text-3)]">
+              Síguenos en nuestras redes sociales — shown as brand icons in the site footer.
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {SOCIAL_PLATFORMS.map((platform) => {
+                const Icon = platform.icon
+                const formKey = SOCIAL_FORM_KEYS[platform.field]
+                return (
+                  <Field key={platform.field} label={platform.label}>
+                    <div className="flex items-center gap-2">
+                      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-[var(--border)] bg-[var(--bg-page)] text-[var(--text-1)]">
+                        <Icon className="h-4 w-4" />
+                      </span>
+                      <input
+                        value={form[formKey]}
+                        onChange={(e) => patch({ [formKey]: e.target.value } as Partial<FormState>)}
+                        placeholder={`https://${platform.label.toLowerCase()}.com/yourpage`}
+                        className="input-field w-full"
+                      />
+                    </div>
+                  </Field>
+                )
+              })}
+            </div>
           </Section>
 
           <Section title="Contact Info" id="contact" open={openSection === 'contact'} onToggle={toggle}>

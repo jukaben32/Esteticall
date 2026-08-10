@@ -1,3 +1,6 @@
+'use client'
+
+import { useState } from 'react'
 import {
   Phone,
   Mail,
@@ -11,8 +14,11 @@ import {
   TrendingUp,
   ClipboardList,
   Key,
+  Loader2,
+  Send,
 } from 'lucide-react'
 import type { WebsiteContent } from '@/types'
+import { configuredSocialLinks } from './socialLinks'
 
 const TEMPLATE_STYLES: Record<
   string,
@@ -125,6 +131,7 @@ export function WebsiteTemplateRenderer({
   const isPulse = website.template === 'pulse'
   const isSerenity = website.template === 'serenity'
   const mapEmbedUrl = normalizeMapEmbedUrl(website.contact_maps_url)
+  const socialLinks = configuredSocialLinks(website)
 
   return (
     <div style={{ backgroundColor: style.bg, color: style.text, fontFamily: font }} className="min-h-full">
@@ -482,29 +489,59 @@ export function WebsiteTemplateRenderer({
             {website.contact_hours && (
               <ContactRow icon={Clock} label="Hours" value={website.contact_hours} subtext={style.subtext} accent={website.primary_color} />
             )}
-          </div>
-          <div
-            className="rounded-2xl overflow-hidden min-h-[240px] grid place-items-center"
-            style={{ backgroundColor: style.border }}
-          >
             {mapEmbedUrl ? (
-              <iframe src={mapEmbedUrl} className="w-full h-full min-h-[240px]" loading="lazy" title="Map" />
+              <div
+                className="rounded-2xl overflow-hidden min-h-[200px]"
+                style={{ backgroundColor: style.border }}
+              >
+                <iframe src={mapEmbedUrl} className="w-full h-full min-h-[200px]" loading="lazy" title="Map" />
+              </div>
             ) : (
               isEditorPreview && (
-                <div className="text-center px-4" style={{ color: style.subtext }}>
-                  <MapPin className="w-6 h-6 mx-auto mb-1.5 opacity-60" />
-                  <p className="text-xs">Add Google Maps embed URL</p>
+                <div
+                  className="rounded-2xl overflow-hidden min-h-[200px] grid place-items-center"
+                  style={{ backgroundColor: style.border }}
+                >
+                  <div className="text-center px-4" style={{ color: style.subtext }}>
+                    <MapPin className="w-6 h-6 mx-auto mb-1.5 opacity-60" />
+                    <p className="text-xs">Add Google Maps embed URL</p>
+                  </div>
                 </div>
               )
             )}
           </div>
+          <LeadForm businessId={website.business_id} style={style} accentColor={website.primary_color} isEditorPreview={isEditorPreview} />
         </div>
       </section>
 
       {/* Footer */}
       <footer className="px-6 sm:px-10 py-8 border-t text-center text-xs" style={{ borderColor: style.border, color: style.subtext }}>
-        <p className="mb-1">{website.footer_tagline || 'Your trusted partner in real estate.'}</p>
-        <p>{website.footer_copyright || `© ${new Date().getFullYear()} ${businessName}. All rights reserved.`}</p>
+        <div className="flex flex-col items-center gap-4">
+          {socialLinks.length > 0 && (
+            <div className="flex flex-wrap items-center justify-center gap-3">
+              {socialLinks.map((platform) => {
+                const Icon = platform.icon
+                return (
+                  <a
+                    key={platform.field}
+                    href={platform.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    aria-label={platform.label}
+                    className="grid h-9 w-9 place-items-center rounded-full text-white transition hover:-translate-y-0.5"
+                    style={{ backgroundColor: website.primary_color }}
+                  >
+                    <Icon className="h-4 w-4" />
+                  </a>
+                )
+              })}
+            </div>
+          )}
+          <div>
+            <p className="mb-1">{website.footer_tagline || 'Your trusted partner in real estate.'}</p>
+            <p>{website.footer_copyright || `© ${new Date().getFullYear()} ${businessName}. All rights reserved.`}</p>
+          </div>
+        </div>
       </footer>
     </div>
   )
@@ -559,6 +596,163 @@ function ContactRow({
         </p>
         <p className="font-medium whitespace-pre-line">{value}</p>
       </div>
+    </div>
+  )
+}
+
+function LeadForm({
+  businessId,
+  style,
+  accentColor,
+  isEditorPreview,
+}: {
+  businessId: string
+  style: (typeof TEMPLATE_STYLES)[string]
+  accentColor: string
+  isEditorPreview: boolean
+}) {
+  const [name, setName] = useState('')
+  const [email, setEmail] = useState('')
+  const [phone, setPhone] = useState('')
+  const [message, setMessage] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  const [submitted, setSubmitted] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    setError(null)
+
+    if (isEditorPreview) {
+      setSubmitted(true)
+      return
+    }
+
+    setSubmitting(true)
+    try {
+      const response = await fetch('/api/website/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          businessId,
+          name: name.trim() || undefined,
+          email: email.trim(),
+          phone: phone.trim() || undefined,
+          message: message.trim() || undefined,
+          source: 'contact_form',
+        }),
+      })
+      const payload = await response.json().catch(() => null)
+      if (!response.ok) {
+        setError(payload?.error || 'Could not send your message. Please try again.')
+        return
+      }
+      setSubmitted(true)
+      setName('')
+      setEmail('')
+      setPhone('')
+      setMessage('')
+    } catch {
+      setError('Network error. Please try again.')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  return (
+    <div
+      className="rounded-2xl border p-6"
+      style={{ borderColor: style.border, backgroundColor: style.cardBg }}
+    >
+      {submitted ? (
+        <div className="grid min-h-[240px] place-items-center text-center">
+          <div>
+            <CheckCircle2 className="mx-auto h-10 w-10" style={{ color: accentColor }} />
+            <p className="mt-4 text-lg font-bold">Thanks for reaching out</p>
+            <p className="mt-2 text-sm leading-6" style={{ color: style.subtext }}>
+              We&apos;ll follow up with you shortly.
+            </p>
+            <button
+              type="button"
+              onClick={() => setSubmitted(false)}
+              className="mt-5 text-sm font-semibold underline"
+              style={{ color: accentColor }}
+            >
+              Send another message
+            </button>
+          </div>
+        </div>
+      ) : (
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: style.subtext }}>
+                Name
+              </label>
+              <input
+                value={name}
+                onChange={(event) => setName(event.target.value)}
+                placeholder="Your name"
+                className="w-full rounded-xl border px-3.5 py-2.5 text-sm outline-none"
+                style={{ borderColor: style.border, backgroundColor: style.bg, color: style.text }}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: style.subtext }}>
+                Phone
+              </label>
+              <input
+                value={phone}
+                onChange={(event) => setPhone(event.target.value)}
+                placeholder="(555) 123-4567"
+                className="w-full rounded-xl border px-3.5 py-2.5 text-sm outline-none"
+                style={{ borderColor: style.border, backgroundColor: style.bg, color: style.text }}
+              />
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: style.subtext }}>
+              Email
+            </label>
+            <input
+              type="email"
+              required
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              placeholder="you@email.com"
+              className="w-full rounded-xl border px-3.5 py-2.5 text-sm outline-none"
+              style={{ borderColor: style.border, backgroundColor: style.bg, color: style.text }}
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: style.subtext }}>
+              Message
+            </label>
+            <textarea
+              value={message}
+              onChange={(event) => setMessage(event.target.value)}
+              rows={4}
+              placeholder="What can we help you with?"
+              className="w-full rounded-xl border px-3.5 py-2.5 text-sm outline-none"
+              style={{ borderColor: style.border, backgroundColor: style.bg, color: style.text }}
+            />
+          </div>
+
+          {error ? <p className="text-sm font-medium text-rose-500">{error}</p> : null}
+
+          <button
+            type="submit"
+            disabled={submitting}
+            className="inline-flex w-full items-center justify-center gap-2 rounded-full px-5 py-3 text-sm font-semibold text-white disabled:opacity-60"
+            style={{ backgroundColor: accentColor }}
+          >
+            {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+            Send message
+          </button>
+        </form>
+      )}
     </div>
   )
 }

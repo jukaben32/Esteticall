@@ -720,6 +720,36 @@ alter table websites add column if not exists contact_address text;
 alter table websites add column if not exists contact_hours text;
 alter table websites add column if not exists contact_maps_url text;
 
+-- Social media links — shown as brand icons in the site footer.
+alter table websites add column if not exists social_youtube text;
+alter table websites add column if not exists social_facebook text;
+alter table websites add column if not exists social_instagram text;
+alter table websites add column if not exists social_tiktok text;
+alter table websites add column if not exists social_linkedin text;
+alter table websites add column if not exists social_pinterest text;
+
+-- 25a. WEBSITE SUBSCRIBERS — contact-form leads (and any other opt-in
+-- source) captured from the public site. Always written through the admin
+-- client from /api/website/subscribe since visitors have no Supabase
+-- session, so there's no public insert policy here — only a read policy
+-- for the business owner.
+create table if not exists website_subscribers (
+  id          uuid primary key default gen_random_uuid(),
+  business_id uuid not null references businesses(id) on delete cascade,
+  email       text not null,
+  name        text,
+  phone       text,
+  message     text,
+  source      text not null default 'website',
+  created_at  timestamptz not null default now()
+);
+create index if not exists idx_website_subscribers_business_id on website_subscribers (business_id);
+create index if not exists idx_website_subscribers_email on website_subscribers (email);
+alter table website_subscribers enable row level security;
+drop policy if exists "Business owners can view their website subscribers" on website_subscribers;
+create policy "Business owners can view their website subscribers"
+  on website_subscribers for select using (is_business_owner(business_id));
+
 -- 26. WEBSITE TEAM MEMBERS (matches the reference template's "Team Members"
 -- content section: Name, Role/Title, Bio, Photo, reorderable, Add/Remove).
 create table if not exists website_team_members (

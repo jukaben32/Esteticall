@@ -1,6 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '@/types/database'
-import type { Website, WebsiteContent, WebsiteSpecialty } from '@/types'
+import type { Website, WebsiteContent, WebsiteSpecialty, WebsiteSubscriber } from '@/types'
 import type {
   WebsiteInput,
   WebsiteServiceInput,
@@ -147,9 +147,38 @@ export async function upsertWebsite(supabase: DB, businessId: string, input: Web
         contact_address: input.contactAddress || null,
         contact_hours: input.contactHours || null,
         contact_maps_url: input.contactMapsUrl || null,
+        social_youtube: input.socialYoutube || null,
+        social_facebook: input.socialFacebook || null,
+        social_instagram: input.socialInstagram || null,
+        social_tiktok: input.socialTiktok || null,
+        social_linkedin: input.socialLinkedin || null,
+        social_pinterest: input.socialPinterest || null,
       },
       { onConflict: 'business_id' }
     )
+    .select('*')
+    .single()
+  if (error) throw error
+  return data
+}
+
+// Contact-form leads (and any other opt-in source) from the public site.
+// Always called with the admin client — visitors have no Supabase session.
+export async function createWebsiteSubscriber(
+  supabase: DB,
+  businessId: string,
+  input: { email: string; name?: string | null; phone?: string | null; message?: string | null; source?: string }
+): Promise<WebsiteSubscriber> {
+  const { data, error } = await supabase
+    .from('website_subscribers')
+    .insert({
+      business_id: businessId,
+      email: input.email,
+      name: input.name || null,
+      phone: input.phone || null,
+      message: input.message || null,
+      source: input.source || 'website',
+    })
     .select('*')
     .single()
   if (error) throw error
