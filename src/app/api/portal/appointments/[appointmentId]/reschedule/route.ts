@@ -10,7 +10,8 @@ import { portalRescheduleSchema } from '@/validations'
 // matches the reference video: the business has to confirm it (by setting
 // the status back to 'scheduled' from /dashboard/viewings, which already
 // emails the client) before it's final.
-export async function PATCH(request: Request, { params }: { params: { appointmentId: string } }) {
+export async function PATCH(request: Request, props: { params: Promise<{ appointmentId: string }> }) {
+  const params = await props.params;
   const supabase = await createClient()
   const {
     data: { user },

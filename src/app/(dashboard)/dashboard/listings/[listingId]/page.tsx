@@ -5,7 +5,8 @@ import { getListingById } from '@/services/listings'
 import { listAgentsForBusiness } from '@/services/aiAgents'
 import { PropertyDetailView } from '@/components/PropertyDetailView'
 
-export default async function PropertyDetailPage({ params }: { params: { listingId: string } }) {
+export default async function PropertyDetailPage(props: { params: Promise<{ listingId: string }> }) {
+  const params = await props.params;
   const supabase = await createClient()
   const {
     data: { user },

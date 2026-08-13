@@ -17,7 +17,8 @@ const MAX_SESSIONS_PER_AGENT = 8 // per agent, per minute — via Postgres, cros
 // Public endpoint — hit by the embeddable widget with no Supabase session, so
 // it uses the admin client and only ever returns an OpenAI *ephemeral* secret,
 // never OPENAI_API_KEY or SUPABASE_SERVICE_ROLE_KEY itself.
-export async function POST(request: Request, { params }: { params: { agentId: string } }) {
+export async function POST(request: Request, props: { params: Promise<{ agentId: string }> }) {
+  const params = await props.params;
   const ip = getClientIp(request)
   if (isRateLimited(`voice-session:ip:${ip}`, { windowMs: RATE_LIMIT_WINDOW_MS, max: MAX_SESSIONS_PER_IP })) {
     return NextResponse.json(

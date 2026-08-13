@@ -9,7 +9,8 @@ import { analyzeSentiment } from '@/services/sentiment'
 // call as finished and records its real duration; client_id/outcome are
 // already set progressively by the tool relay as the call happens, so this
 // never overwrites them.
-export async function POST(_request: Request, { params }: { params: { conversationId: string } }) {
+export async function POST(_request: Request, props: { params: Promise<{ conversationId: string }> }) {
+  const params = await props.params;
   const supabase = createAdminClient()
 
   const { data: conversation, error } = await supabase

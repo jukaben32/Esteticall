@@ -6,7 +6,8 @@ export const dynamic = 'force-dynamic'
 
 // Public, unauthenticated: powers "Property Interest" in the Book form of
 // the floating widget on the public site / embed script.
-export async function GET(_request: Request, { params }: { params: { businessId: string } }) {
+export async function GET(_request: Request, props: { params: Promise<{ businessId: string }> }) {
+  const params = await props.params;
   const supabase = createAdminClient()
   const listings = await listAiVisibleListings(supabase, params.businessId)
   return NextResponse.json({

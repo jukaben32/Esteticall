@@ -15,7 +15,8 @@ async function requireBusiness() {
   return { supabase, business }
 }
 
-export async function PATCH(request: Request, { params }: { params: { widgetId: string } }) {
+export async function PATCH(request: Request, props: { params: Promise<{ widgetId: string }> }) {
+  const params = await props.params;
   const ctx = await requireBusiness()
   if ('error' in ctx) return NextResponse.json({ error: ctx.error }, { status: 401 })
 
@@ -39,7 +40,8 @@ export async function PATCH(request: Request, { params }: { params: { widgetId: 
   }
 }
 
-export async function DELETE(_request: Request, { params }: { params: { widgetId: string } }) {
+export async function DELETE(_request: Request, props: { params: Promise<{ widgetId: string }> }) {
+  const params = await props.params;
   const ctx = await requireBusiness()
   if ('error' in ctx) return NextResponse.json({ error: ctx.error }, { status: 401 })
 

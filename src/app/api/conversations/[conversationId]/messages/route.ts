@@ -4,7 +4,8 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { getBusinessForOwner } from '@/services/businesses'
 import { appendMessage, getConversationTranscript } from '@/services/conversations'
 
-export async function GET(_request: Request, { params }: { params: { conversationId: string } }) {
+export async function GET(_request: Request, props: { params: Promise<{ conversationId: string }> }) {
+  const params = await props.params;
   const supabase = await createClient()
   const {
     data: { user },
@@ -26,7 +27,8 @@ export async function GET(_request: Request, { params }: { params: { conversatio
 // client resolves conversationId -> business_id server-side instead of
 // relying on auth. Persisting turns here is what makes a real transcript
 // (and sentiment analysis, which reads it back after the call ends) possible.
-export async function POST(request: Request, { params }: { params: { conversationId: string } }) {
+export async function POST(request: Request, props: { params: Promise<{ conversationId: string }> }) {
+  const params = await props.params;
   const { role, content } = await request.json()
   if ((role !== 'agent' && role !== 'caller') || typeof content !== 'string' || !content.trim()) {
     return NextResponse.json({ error: 'Invalid message' }, { status: 400 })

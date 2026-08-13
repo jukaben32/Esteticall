@@ -14,7 +14,8 @@ async function requireBusiness() {
   return { supabase, business }
 }
 
-export async function PATCH(request: Request, { params }: { params: { listingId: string } }) {
+export async function PATCH(request: Request, props: { params: Promise<{ listingId: string }> }) {
+  const params = await props.params;
   const ctx = await requireBusiness()
   if ('error' in ctx) return NextResponse.json({ error: ctx.error }, { status: 401 })
 
@@ -47,7 +48,8 @@ async function getListingByIdPlain(supabase: Awaited<ReturnType<typeof createCli
   return data
 }
 
-export async function DELETE(_request: Request, { params }: { params: { listingId: string } }) {
+export async function DELETE(_request: Request, props: { params: Promise<{ listingId: string }> }) {
+  const params = await props.params;
   const ctx = await requireBusiness()
   if ('error' in ctx) return NextResponse.json({ error: ctx.error }, { status: 401 })
 

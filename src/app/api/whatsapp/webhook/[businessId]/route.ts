@@ -27,7 +27,8 @@ function extractInboundText(data: Record<string, unknown>): string | null {
 // connection row exists + is enabled) is the trust boundary. This URL isn't
 // guessable without already knowing a valid business_id, and the worst a
 // forged POST can do is create a spurious WhatsApp conversation.
-export async function POST(request: Request, { params }: { params: { businessId: string } }) {
+export async function POST(request: Request, props: { params: Promise<{ businessId: string }> }) {
+  const params = await props.params;
   const payload = await request.json().catch(() => null)
   if (!payload) return NextResponse.json({ ok: true })
 

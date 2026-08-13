@@ -21,7 +21,8 @@ async function requireBusiness() {
   return { supabase, business }
 }
 
-export async function PATCH(request: Request, { params }: { params: { appointmentId: string } }) {
+export async function PATCH(request: Request, props: { params: Promise<{ appointmentId: string }> }) {
+  const params = await props.params;
   const ctx = await requireBusiness()
   if ('error' in ctx) return NextResponse.json({ error: ctx.error }, { status: 401 })
 

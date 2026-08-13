@@ -9,7 +9,8 @@ import { getOwnedAppointmentForClientUser } from '@/services/clientPortal'
 // StripePaymentsForm), never the platform's STRIPE_SECRET_KEY, which is only
 // ever used for SaaS subscription billing. Each business is its own Stripe
 // merchant here, so this session is created with their key.
-export async function POST(request: Request, { params }: { params: { appointmentId: string } }) {
+export async function POST(request: Request, props: { params: Promise<{ appointmentId: string }> }) {
+  const params = await props.params;
   const supabase = await createClient()
   const {
     data: { user },

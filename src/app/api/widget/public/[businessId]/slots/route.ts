@@ -6,7 +6,8 @@ export const dynamic = 'force-dynamic'
 
 // Public, unauthenticated: powers "Pick a Date" / "Pick a Time" in the Book
 // tab. Same slot-generation logic the AI agent's book_viewing tool uses.
-export async function GET(request: Request, { params }: { params: { businessId: string } }) {
+export async function GET(request: Request, props: { params: Promise<{ businessId: string }> }) {
+  const params = await props.params;
   const supabase = createAdminClient()
   const url = new URL(request.url)
   const fromDateParam = url.searchParams.get('fromDate')

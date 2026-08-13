@@ -15,7 +15,8 @@ async function requireAdmin() {
   return { admin: createAdminClient() }
 }
 
-export async function PATCH(request: Request, { params }: { params: { documentId: string } }) {
+export async function PATCH(request: Request, props: { params: Promise<{ documentId: string }> }) {
+  const params = await props.params;
   const ctx = await requireAdmin()
   if ('error' in ctx) return NextResponse.json({ error: ctx.error }, { status: 403 })
 
@@ -33,7 +34,8 @@ export async function PATCH(request: Request, { params }: { params: { documentId
   return NextResponse.json({ document })
 }
 
-export async function DELETE(_request: Request, { params }: { params: { documentId: string } }) {
+export async function DELETE(_request: Request, props: { params: Promise<{ documentId: string }> }) {
+  const params = await props.params;
   const ctx = await requireAdmin()
   if ('error' in ctx) return NextResponse.json({ error: ctx.error }, { status: 403 })
   await deletePlatformKnowledgeDocument(ctx.admin, params.documentId)

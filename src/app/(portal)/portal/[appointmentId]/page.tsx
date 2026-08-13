@@ -13,7 +13,8 @@ const STATUS_LABEL: Record<string, string> = {
 
 // Public, unauthenticated — the appointment id in the URL is the access
 // token, same as the "View in Client Portal" link in the confirmation email.
-export default async function ClientPortalPage({ params }: { params: { appointmentId: string } }) {
+export default async function ClientPortalPage(props: { params: Promise<{ appointmentId: string }> }) {
+  const params = await props.params;
   const supabase = createAdminClient()
   const appointment = await getAppointmentPublic(supabase, params.appointmentId)
   if (!appointment) notFound()

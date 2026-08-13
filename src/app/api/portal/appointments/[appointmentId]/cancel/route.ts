@@ -6,7 +6,8 @@ import { updateAppointmentStatus } from '@/services/appointments'
 import { sendAppointmentCancelledEmail, sendAppointmentCancelledOwnerEmail } from '@/services/email'
 import { portalCancelSchema } from '@/validations'
 
-export async function PATCH(request: Request, { params }: { params: { appointmentId: string } }) {
+export async function PATCH(request: Request, props: { params: Promise<{ appointmentId: string }> }) {
+  const params = await props.params;
   const supabase = await createClient()
   const {
     data: { user },

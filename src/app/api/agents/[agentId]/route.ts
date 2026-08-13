@@ -20,7 +20,8 @@ async function requireBusiness() {
 // Accepts the same camelCase shape as POST /api/agents (aiAgentSchema) — the
 // UI never has to know ai_agents' actual (snake_case) column names, and both
 // callers (AgentEditModal, AgentStudio) send one consistent wire format.
-export async function PATCH(request: Request, { params }: { params: { agentId: string } }) {
+export async function PATCH(request: Request, props: { params: Promise<{ agentId: string }> }) {
+  const params = await props.params;
   const ctx = await requireBusiness()
   if ('error' in ctx) return NextResponse.json({ error: ctx.error }, { status: 401 })
 
@@ -47,14 +48,16 @@ export async function PATCH(request: Request, { params }: { params: { agentId: s
   }
 }
 
-export async function DELETE(_request: Request, { params }: { params: { agentId: string } }) {
+export async function DELETE(_request: Request, props: { params: Promise<{ agentId: string }> }) {
+  const params = await props.params;
   const ctx = await requireBusiness()
   if ('error' in ctx) return NextResponse.json({ error: ctx.error }, { status: 401 })
   await deleteAgent(ctx.supabase, ctx.business.id, params.agentId)
   return NextResponse.json({ ok: true })
 }
 
-export async function POST(request: Request, { params }: { params: { agentId: string } }) {
+export async function POST(request: Request, props: { params: Promise<{ agentId: string }> }) {
+  const params = await props.params;
   // Reused for the "duplicate agent" action — the only POST this route needs.
   const ctx = await requireBusiness()
   if ('error' in ctx) return NextResponse.json({ error: ctx.error }, { status: 401 })

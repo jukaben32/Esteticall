@@ -6,7 +6,8 @@ import { listServiceIdsForAgent } from '@/services/agentServices'
 import { listServicesForBusiness } from '@/services/businessServices'
 import { AgentStudio } from '@/components/AgentStudio'
 
-export default async function AgentStudioPage({ params }: { params: { agentId: string } }) {
+export default async function AgentStudioPage(props: { params: Promise<{ agentId: string }> }) {
+  const params = await props.params;
   const supabase = await createClient()
   const {
     data: { user },

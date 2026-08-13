@@ -15,7 +15,8 @@ async function requireBusiness() {
   return { supabase, business }
 }
 
-export async function GET(_request: Request, { params }: { params: { ticketId: string } }) {
+export async function GET(_request: Request, props: { params: Promise<{ ticketId: string }> }) {
+  const params = await props.params;
   const ctx = await requireBusiness()
   if ('error' in ctx) return NextResponse.json({ error: ctx.error }, { status: 401 })
 
@@ -26,7 +27,8 @@ export async function GET(_request: Request, { params }: { params: { ticketId: s
   return NextResponse.json({ ticket, messages })
 }
 
-export async function PATCH(request: Request, { params }: { params: { ticketId: string } }) {
+export async function PATCH(request: Request, props: { params: Promise<{ ticketId: string }> }) {
+  const params = await props.params;
   const ctx = await requireBusiness()
   if ('error' in ctx) return NextResponse.json({ error: ctx.error }, { status: 401 })
 

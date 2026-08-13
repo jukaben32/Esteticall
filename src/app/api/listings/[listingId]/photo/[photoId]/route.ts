@@ -15,7 +15,11 @@ async function requireBusiness() {
 }
 
 // Marca esta foto como portada de la propiedad.
-export async function PATCH(_request: Request, { params }: { params: { listingId: string; photoId: string } }) {
+export async function PATCH(
+  _request: Request,
+  props: { params: Promise<{ listingId: string; photoId: string }> }
+) {
+  const params = await props.params;
   const ctx = await requireBusiness()
   if ('error' in ctx) return NextResponse.json({ error: ctx.error }, { status: 401 })
 
@@ -24,7 +28,11 @@ export async function PATCH(_request: Request, { params }: { params: { listingId
   return NextResponse.json({ listing })
 }
 
-export async function DELETE(_request: Request, { params }: { params: { listingId: string; photoId: string } }) {
+export async function DELETE(
+  _request: Request,
+  props: { params: Promise<{ listingId: string; photoId: string }> }
+) {
+  const params = await props.params;
   const ctx = await requireBusiness()
   if ('error' in ctx) return NextResponse.json({ error: ctx.error }, { status: 401 })
 

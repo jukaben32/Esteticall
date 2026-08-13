@@ -3,7 +3,8 @@ import { createClient } from '@/lib/supabase/server'
 import { getBusinessForOwner } from '@/services/businesses'
 import { markNotificationRead } from '@/services/notifications'
 
-export async function PATCH(_request: Request, { params }: { params: { notificationId: string } }) {
+export async function PATCH(_request: Request, props: { params: Promise<{ notificationId: string }> }) {
+  const params = await props.params;
   const supabase = await createClient()
   const {
     data: { user },

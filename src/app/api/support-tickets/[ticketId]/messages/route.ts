@@ -4,7 +4,8 @@ import { getBusinessForOwner } from '@/services/businesses'
 import { replyToTicket } from '@/services/support'
 import { supportMessageSchema } from '@/validations'
 
-export async function POST(request: Request, { params }: { params: { ticketId: string } }) {
+export async function POST(request: Request, props: { params: Promise<{ ticketId: string }> }) {
+  const params = await props.params;
   const supabase = await createClient()
   const {
     data: { user },

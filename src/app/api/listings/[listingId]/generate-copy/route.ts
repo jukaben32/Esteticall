@@ -37,7 +37,8 @@ const LISTING_TYPE_ES: Record<string, string> = {
 // into the form so far (title, type, specs, amenities…) rather than
 // requiring the listing to be saved first, so it's useful while drafting a
 // brand-new listing too.
-export async function POST(request: Request, { params }: { params: { listingId: string } }) {
+export async function POST(request: Request, props: { params: Promise<{ listingId: string }> }) {
+  const params = await props.params;
   const ctx = await requireBusiness()
   if ('error' in ctx) return NextResponse.json({ error: ctx.error }, { status: 401 })
   if (!process.env.OPENAI_API_KEY) {

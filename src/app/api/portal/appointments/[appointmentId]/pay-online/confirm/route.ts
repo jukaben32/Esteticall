@@ -14,7 +14,8 @@ import { sendAppointmentPaidClientEmail, sendAppointmentPaidOwnerEmail } from '@
 // Idempotent: re-hitting this with an already-confirmed session is a no-op,
 // not a duplicate charge or duplicate email — the checkout already happened,
 // this route only records that fact.
-export async function POST(request: Request, { params }: { params: { appointmentId: string } }) {
+export async function POST(request: Request, props: { params: Promise<{ appointmentId: string }> }) {
+  const params = await props.params;
   const supabase = await createClient()
   const {
     data: { user },

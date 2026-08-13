@@ -8,7 +8,8 @@ import { sendAppointmentPaidClientEmail, sendAppointmentPaidOwnerEmail } from '@
 // The client self-declaring "I'll pay in cash at the agency" — same
 // end state (payment_status: 'cash') the business side already sets from
 // /dashboard/viewings, just triggered from the other side of the booking.
-export async function POST(_request: Request, { params }: { params: { appointmentId: string } }) {
+export async function POST(_request: Request, props: { params: Promise<{ appointmentId: string }> }) {
+  const params = await props.params;
   const supabase = await createClient()
   const {
     data: { user },

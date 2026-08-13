@@ -15,7 +15,8 @@ export const dynamic = 'force-dynamic'
 // scoped by businessId in the URL instead of an authenticated session, and
 // fires both confirmation emails (client + business owner) synchronously so
 // the widget's "Viewing Requested" screen only shows once they're queued.
-export async function POST(request: Request, { params }: { params: { businessId: string } }) {
+export async function POST(request: Request, props: { params: Promise<{ businessId: string }> }) {
+  const params = await props.params;
   const supabase = createAdminClient()
   const business = await getBusinessById(supabase, params.businessId)
   if (!business) return NextResponse.json({ error: 'Business not found' }, { status: 404 })

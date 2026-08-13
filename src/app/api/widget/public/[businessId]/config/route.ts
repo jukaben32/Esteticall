@@ -11,7 +11,8 @@ export const dynamic = 'force-dynamic'
 // data-business-id="..." data-agent-id="..."> on any third-party site — public
 // by design, so only non-sensitive config is ever returned here. Each hit
 // counts as one impression for the matched widget.
-export async function GET(request: Request, { params }: { params: { businessId: string } }) {
+export async function GET(request: Request, props: { params: Promise<{ businessId: string }> }) {
+  const params = await props.params;
   const supabase = createAdminClient()
   const agentId = new URL(request.url).searchParams.get('agentId')
   const config = await getPublicWidgetConfig(supabase, params.businessId, agentId)

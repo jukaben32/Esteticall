@@ -20,7 +20,8 @@ const ALLOWED_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp', 'image/g
 // Runs with the service-role client (createAdminClient) because Storage
 // writes need the bucket's write policy, which is service-role-only —
 // ownership is enforced above, before this ever touches storage.
-export async function POST(request: Request, { params }: { params: { listingId: string } }) {
+export async function POST(request: Request, props: { params: Promise<{ listingId: string }> }) {
+  const params = await props.params;
   const ctx = await requireBusiness()
   if ('error' in ctx) return NextResponse.json({ error: ctx.error }, { status: 401 })
 

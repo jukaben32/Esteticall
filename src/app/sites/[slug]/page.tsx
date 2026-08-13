@@ -9,7 +9,8 @@ import { FloatingWidgetLauncher } from '@/components/FloatingWidgetLauncher'
 // Public marketing site for one business, e.g. example.com/sites/the-blockchain-coders
 // or a custom domain mapped to websites.custom_domain. Uses the admin client
 // since visitors have no Supabase session — is_published gates visibility.
-export default async function PublicSitePage({ params }: { params: { slug: string } }) {
+export default async function PublicSitePage(props: { params: Promise<{ slug: string }> }) {
+  const params = await props.params;
   const supabase = createAdminClient()
   const business = await getBusinessBySlug(supabase, params.slug)
   if (!business) notFound()

@@ -16,7 +16,8 @@ async function requireBusiness() {
   return { supabase, business }
 }
 
-export async function PATCH(request: Request, { params }: { params: { documentId: string } }) {
+export async function PATCH(request: Request, props: { params: Promise<{ documentId: string }> }) {
+  const params = await props.params;
   const ctx = await requireBusiness()
   if ('error' in ctx) return NextResponse.json({ error: ctx.error }, { status: 401 })
 
@@ -36,7 +37,8 @@ export async function PATCH(request: Request, { params }: { params: { documentId
   return NextResponse.json({ document })
 }
 
-export async function DELETE(_request: Request, { params }: { params: { documentId: string } }) {
+export async function DELETE(_request: Request, props: { params: Promise<{ documentId: string }> }) {
+  const params = await props.params;
   const ctx = await requireBusiness()
   if ('error' in ctx) return NextResponse.json({ error: ctx.error }, { status: 401 })
   await deleteKnowledgeDocument(ctx.supabase, ctx.business.id, params.documentId)

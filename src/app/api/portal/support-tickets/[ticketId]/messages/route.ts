@@ -4,7 +4,8 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { getOwnedTicketForClientUser, listMessagesForOwnedTicket, addClientMessageToTicket } from '@/services/clientPortal'
 import { supportMessageSchema } from '@/validations'
 
-export async function GET(request: Request, { params }: { params: { ticketId: string } }) {
+export async function GET(request: Request, props: { params: Promise<{ ticketId: string }> }) {
+  const params = await props.params;
   const supabase = await createClient()
   const {
     data: { user },
@@ -19,7 +20,8 @@ export async function GET(request: Request, { params }: { params: { ticketId: st
   return NextResponse.json({ messages })
 }
 
-export async function POST(request: Request, { params }: { params: { ticketId: string } }) {
+export async function POST(request: Request, props: { params: Promise<{ ticketId: string }> }) {
+  const params = await props.params;
   const supabase = await createClient()
   const {
     data: { user },
