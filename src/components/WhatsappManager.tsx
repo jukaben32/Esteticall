@@ -46,11 +46,13 @@ export function WhatsappManager({
   const [notConfigured, setNotConfigured] = useState(false)
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
-  useEffect(() => {
+  const [syncedAgentId, setSyncedAgentId] = useState(connection?.agent_id)
+  if (syncedAgentId !== connection?.agent_id) {
+    setSyncedAgentId(connection?.agent_id)
     if (connection?.agent_id) {
       setAgentId(connection.agent_id)
     }
-  }, [connection?.agent_id])
+  }
 
   useEffect(() => {
     return () => {

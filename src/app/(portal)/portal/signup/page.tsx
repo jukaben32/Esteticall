@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { Eye, EyeOff, UserPlus, Building2, Info } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { portalSignupSchema } from '@/validations'
@@ -131,9 +132,9 @@ export default function PortalSignupPage() {
         </button>
         <p className="text-sm text-center text-[var(--text-3)]">
           Already have an account?{' '}
-          <a href="/portal/login" className="text-[var(--teal-700)] font-medium">
+          <Link href="/portal/login" className="text-[var(--teal-700)] font-medium">
             Sign in
-          </a>
+          </Link>
         </p>
       </form>
     </div>

@@ -95,6 +95,7 @@ function ConversationDetails({ conv, onClose }: { conv: ConversationWithClient; 
 
   useEffect(() => {
     let cancelled = false
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- setting loading state before an async fetch, not a render-sync anti-pattern
     setLoading(true)
     setLoadError(false)
     fetch(`/api/conversations/${conv.id}/messages`)

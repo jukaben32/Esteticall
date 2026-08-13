@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import {
@@ -76,9 +76,11 @@ export function DashboardSidebar({
   const [mobileOpen, setMobileOpen] = useState(false)
 
   // Close the mobile drawer automatically whenever navigation happens.
-  useEffect(() => {
+  const [syncedPathname, setSyncedPathname] = useState(pathname)
+  if (syncedPathname !== pathname) {
+    setSyncedPathname(pathname)
     setMobileOpen(false)
-  }, [pathname])
+  }
 
   async function handleSignOut() {
     const supabase = createClient()

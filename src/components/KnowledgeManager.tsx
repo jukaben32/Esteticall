@@ -18,7 +18,7 @@ import {
 import type { KnowledgeDocument } from '@/types'
 import { FAQ_CATEGORIES, FAQ_TEMPLATES, type FaqTemplate } from '@/data/faqTemplates'
 
-type ToastMsg = { id: number; message: string }
+type ToastMsg = { id: string; message: string }
 
 const CATEGORY_BADGE: Record<string, string> = {
   'Visitas a propiedades': 'bg-[var(--teal-50)] text-[var(--teal-700)]',
@@ -139,7 +139,7 @@ export function KnowledgeManager({ initialDocuments }: { initialDocuments: Knowl
   const [toasts, setToasts] = useState<ToastMsg[]>([])
 
   function pushToast(message: string) {
-    const id = Date.now() + Math.random()
+    const id = crypto.randomUUID()
     setToasts((prev) => [...prev, { id, message }])
     setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), 2500)
   }

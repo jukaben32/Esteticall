@@ -30,11 +30,19 @@ export function PortalSupportPanel({
   const [newBusinessId, setNewBusinessId] = useState(businesses[0]?.id ?? '')
   const [error, setError] = useState<string | null>(null)
 
+  const [hadSelectedId, setHadSelectedId] = useState(selectedId != null)
+  if (!selectedId && hadSelectedId) {
+    setHadSelectedId(false)
+    setMessages(null)
+  } else if (selectedId && !hadSelectedId) {
+    setHadSelectedId(true)
+  }
+
   useEffect(() => {
     if (!selectedId) {
-      setMessages(null)
       return
     }
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- clearing state before an async fetch, not a render-sync anti-pattern
     setMessages(null)
     fetch(`/api/portal/support-tickets/${selectedId}/messages`)
       .then((res) => res.json())

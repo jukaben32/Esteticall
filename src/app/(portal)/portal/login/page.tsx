@@ -2,6 +2,7 @@
 
 import { Suspense, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import Link from 'next/link'
 import { Eye, EyeOff, LogIn, Building2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { loginSchema } from '@/validations'
@@ -101,9 +102,9 @@ function PortalLoginForm() {
         </button>
         <p className="text-sm text-center text-[var(--text-3)]">
           ¿No tienes cuenta?{' '}
-          <a href="/portal/signup" className="text-[var(--teal-700)] font-medium">
+          <Link href="/portal/signup" className="text-[var(--teal-700)] font-medium">
             Crea una
-          </a>
+          </Link>
         </p>
       </form>
     </div>

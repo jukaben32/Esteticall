@@ -83,7 +83,7 @@ export function PortalAppointmentsList({ initialAppointments }: { initialAppoint
     setAppointments((prev) => prev.map((a) => (a.id === appt.id ? { ...a, ...data.appointment } : a)))
   }
 
-  const now = Date.now()
+  const [now] = useState(() => Date.now())
   const upcoming = appointments.filter((a) => a.status !== 'cancelled' && new Date(a.scheduled_at).getTime() >= now)
   const past = appointments.filter((a) => a.status === 'cancelled' || new Date(a.scheduled_at).getTime() < now)
 
@@ -120,6 +120,7 @@ export function PortalAppointmentsList({ initialAppointments }: { initialAppoint
               onCancel={() => handleCancel(appt)}
               onPay={() => setPaying(appt)}
               busy={cancellingId === appt.id}
+              now={now}
             />
           ))}
         </section>
@@ -138,6 +139,7 @@ export function PortalAppointmentsList({ initialAppointments }: { initialAppoint
               onCancel={() => handleCancel(appt)}
               onPay={() => setPaying(appt)}
               busy={cancellingId === appt.id}
+              now={now}
             />
           ))}
         </section>
@@ -176,6 +178,7 @@ function AppointmentCard({
   onCancel,
   onPay,
   busy,
+  now,
 }: {
   appt: PortalAppointment
   expanded: boolean
@@ -184,10 +187,11 @@ function AppointmentCard({
   onCancel: () => void
   onPay: () => void
   busy: boolean
+  now: number
 }) {
   const { month, day } = dateBadgeParts(appt.scheduled_at)
   const title = appt.service?.name ?? appt.listing?.title ?? 'Cita'
-  const canAct = appt.status !== 'cancelled' && appt.status !== 'completed' && new Date(appt.scheduled_at).getTime() >= Date.now()
+  const canAct = appt.status !== 'cancelled' && appt.status !== 'completed' && new Date(appt.scheduled_at).getTime() >= now
 
   return (
     <div className="card-raised overflow-hidden">

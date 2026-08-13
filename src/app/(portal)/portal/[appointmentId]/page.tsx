@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation'
+import Link from 'next/link'
 import { CheckCircle2, Calendar, Phone, Mail, MapPin, Wallet } from 'lucide-react'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getAppointmentPublic } from '@/services/appointments'
@@ -105,9 +106,9 @@ export default async function ClientPortalPage(props: { params: Promise<{ appoin
             If you need to reschedule or cancel, please contact us at least 24 hours in advance — or manage it
             yourself from your Client Portal account.
           </p>
-          <a href="/portal/signup" className="btn-primary w-full justify-center">
+          <Link href="/portal/signup" className="btn-primary w-full justify-center">
             Create Client Account
-          </a>
+          </Link>
         </div>
       </div>
     </main>

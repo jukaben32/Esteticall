@@ -17,6 +17,7 @@ export function PlanBilling({ subscription }: { subscription: BusinessSubscripti
       body: JSON.stringify({ plan }),
     })
     const { url } = await res.json()
+    // eslint-disable-next-line react-hooks/immutability -- redirecting to Stripe Checkout inside a click handler, not during render
     if (url) window.location.href = url
     else setLoadingPlan(null)
   }

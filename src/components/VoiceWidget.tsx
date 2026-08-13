@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import { useRealtimeVoice } from '@/hooks/useRealtimeVoice'
 import { useVoiceStore } from '@/store/voice'
 
@@ -50,9 +51,9 @@ export function VoiceWidget({ businessId }: { businessId: string }) {
     return (
       <div className="card-surface p-4 text-sm">
         Todavía no tienes ningún agente IA activo. Crea uno en{' '}
-        <a href="/dashboard/ai-agents" className="underline text-[var(--teal-700)]">
+        <Link href="/dashboard/ai-agents" className="underline text-[var(--teal-700)]">
           Agentes IA
-        </a>{' '}
+        </Link>{' '}
         y ponlo en estado &quot;Activo&quot; para poder probar la llamada.
       </div>
     )

@@ -93,8 +93,10 @@ export default async function OverviewPage() {
   const callbacksRequested = conversations.filter((c) => c.outcome === 'escalated').length
 
   const days: string[] = []
+  // eslint-disable-next-line react-hooks/purity -- Server Component, renders once per request; not subject to client re-render instability
+  const referenceNow = Date.now()
   for (let i = DAYS_BACK - 1; i >= 0; i--) {
-    days.push(dayKey(new Date(Date.now() - i * 86_400_000).toISOString()))
+    days.push(dayKey(new Date(referenceNow - i * 86_400_000).toISOString()))
   }
   const callsByDay = new Map<string, number>()
   const viewingsByDay = new Map<string, number>()
