@@ -1,9 +1,12 @@
-import { PhoneCall, Clock, CalendarCheck, TrendingUp, CalendarDays, PhoneForwarded } from 'lucide-react'
+import { PhoneCall, Clock, CalendarCheck, TrendingUp, CalendarDays, PhoneForwarded, DollarSign } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { getBusinessForOwner } from '@/services/businesses'
 import { listConversationsForBusiness } from '@/services/conversations'
 import { listAppointmentsForBusiness } from '@/services/appointments'
+import { getAiSpendUsd } from '@/services/aiUsage'
 import { AnalyticsCharts, type DailyPoint, type OutcomePoint } from '@/components/AnalyticsCharts'
+
+const USD_FORMAT = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2, maximumFractionDigits: 2 })
 
 const DAYS_BACK = 14
 
@@ -34,9 +37,10 @@ export default async function AnalyticsPage() {
   const business = await getBusinessForOwner(supabase, user!.id)
   if (!business) return null
 
-  const [conversations, appointments] = await Promise.all([
+  const [conversations, appointments, aiSpendUsd] = await Promise.all([
     listConversationsForBusiness(supabase, business.id),
     listAppointmentsForBusiness(supabase, business.id),
+    getAiSpendUsd(supabase, business.id),
   ])
 
   const days: string[] = []
@@ -108,11 +112,12 @@ export default async function AnalyticsPage() {
         <h1 className="font-display font-semibold text-2xl text-[var(--text-1)]">Analítica</h1>
         <p className="text-sm text-[var(--text-3)] mt-1">Rendimiento de tus agentes IA, últimos 14 días</p>
       </div>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-4">
         <StatCard icon={PhoneCall} label="Conversaciones totales" value={conversations.length} />
         <StatCard icon={Clock} label="Duración promedio" value={`${avgMinutes}:${avgSeconds.toString().padStart(2, '0')}`} />
         <StatCard icon={CalendarCheck} label="Citas agendadas" value={appointments.length} />
         <StatCard icon={TrendingUp} label="Tasa de conversión" value={`${conversionRate}%`} />
+        <StatCard icon={DollarSign} label="Gasto en API de IA" value={USD_FORMAT.format(aiSpendUsd)} />
       </div>
       <AnalyticsCharts daily={daily} outcomes={outcomes} />
 

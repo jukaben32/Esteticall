@@ -234,6 +234,25 @@ export interface Database {
         Update: Partial<Database['public']['Tables']['conversation_messages']['Row']>
         Relationships: []
       }
+      ai_usage_events: {
+        Row: {
+          id: string
+          business_id: string
+          conversation_id: string | null
+          kind: 'chat_completion' | 'realtime_voice'
+          input_tokens: number | null
+          output_tokens: number | null
+          duration_seconds: number | null
+          cost_usd: number
+          created_at: string
+        }
+        Insert: Partial<Database['public']['Tables']['ai_usage_events']['Row']> & {
+          business_id: string
+          kind: 'chat_completion' | 'realtime_voice'
+        }
+        Update: Partial<Database['public']['Tables']['ai_usage_events']['Row']>
+        Relationships: []
+      }
       appointments: {
         Row: {
           id: string
@@ -413,6 +432,7 @@ export interface Database {
           social_tiktok: string | null
           social_linkedin: string | null
           social_pinterest: string | null
+          social_twitter: string | null
           created_at: string
           updated_at: string
         }

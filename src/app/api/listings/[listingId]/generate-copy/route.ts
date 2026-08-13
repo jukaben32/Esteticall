@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getBusinessForOwner } from '@/services/businesses'
+import { chatCompletionCostUsd, logAiUsage } from '@/services/aiUsage'
 
 async function requireBusiness() {
   const supabase = await createClient()
@@ -105,6 +106,17 @@ export async function POST(request: Request, props: { params: Promise<{ listingI
 
   const data = await res.json()
   const description = data.choices?.[0]?.message?.content?.trim()
+
+  const inputTokens = data?.usage?.prompt_tokens ?? 0
+  const outputTokens = data?.usage?.completion_tokens ?? 0
+  await logAiUsage(admin, {
+    businessId: ctx.business.id,
+    kind: 'chat_completion',
+    inputTokens,
+    outputTokens,
+    costUsd: chatCompletionCostUsd(inputTokens, outputTokens, 'gpt-4o-mini'),
+  })
+
   if (!description) return NextResponse.json({ error: 'No se pudo generar la descripción' }, { status: 502 })
 
   return NextResponse.json({ description })

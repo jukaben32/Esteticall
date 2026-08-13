@@ -59,6 +59,7 @@ type SocialFormKey =
   | 'socialTiktok'
   | 'socialLinkedin'
   | 'socialPinterest'
+  | 'socialTwitter'
 
 const SOCIAL_FORM_KEYS: Record<string, SocialFormKey> = {
   social_youtube: 'socialYoutube',
@@ -67,6 +68,7 @@ const SOCIAL_FORM_KEYS: Record<string, SocialFormKey> = {
   social_tiktok: 'socialTiktok',
   social_linkedin: 'socialLinkedin',
   social_pinterest: 'socialPinterest',
+  social_twitter: 'socialTwitter',
 }
 
 const FONTS = [
@@ -133,6 +135,7 @@ interface FormState {
   socialTiktok: string
   socialLinkedin: string
   socialPinterest: string
+  socialTwitter: string
 }
 
 function toForm(content: WebsiteContent): FormState {
@@ -174,6 +177,7 @@ function toForm(content: WebsiteContent): FormState {
     socialTiktok: w.social_tiktok ?? '',
     socialLinkedin: w.social_linkedin ?? '',
     socialPinterest: w.social_pinterest ?? '',
+    socialTwitter: w.social_twitter ?? '',
   }
 }
 
@@ -421,6 +425,7 @@ export function WebsiteEditor({
         social_tiktok: form.socialTiktok || null,
         social_linkedin: form.socialLinkedin || null,
         social_pinterest: form.socialPinterest || null,
+        social_twitter: form.socialTwitter || null,
       },
       services: websiteServices.map((s, i) => ({
         id: s.id ?? `tmp-${i}`,
@@ -527,6 +532,7 @@ export function WebsiteEditor({
         socialTiktok: form.socialTiktok,
         socialLinkedin: form.socialLinkedin,
         socialPinterest: form.socialPinterest,
+        socialTwitter: form.socialTwitter,
       },
       services: websiteServices.map((s, i) => ({
         ...s,

@@ -1,4 +1,9 @@
+import type { SupabaseClient } from '@supabase/supabase-js'
+import type { Database } from '@/types/database'
 import type { ConversationMessage } from '@/types'
+import { chatCompletionCostUsd, logAiUsage } from './aiUsage'
+
+type DB = SupabaseClient<Database>
 
 export type Sentiment = 'positive' | 'neutral' | 'negative'
 
@@ -8,7 +13,10 @@ export type Sentiment = 'positive' | 'neutral' | 'negative'
 // this only needs to run once against the finished transcript. Returns null
 // (not a guess) whenever there's nothing to classify or the call fails, so
 // the Call Log shows "—" instead of a fabricated sentiment.
-export async function analyzeSentiment(messages: ConversationMessage[]): Promise<Sentiment | null> {
+export async function analyzeSentiment(
+  messages: ConversationMessage[],
+  usageCtx?: { supabase: DB; businessId: string; conversationId: string }
+): Promise<Sentiment | null> {
   const transcript = messages
     .filter((m) => m.role !== 'system')
     .map((m) => `${m.role === 'agent' ? 'Agente' : 'Cliente'}: ${m.content}`)
@@ -45,6 +53,20 @@ export async function analyzeSentiment(messages: ConversationMessage[]): Promise
     if (!res.ok) return null
 
     const data = await res.json()
+
+    if (usageCtx) {
+      const inputTokens = data?.usage?.prompt_tokens ?? 0
+      const outputTokens = data?.usage?.completion_tokens ?? 0
+      await logAiUsage(usageCtx.supabase, {
+        businessId: usageCtx.businessId,
+        conversationId: usageCtx.conversationId,
+        kind: 'chat_completion',
+        inputTokens,
+        outputTokens,
+        costUsd: chatCompletionCostUsd(inputTokens, outputTokens, 'gpt-4o-mini'),
+      })
+    }
+
     const parsed = JSON.parse(data.choices?.[0]?.message?.content ?? '{}')
     if (parsed.sentiment === 'positive' || parsed.sentiment === 'neutral' || parsed.sentiment === 'negative') {
       return parsed.sentiment

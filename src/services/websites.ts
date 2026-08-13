@@ -153,6 +153,7 @@ export async function upsertWebsite(supabase: DB, businessId: string, input: Web
         social_tiktok: input.socialTiktok || null,
         social_linkedin: input.socialLinkedin || null,
         social_pinterest: input.socialPinterest || null,
+        social_twitter: input.socialTwitter || null,
       },
       { onConflict: 'business_id' }
     )

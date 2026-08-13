@@ -155,6 +155,7 @@ export const websiteSchema = z.object({
   socialTiktok: z.string().optional(),
   socialLinkedin: z.string().optional(),
   socialPinterest: z.string().optional(),
+  socialTwitter: z.string().optional(),
 })
 export type WebsiteInput = z.infer<typeof websiteSchema>
 

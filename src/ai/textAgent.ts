@@ -2,6 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '@/types/database'
 import { REALTIME_TOOLS } from './tools'
 import { executeAiTool } from './executeTool'
+import { chatCompletionCostUsd, logAiUsage } from '@/services/aiUsage'
 
 type DB = SupabaseClient<Database>
 
@@ -43,6 +44,21 @@ export async function runWhatsappAgentTurn(
 ): Promise<string> {
   const messages: ChatMessage[] = [{ role: 'system', content: ctx.systemPrompt }, ...ctx.history]
 
+  let totalInputTokens = 0
+  let totalOutputTokens = 0
+
+  async function flushUsage() {
+    if (totalInputTokens === 0 && totalOutputTokens === 0) return
+    await logAiUsage(supabase, {
+      businessId: ctx.businessId,
+      conversationId: ctx.conversationId,
+      kind: 'chat_completion',
+      inputTokens: totalInputTokens,
+      outputTokens: totalOutputTokens,
+      costUsd: chatCompletionCostUsd(totalInputTokens, totalOutputTokens, CHAT_MODEL),
+    })
+  }
+
   for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
     const res = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -58,14 +74,21 @@ export async function runWhatsappAgentTurn(
     })
     if (!res.ok) {
       const detail = await res.text()
+      await flushUsage()
       throw new Error(`OpenAI Chat Completions error: ${detail}`)
     }
 
     const data = await res.json()
+    totalInputTokens += data?.usage?.prompt_tokens ?? 0
+    totalOutputTokens += data?.usage?.completion_tokens ?? 0
     const message = data.choices?.[0]?.message
-    if (!message) throw new Error('OpenAI Chat Completions returned no message')
+    if (!message) {
+      await flushUsage()
+      throw new Error('OpenAI Chat Completions returned no message')
+    }
 
     if (!message.tool_calls?.length) {
+      await flushUsage()
       return message.content ?? ''
     }
 
@@ -96,5 +119,6 @@ export async function runWhatsappAgentTurn(
     }
   }
 
+  await flushUsage()
   return 'Perdón, tuve un problema procesando tu mensaje — en breve te contacta alguien del equipo.'
 }
