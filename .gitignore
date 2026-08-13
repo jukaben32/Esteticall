@@ -30,6 +30,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 
+# auto-generados por `next dev` (Next.js 16 agentRules)
+/AGENTS.md
+/CLAUDE.md
+
 # environment variables — never commit secrets
 
 
