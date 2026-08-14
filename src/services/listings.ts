@@ -63,38 +63,27 @@ export async function getListingById(
   return mapListingRow(data as unknown as ListingJoinRow)
 }
 
-// Listings assigned (via agent_listings) to a *different* agent than the one
-// asking. A listing with no assignment at all is never excluded — agencies
-// that never bother assigning anyone keep the old "every live agent can
-// discuss everything" behavior, so this can't silently blind an existing
-// agent to listings nobody ever restricted.
-export async function getListingIdsExcludedForAgent(
-  supabase: DB,
-  businessId: string,
-  agentId: string
-): Promise<Set<string>> {
+// Listings assigned (via agent_listings) to this specific agent — its
+// "specialty portfolio." This is a RANKING signal, never an access filter:
+// a lead who names a specific property must always get a real answer, or
+// the AI agent is actively costing the business the sale it exists to
+// capture. buildSystemPrompt uses this set only to decide what an agent
+// leads with when a caller is browsing with no specific ask yet.
+export async function getAssignedListingIds(supabase: DB, businessId: string, agentId: string): Promise<Set<string>> {
   const { data, error } = await supabase
     .from('agent_listings')
-    .select('listing_id, agent_id')
+    .select('listing_id')
     .eq('business_id', businessId)
+    .eq('agent_id', agentId)
   if (error) throw error
-
-  const assignedAgentsByListing = new Map<string, Set<string>>()
-  for (const row of data ?? []) {
-    if (!assignedAgentsByListing.has(row.listing_id)) assignedAgentsByListing.set(row.listing_id, new Set())
-    assignedAgentsByListing.get(row.listing_id)!.add(row.agent_id)
-  }
-
-  const excluded = new Set<string>()
-  for (const [listingId, agentIds] of assignedAgentsByListing) {
-    if (!agentIds.has(agentId)) excluded.add(listingId)
-  }
-  return excluded
+  return new Set((data ?? []).map((row) => row.listing_id))
 }
 
-// Listings the AI agent is allowed to discuss on a call — feeds the Realtime
-// system prompt and the `search_listings` tool the model can invoke. Pass
-// the calling agent's id to also apply the per-listing assignment above.
+// Listings the AI agent can discuss — feeds the Realtime system prompt and
+// the `search_listings` tool. Every visible listing is always included;
+// passing agentId only moves that agent's assigned listings to the front,
+// so buildSystemPrompt can present them as its specialty without ever
+// hiding the rest of the business's inventory.
 export async function listAiVisibleListings(
   supabase: DB,
   businessId: string,
@@ -110,8 +99,9 @@ export async function listAiVisibleListings(
   const listings = data ?? []
   if (!agentId) return listings
 
-  const excluded = await getListingIdsExcludedForAgent(supabase, businessId, agentId)
-  return excluded.size ? listings.filter((listing) => !excluded.has(listing.id)) : listings
+  const assigned = await getAssignedListingIds(supabase, businessId, agentId)
+  if (!assigned.size) return listings
+  return [...listings].sort((a, b) => Number(assigned.has(b.id)) - Number(assigned.has(a.id)))
 }
 
 export async function createListing(

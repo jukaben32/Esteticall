@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { startConversation } from '@/services/conversations'
-import { listAiVisibleListings } from '@/services/listings'
+import { listAiVisibleListings, getAssignedListingIds } from '@/services/listings'
 import { listKnowledgeDocuments, listPlatformKnowledgeDocuments } from '@/services/knowledge'
 import { buildSystemPrompt, REALTIME_TOOLS } from '@/ai/tools'
 import { OPENAI_REALTIME_MODEL } from '@/constants'
@@ -64,8 +64,9 @@ export async function POST(request: Request, props: { params: Promise<{ agentId:
     .single()
   if (businessError) return NextResponse.json({ error: businessError.message }, { status: 500 })
 
-  const [listings, knowledgeDocs, platformKnowledgeDocs] = await Promise.all([
+  const [listings, assignedListingIds, knowledgeDocs, platformKnowledgeDocs] = await Promise.all([
     listAiVisibleListings(supabase, business.id, agent.id),
+    getAssignedListingIds(supabase, business.id, agent.id),
     listKnowledgeDocuments(supabase, business.id),
     listPlatformKnowledgeDocuments(supabase),
   ])
@@ -75,7 +76,7 @@ export async function POST(request: Request, props: { params: Promise<{ agentId:
     channel: 'widget_voice',
   })
 
-  const systemPrompt = buildSystemPrompt({ business, agent, listings, knowledgeDocs, platformKnowledgeDocs })
+  const systemPrompt = buildSystemPrompt({ business, agent, listings, assignedListingIds, knowledgeDocs, platformKnowledgeDocs })
   const turnDetection = {
     type: 'server_vad',
     threshold: Number(agent.sensitivity) || 0.5,

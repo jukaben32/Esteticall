@@ -3,7 +3,7 @@ import type { Database } from '@/types/database'
 import { getAvailableSlots, createAppointment } from '@/services/appointments'
 import { findOrCreateClientByPhone } from '@/services/clients'
 import { getSubscription } from '@/services/businesses'
-import { getListingIdsExcludedForAgent } from '@/services/listings'
+import { getAssignedListingIds } from '@/services/listings'
 import { appendMessage, recordConversationOutcome } from '@/services/conversations'
 import { sendAppointmentConfirmationEmail, sendNewAppointmentOwnerEmail } from '@/services/email'
 import type { Client, PlanId } from '@/types'
@@ -40,14 +40,16 @@ export async function executeAiTool(
       if (args.city) query = query.ilike('city', `%${args.city}%`)
       if (args.confoturOnly) query = query.eq('confotur_eligible', true)
 
-      // Same per-agent restriction as listAiVisibleListings. Fetch a larger
-      // candidate batch when a filter is going to be applied afterward, so
-      // excluding some rows doesn't leave fewer than 5 results when more
-      // would actually qualify.
-      const excluded = agentId ? await getListingIdsExcludedForAgent(supabase, businessId, agentId) : null
-      const { data, error: searchError } = await query.limit(excluded?.size ? 30 : 5)
+      // A specialty portfolio only ranks matches — it never removes one.
+      // Fetch a little headroom so, when the agent has a portfolio, its own
+      // listings can be sorted first among equally valid results, without
+      // ever dropping a real match the caller asked for.
+      const assigned = agentId ? await getAssignedListingIds(supabase, businessId, agentId) : null
+      const { data, error: searchError } = await query.limit(assigned?.size ? 20 : 5)
       if (searchError) throw searchError
-      const results = (excluded?.size ? (data ?? []).filter((l) => !excluded.has(l.id)) : (data ?? [])).slice(0, 5)
+      const results = assigned?.size
+        ? [...(data ?? [])].sort((a, b) => Number(assigned.has(b.id)) - Number(assigned.has(a.id))).slice(0, 5)
+        : (data ?? [])
 
       await appendMessage(
         supabase,
@@ -60,6 +62,9 @@ export async function executeAiTool(
     }
 
     case 'get_listing_details': {
+      // A caller naming a specific listing_code is a specific, real
+      // inquiry — always answer it in full, regardless of which agent's
+      // specialty portfolio it falls under. See buildSystemPrompt for why.
       const { data, error: listingError } = await supabase
         .from('listings')
         .select('*')
@@ -67,26 +72,18 @@ export async function executeAiTool(
         .eq('listing_code', args.listingCode as string)
         .maybeSingle()
       if (listingError) throw listingError
-      if (data && agentId) {
-        const excluded = await getListingIdsExcludedForAgent(supabase, businessId, agentId)
-        if (excluded.has(data.id)) return { listing: null }
-      }
       return { listing: data ?? null }
     }
 
     case 'calculate_roi': {
       const { data: listing, error: listingError } = await supabase
         .from('listings')
-        .select('id, listing_code, title, listing_type, price, rental_period')
+        .select('listing_code, title, listing_type, price, rental_period')
         .eq('business_id', businessId)
         .eq('listing_code', args.listingCode as string)
         .maybeSingle()
       if (listingError) throw listingError
       if (!listing) return { error: 'Listing not found' }
-      if (agentId) {
-        const excluded = await getListingIdsExcludedForAgent(supabase, businessId, agentId)
-        if (excluded.has(listing.id)) return { error: 'Listing not found' }
-      }
       if (listing.listing_type !== 'vacation_rental') {
         return { error: 'ROI can only be calculated for vacation_rental listings' }
       }

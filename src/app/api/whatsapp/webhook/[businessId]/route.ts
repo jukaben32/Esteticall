@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { findOrCreateClientByPhone } from '@/services/clients'
 import { startConversation, appendMessage } from '@/services/conversations'
-import { listAiVisibleListings } from '@/services/listings'
+import { listAiVisibleListings, getAssignedListingIds } from '@/services/listings'
 import { listKnowledgeDocuments, listPlatformKnowledgeDocuments } from '@/services/knowledge'
 import { getWhatsappConnection, sendWhatsappMessage } from '@/services/whatsapp'
 import { buildSystemPrompt } from '@/ai/tools'
@@ -98,8 +98,9 @@ export async function POST(request: Request, props: { params: Promise<{ business
 
   await appendMessage(supabase, businessId, conversation.id, 'caller', text)
 
-  const [listings, knowledgeDocs, platformKnowledgeDocs, historyRes] = await Promise.all([
+  const [listings, assignedListingIds, knowledgeDocs, platformKnowledgeDocs, historyRes] = await Promise.all([
     listAiVisibleListings(supabase, businessId, agent.id),
+    getAssignedListingIds(supabase, businessId, agent.id),
     listKnowledgeDocuments(supabase, businessId),
     listPlatformKnowledgeDocuments(supabase),
     supabase
@@ -113,6 +114,7 @@ export async function POST(request: Request, props: { params: Promise<{ business
     business,
     agent,
     listings,
+    assignedListingIds,
     knowledgeDocs,
     platformKnowledgeDocs,
     channel: 'text',

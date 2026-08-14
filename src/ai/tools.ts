@@ -123,11 +123,20 @@ export function buildSystemPrompt(opts: {
   business: Business
   agent: AiAgent
   listings: Listing[]
+  assignedListingIds?: Set<string>
   knowledgeDocs?: KnowledgeDocument[]
   platformKnowledgeDocs?: PlatformKnowledgeDocument[]
   channel?: 'voice' | 'text'
 }): string {
-  const { business, agent, listings, knowledgeDocs = [], platformKnowledgeDocs = [], channel = 'voice' } = opts
+  const {
+    business,
+    agent,
+    listings,
+    assignedListingIds,
+    knowledgeDocs = [],
+    platformKnowledgeDocs = [],
+    channel = 'voice',
+  } = opts
   const knowledgeText = formatKnowledgeForPrompt(knowledgeDocs)
   const platformKnowledgeText = formatKnowledgeForPrompt(platformKnowledgeDocs)
   const mediumInstruction =
@@ -136,20 +145,46 @@ export function buildSystemPrompt(opts: {
       : 'Keep responses short — this is a WhatsApp chat. Use plain text (no markdown), short paragraphs, ' +
         'and at most one relevant emoji per message, only when it fits naturally.'
 
-  const listingSummaries = listings.length
-    ? listings
-        .map((l) => {
-          const specs = isLandListing(l) ? `${l.area_sqft}sqft lot` : `${l.bedrooms}bd/${l.bathrooms}ba, ${l.area_sqft}sqft`
-          return (
-            `- ${l.listing_code}: ${l.title} — ${l.property_type} (${l.listing_type}), ${specs}, ` +
-            `${formatListingPrice(l)}${listingPriceSuffix(l)}, ` +
-            `${l.city ?? l.area_name ?? 'location on file'}` +
-            (l.confotur_eligible ? ' · CONFOTUR-eligible (Ley 158-01 tax exemption)' : '') +
-            (l.delivery_date ? ` · delivery ${formatDeliveryDate(l.delivery_date)}` : '')
-          )
-        })
-        .join('\n')
-    : 'No listings are currently marked visible to AI agents.'
+  function summarizeListing(l: Listing): string {
+    const specs = isLandListing(l) ? `${l.area_sqft}sqft lot` : `${l.bedrooms}bd/${l.bathrooms}ba, ${l.area_sqft}sqft`
+    return (
+      `- ${l.listing_code}: ${l.title} — ${l.property_type} (${l.listing_type}), ${specs}, ` +
+      `${formatListingPrice(l)}${listingPriceSuffix(l)}, ` +
+      `${l.city ?? l.area_name ?? 'location on file'}` +
+      (l.confotur_eligible ? ' · CONFOTUR-eligible (Ley 158-01 tax exemption)' : '') +
+      (l.delivery_date ? ` · delivery ${formatDeliveryDate(l.delivery_date)}` : '')
+    )
+  }
+
+  // assignedListingIds is a ranking hint, never an access filter — every
+  // listing here is something this agent CAN and MUST discuss if asked.
+  // Splitting into "your specialty" vs "also available" lets the agent lead
+  // with its portfolio while browsing, without ever having a real inquiry
+  // hit a listing it's not allowed to acknowledge.
+  const hasSplit = !!assignedListingIds?.size && listings.some((l) => assignedListingIds.has(l.id))
+  const primary = hasSplit ? listings.filter((l) => assignedListingIds!.has(l.id)) : listings
+  const secondary = hasSplit ? listings.filter((l) => !assignedListingIds!.has(l.id)) : []
+
+  const listingSummaries = !listings.length
+    ? 'No listings are currently marked visible to AI agents.'
+    : hasSplit
+      ? [
+          'Your specialty listings — lead with these when the caller is browsing without a specific property in mind:',
+          primary.map(summarizeListing).join('\n'),
+          secondary.length
+            ? [
+                '',
+                "Other listings at this business — not your specialty, but still real inventory. If the caller asks about",
+                'one of these by name, code, or description, answer fully and help them book it exactly like your own —',
+                'never say you don\'t have it or don\'t know about it. You may mention a colleague specializes in it, but',
+                'only after helping, never instead of helping:',
+                secondary.map(summarizeListing).join('\n'),
+              ].join('\n')
+            : '',
+        ]
+          .filter(Boolean)
+          .join('\n')
+      : listings.map(summarizeListing).join('\n')
 
   // Santo Domingo is a fixed UTC-4 year-round (no DST since 1974), so this
   // offset trick reliably reads "today" there regardless of server timezone.
@@ -174,7 +209,10 @@ export function buildSystemPrompt(opts: {
     'If the caller asks about return on investment, rental income, or cap rate for a vacation_rental listing, call',
     'calculate_roi instead of doing that math yourself — state the occupancy/expenses assumptions it returns so the',
     "caller knows those are estimates, not the property's actual performance.",
-    'Never invent listing details, prices, or availability that the tools did not return.',
+    'Never invent listing details, prices, or availability that the tools did not return. And never refuse to discuss',
+    'or claim ignorance of a property that is actually listed above, in either section — a caller with a specific',
+    'question about a real listing is a sale in progress, and losing it to a scripted "I don\'t have that information"',
+    'is the one mistake this business cannot afford.',
     platformKnowledgeText
       ? [
           '',
