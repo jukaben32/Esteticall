@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { getBusinessForOwner, updateBusiness, getBusinessBySlug } from '@/services/businesses'
+import { getBusinessForOwner, updateBusiness, getBusinessBySlug, getSubscription } from '@/services/businesses'
 import { getWebsiteContentForBusiness, saveWebsiteContent } from '@/services/websites'
 import { saveWebsiteContentSchema, websiteSiteUrlSchema } from '@/validations'
 
@@ -49,6 +49,19 @@ export async function PUT(request: Request) {
       return NextResponse.json({ error: 'That site URL is already taken' }, { status: 409 })
     }
     await updateBusiness(ctx.supabase, ctx.business.id, { slug: slugCheck.data.slug })
+  }
+
+  // The client only redirects to Stripe Checkout when it locally believes
+  // the add-on isn't enabled — that's a UX nicety, not enforcement. Re-check
+  // server-side so a direct PUT can't publish for free.
+  if (parsed.data.website.isPublished) {
+    const subscription = await getSubscription(ctx.supabase, ctx.business.id)
+    if (!subscription?.website_builder_enabled) {
+      return NextResponse.json(
+        { error: 'The Website Builder add-on is required to publish your site — upgrade first.' },
+        { status: 402 }
+      )
+    }
   }
 
   const content = await saveWebsiteContent(ctx.supabase, ctx.business.id, parsed.data)
