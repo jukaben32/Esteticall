@@ -2,7 +2,13 @@ import Stripe from 'stripe'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '@/types/database'
 import type { PlanId, BusinessSubscription } from '@/types'
-import { PLAN_LIMITS, WEBSITE_BUILDER_PRICE_USD, WEBSITE_BUILDER_FEATURES } from '@/constants'
+import {
+  PLAN_LIMITS,
+  WEBSITE_BUILDER_PRICE_USD,
+  WEBSITE_BUILDER_FEATURES,
+  VOICE_RECHARGE_BLOCK_MINUTES,
+  VOICE_RECHARGE_PRICE_USD,
+} from '@/constants'
 
 type DB = SupabaseClient<Database>
 
@@ -19,7 +25,8 @@ async function findOrCreatePrice(
   productKey: string,
   productName: string,
   unitAmountUsd: number,
-  description?: string
+  description?: string,
+  recurring: boolean = true
 ): Promise<string> {
   const products = await stripe.products.search({ query: `metadata['key']:'${productKey}'` })
   let product = products.data[0]
@@ -28,14 +35,16 @@ async function findOrCreatePrice(
   }
 
   const prices = await stripe.prices.list({ product: product.id, active: true })
-  const existing = prices.data.find((p) => p.unit_amount === unitAmountUsd * 100)
+  const existing = prices.data.find(
+    (p) => p.unit_amount === unitAmountUsd * 100 && !!p.recurring === recurring
+  )
   if (existing) return existing.id
 
   const price = await stripe.prices.create({
     product: product.id,
     unit_amount: unitAmountUsd * 100,
     currency: 'usd',
-    recurring: { interval: 'month' },
+    ...(recurring ? { recurring: { interval: 'month' } } : {}),
   })
   return price.id
 }
@@ -63,6 +72,42 @@ export async function createCheckoutSession(opts: {
     success_url: opts.successUrl,
     cancel_url: opts.cancelUrl,
     metadata: { businessId: opts.businessId, plan: opts.plan },
+  })
+}
+
+// One-time payment (never a subscription) that tops up voice_credit_seconds_balance
+// by VOICE_RECHARGE_BLOCK_MINUTES once Stripe confirms it — see
+// syncSubscriptionFromStripeEvent's 'voice_minutes_recharge' branch. Callers
+// must check the business isn't on the free plan before offering this; Free
+// falls back to WhatsApp instead of ever topping up (see the /api/billing/
+// recharge-voice-minutes route).
+export async function createVoiceMinutesRechargeCheckoutSession(opts: {
+  businessId: string
+  ownerEmail: string
+  successUrl: string
+  cancelUrl: string
+}) {
+  const stripe = getStripeClient()
+  const priceId = await findOrCreatePrice(
+    stripe,
+    'addon_voice_minutes_recharge',
+    `${VOICE_RECHARGE_BLOCK_MINUTES} Voice Minutes Recharge`,
+    VOICE_RECHARGE_PRICE_USD,
+    `One-time top-up of ${VOICE_RECHARGE_BLOCK_MINUTES} AI voice-call minutes.`,
+    false
+  )
+
+  return stripe.checkout.sessions.create({
+    mode: 'payment',
+    customer_email: opts.ownerEmail,
+    line_items: [{ price: priceId, quantity: 1 }],
+    success_url: opts.successUrl,
+    cancel_url: opts.cancelUrl,
+    metadata: {
+      businessId: opts.businessId,
+      addon: 'voice_minutes_recharge',
+      minutes: String(VOICE_RECHARGE_BLOCK_MINUTES),
+    },
   })
 }
 
@@ -116,6 +161,17 @@ export async function syncSubscriptionFromStripeEvent(
           .from('business_subscriptions')
           .update({ website_builder_enabled: true })
           .eq('business_id', businessId)
+        return
+      }
+
+      if (session.metadata?.addon === 'voice_minutes_recharge') {
+        const minutes = Number(session.metadata?.minutes ?? 0)
+        if (minutes > 0) {
+          await supabase.rpc('adjust_voice_credit_balance' as never, {
+            p_business_id: businessId,
+            p_delta_seconds: minutes * 60,
+          } as never)
+        }
         return
       }
 

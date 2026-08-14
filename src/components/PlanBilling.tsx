@@ -1,12 +1,19 @@
 'use client'
 
 import { useState } from 'react'
-import { CreditCard, Bot, CalendarCheck, CheckCircle2 } from 'lucide-react'
+import { CreditCard, Bot, CalendarCheck, CheckCircle2, Phone } from 'lucide-react'
 import type { BusinessSubscription, PlanId } from '@/types'
-import { PLAN_LIMITS } from '@/constants'
+import { PLAN_LIMITS, VOICE_RECHARGE_BLOCK_MINUTES, VOICE_RECHARGE_PRICE_USD } from '@/constants'
+import type { VoiceMinutesAvailability } from '@/services/aiUsage'
 
-export function PlanBilling({ subscription }: { subscription: BusinessSubscription | null }) {
-  const [loadingPlan, setLoadingPlan] = useState<PlanId | 'portal' | null>(null)
+export function PlanBilling({
+  subscription,
+  voiceMinutes,
+}: {
+  subscription: BusinessSubscription | null
+  voiceMinutes: VoiceMinutesAvailability
+}) {
+  const [loadingPlan, setLoadingPlan] = useState<PlanId | 'portal' | 'recharge' | null>(null)
   const currentPlan: PlanId = (subscription?.plan as PlanId) ?? 'free'
 
   async function upgrade(plan: Exclude<PlanId, 'free'>) {
@@ -30,6 +37,19 @@ export function PlanBilling({ subscription }: { subscription: BusinessSubscripti
     else setLoadingPlan(null)
   }
 
+  async function recharge() {
+    setLoadingPlan('recharge')
+    const res = await fetch('/api/billing/recharge-voice-minutes', { method: 'POST' })
+    const body = await res.json()
+    if (body.url) window.location.href = body.url
+    else setLoadingPlan(null)
+  }
+
+  const usedMinutes = Math.round(voiceMinutes.usedSecondsThisMonth / 60)
+  const includedMinutes = Math.round(voiceMinutes.includedSecondsThisMonth / 60)
+  const creditMinutes = Math.floor(voiceMinutes.creditSecondsBalance / 60)
+  const outOfMinutes = voiceMinutes.availableSeconds <= 0
+
   return (
     <div className="space-y-4">
       <div className="stat-card p-4 flex items-start gap-3">
@@ -51,6 +71,30 @@ export function PlanBilling({ subscription }: { subscription: BusinessSubscripti
         </div>
       </div>
 
+      <div className="stat-card p-4">
+        <div className="flex items-center gap-2">
+          <Phone className="w-4 h-4 text-[var(--teal-700)] shrink-0" />
+          <p className="text-sm font-semibold text-[var(--text-1)]">Minutos de voz este mes</p>
+        </div>
+        <p className="text-sm text-[var(--text-3)] mt-1">
+          {usedMinutes} de {includedMinutes} minutos incluidos usados
+          {creditMinutes > 0 && ` · ${creditMinutes} min de recarga disponibles`}
+        </p>
+        {outOfMinutes && (
+          <p className="text-sm font-semibold text-red-600 mt-2">
+            Sin minutos disponibles — el agente de voz responde solo por WhatsApp hasta que recargues
+            {currentPlan === 'free' ? ' o mejores de plan' : ''}.
+          </p>
+        )}
+        {currentPlan !== 'free' && (
+          <button className="btn-secondary mt-3" onClick={recharge} disabled={loadingPlan === 'recharge'}>
+            {loadingPlan === 'recharge'
+              ? 'Redirigiendo…'
+              : `Recargar ${VOICE_RECHARGE_BLOCK_MINUTES} minutos ($${VOICE_RECHARGE_PRICE_USD})`}
+          </button>
+        )}
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {(Object.values(PLAN_LIMITS) as (typeof PLAN_LIMITS)[PlanId][]).map((plan) => (
           <div key={plan.id} className={`card-surface p-4 ${plan.id === currentPlan ? 'card-glow' : ''}`}>
@@ -67,6 +111,10 @@ export function PlanBilling({ subscription }: { subscription: BusinessSubscripti
               <li className="flex items-center gap-1.5">
                 <CalendarCheck className="w-3.5 h-3.5 text-[var(--teal-700)] shrink-0" />
                 {plan.bookingLimit === 0 ? 'Ilimitadas' : plan.bookingLimit} citas/mes
+              </li>
+              <li className="flex items-center gap-1.5">
+                <Phone className="w-3.5 h-3.5 text-[var(--teal-700)] shrink-0" />
+                {plan.includedVoiceMinutes} min de voz/mes
               </li>
             </ul>
             {plan.id !== 'free' && plan.id !== currentPlan && (

@@ -2,7 +2,8 @@ import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { endConversation, getConversationTranscript, setConversationSentiment } from '@/services/conversations'
 import { analyzeSentiment } from '@/services/sentiment'
-import { logAiUsage, realtimeVoiceCostUsd } from '@/services/aiUsage'
+import { logAiUsage, realtimeVoiceCostUsd, getVoiceSecondsUsedThisMonth, applyVoiceUsageOverflowToCredits } from '@/services/aiUsage'
+import type { PlanId } from '@/types'
 
 // Called by the browser when a widget voice call hangs up. Public endpoint
 // (no Supabase session — an anonymous website visitor can be the one calling)
@@ -30,6 +31,14 @@ export async function POST(_request: Request, props: { params: Promise<{ convers
 
   const updated = await endConversation(supabase, params.conversationId, { durationSeconds })
 
+  // Read usage *before* logging this call's own event below, so the overflow
+  // math (services/aiUsage.applyVoiceUsageOverflowToCredits) sees only what
+  // was used prior to this call, not double-counting it.
+  const [usedSecondsBeforeThisCall, { data: subscription }] = await Promise.all([
+    getVoiceSecondsUsedThisMonth(supabase, updated.business_id),
+    supabase.from('business_subscriptions').select('plan').eq('business_id', updated.business_id).maybeSingle(),
+  ])
+
   await logAiUsage(supabase, {
     businessId: updated.business_id,
     conversationId: params.conversationId,
@@ -37,6 +46,14 @@ export async function POST(_request: Request, props: { params: Promise<{ convers
     durationSeconds,
     costUsd: realtimeVoiceCostUsd(durationSeconds),
   })
+
+  await applyVoiceUsageOverflowToCredits(
+    supabase,
+    updated.business_id,
+    (subscription?.plan as PlanId) ?? 'free',
+    durationSeconds,
+    usedSecondsBeforeThisCall
+  )
 
   const transcript = await getConversationTranscript(supabase, params.conversationId)
   const sentiment = await analyzeSentiment(transcript, {

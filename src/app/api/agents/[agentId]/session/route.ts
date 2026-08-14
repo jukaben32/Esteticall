@@ -6,6 +6,8 @@ import { listKnowledgeDocuments, listPlatformKnowledgeDocuments } from '@/servic
 import { buildSystemPrompt, REALTIME_TOOLS } from '@/ai/tools'
 import { OPENAI_REALTIME_MODEL } from '@/constants'
 import { isRateLimited, getClientIp } from '@/lib/rateLimit'
+import { getVoiceMinutesAvailability } from '@/services/aiUsage'
+import type { PlanId } from '@/types'
 
 // This endpoint mints a real OpenAI Realtime session on every call, so an
 // unthrottled loop against it is a direct line to a large OpenAI bill —
@@ -63,6 +65,34 @@ export async function POST(request: Request, props: { params: Promise<{ agentId:
     .eq('id', agent.business_id)
     .single()
   if (businessError) return NextResponse.json({ error: businessError.message }, { status: 500 })
+
+  // Checked before minting anything from OpenAI — a call rejected here never
+  // costs a cent, one rejected only after connecting already would have.
+  // Included minutes reset monthly; once those and any purchased recharge
+  // credits are both exhausted, the widget falls back to WhatsApp instead
+  // (see FloatingWidgetLauncher's handling of this error).
+  const { data: subscription } = await supabase
+    .from('business_subscriptions')
+    .select('plan, voice_credit_seconds_balance')
+    .eq('business_id', business.id)
+    .maybeSingle()
+  const plan: PlanId = (subscription?.plan as PlanId) ?? 'free'
+  const availability = await getVoiceMinutesAvailability(
+    supabase,
+    business.id,
+    plan,
+    subscription?.voice_credit_seconds_balance ?? 0
+  )
+  if (availability.availableSeconds <= 0) {
+    return NextResponse.json(
+      {
+        error: 'no_voice_minutes',
+        message:
+          'Este negocio agotó sus minutos de voz disponibles este mes. Puede escribir por WhatsApp, o el negocio puede recargar minutos desde su panel.',
+      },
+      { status: 402 }
+    )
+  }
 
   const [listings, assignedListingIds, knowledgeDocs, platformKnowledgeDocs] = await Promise.all([
     listAiVisibleListings(supabase, business.id, agent.id),

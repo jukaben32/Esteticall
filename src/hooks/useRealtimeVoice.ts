@@ -39,7 +39,14 @@ export function useRealtimeVoice() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ listingId }),
         })
-        if (!res.ok) throw new Error(`Failed to start session (${res.status})`)
+        if (!res.ok) {
+          // The session route sends a real message for known cases (e.g.
+          // "no_voice_minutes") — surface that instead of a bare status code
+          // so the widget can point the caller to WhatsApp instead of just
+          // showing a generic failure.
+          const body = await res.json().catch(() => null)
+          throw new Error(body?.message || `Failed to start session (${res.status})`)
+        }
         const session: RealtimeSessionResponse = await res.json()
         setConversationId(session.conversationId)
 

@@ -50,6 +50,7 @@ export interface Database {
           current_period_end: string | null
           cancel_at_period_end: boolean
           website_builder_enabled: boolean
+          voice_credit_seconds_balance: number
           created_at: string
           updated_at: string
         }

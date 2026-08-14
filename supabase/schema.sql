@@ -78,12 +78,26 @@ create table if not exists business_subscriptions (
   current_period_end      timestamptz,
   cancel_at_period_end    boolean not null default false,
   website_builder_enabled boolean not null default false,
+  voice_credit_seconds_balance integer not null default 0,
   created_at              timestamptz not null default now(),
   updated_at              timestamptz not null default now()
 );
 
 create index if not exists idx_business_subscriptions_business_id on business_subscriptions (business_id);
 create index if not exists idx_business_subscriptions_stripe_customer_id on business_subscriptions (stripe_customer_id);
+
+-- Purchased voice-minute recharge balance, in seconds — topped up by the
+-- one-time Stripe checkout in services/billing.ts, spent by
+-- /api/conversations/[conversationId]/end once a business's plan-included
+-- monthly voice minutes run out. A plpgsql function (not a plain UPDATE from
+-- the app) keeps the +/- arithmetic atomic under concurrent calls.
+create or replace function adjust_voice_credit_balance(p_business_id uuid, p_delta_seconds integer) returns void as $$
+begin
+  update business_subscriptions
+  set voice_credit_seconds_balance = greatest(0, voice_credit_seconds_balance + p_delta_seconds)
+  where business_id = p_business_id;
+end;
+$$ language plpgsql security definer set search_path = public;
 
 drop trigger if exists update_business_subscriptions_updated_at on business_subscriptions;
 create trigger update_business_subscriptions_updated_at

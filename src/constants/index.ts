@@ -7,6 +7,7 @@ export const PLAN_LIMITS: Record<PlanId, PlanLimits> = {
     priceUsd: 0,
     agentLimit: Number(process.env.NEXT_PUBLIC_FREE_AGENT_LIMIT ?? 1),
     bookingLimit: Number(process.env.NEXT_PUBLIC_FREE_BOOKING_LIMIT ?? 5),
+    includedVoiceMinutes: Number(process.env.NEXT_PUBLIC_FREE_VOICE_MINUTES ?? 20),
   },
   pro: {
     id: 'pro',
@@ -14,6 +15,7 @@ export const PLAN_LIMITS: Record<PlanId, PlanLimits> = {
     priceUsd: Number(process.env.NEXT_PUBLIC_PRO_PLAN_PRICE_USD ?? 49),
     agentLimit: Number(process.env.NEXT_PUBLIC_PRO_AGENT_LIMIT ?? 10),
     bookingLimit: Number(process.env.NEXT_PUBLIC_PRO_BOOKING_LIMIT ?? 99),
+    includedVoiceMinutes: Number(process.env.NEXT_PUBLIC_PRO_VOICE_MINUTES ?? 200),
   },
   business: {
     id: 'business',
@@ -21,8 +23,15 @@ export const PLAN_LIMITS: Record<PlanId, PlanLimits> = {
     priceUsd: Number(process.env.NEXT_PUBLIC_BUSINESS_PLAN_PRICE_USD ?? 199),
     agentLimit: Number(process.env.NEXT_PUBLIC_BUSINESS_AGENT_LIMIT ?? 0),
     bookingLimit: Number(process.env.NEXT_PUBLIC_BUSINESS_BOOKING_LIMIT ?? 0),
+    includedVoiceMinutes: Number(process.env.NEXT_PUBLIC_BUSINESS_VOICE_MINUTES ?? 1000),
   },
 }
+
+// Sold as a one-time top-up, only to plans that already pay a subscription
+// (see /api/billing/recharge-voice-minutes) — Free never recharges, it falls
+// back to WhatsApp once its included minutes run out.
+export const VOICE_RECHARGE_BLOCK_MINUTES = Number(process.env.NEXT_PUBLIC_VOICE_RECHARGE_BLOCK_MINUTES ?? 100)
+export const VOICE_RECHARGE_PRICE_USD = Number(process.env.NEXT_PUBLIC_VOICE_RECHARGE_PRICE_USD ?? 30)
 
 export const WEBSITE_BUILDER_PRICE_USD = Number(
   process.env.NEXT_PUBLIC_WEBSITE_BUILDER_PRICE_USD ?? 29

@@ -48,6 +48,7 @@ export interface PlanLimits {
   priceUsd: number
   agentLimit: number // 0 = unlimited
   bookingLimit: number // 0 = unlimited
+  includedVoiceMinutes: number // resets every calendar month, never "unlimited"
 }
 
 // ─── Dashboard ────────────────────────────────────────────────────────────

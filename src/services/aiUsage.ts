@@ -1,5 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '@/types/database'
+import type { PlanId } from '@/types'
+import { PLAN_LIMITS } from '@/constants'
 
 type DB = SupabaseClient<Database>
 
@@ -62,4 +64,86 @@ export async function getAiSpendUsd(supabase: DB, businessId: string, sinceIso?:
     return 0
   }
   return (data ?? []).reduce((sum, row) => sum + (row.cost_usd ?? 0), 0)
+}
+
+function startOfCurrentMonthIso(): string {
+  const now = new Date()
+  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)).toISOString()
+}
+
+// Total realtime-voice seconds this business has used since the start of
+// the current calendar month — the plan's included-minutes allowance resets
+// on this same boundary, independent of any Stripe billing-cycle date, so it
+// still works for the Free plan (which never has a Stripe subscription).
+export async function getVoiceSecondsUsedThisMonth(supabase: DB, businessId: string): Promise<number> {
+  const { data, error } = await supabase
+    .from('ai_usage_events')
+    .select('duration_seconds')
+    .eq('business_id', businessId)
+    .eq('kind', 'realtime_voice')
+    .gte('created_at', startOfCurrentMonthIso())
+  if (error) {
+    console.error('Failed to load voice usage', error)
+    return 0
+  }
+  return (data ?? []).reduce((sum, row) => sum + (row.duration_seconds ?? 0), 0)
+}
+
+export interface VoiceMinutesAvailability {
+  plan: PlanId
+  usedSecondsThisMonth: number
+  includedSecondsThisMonth: number
+  remainingIncludedSeconds: number
+  creditSecondsBalance: number
+  availableSeconds: number
+}
+
+// The single source of truth for "can this business start a voice call right
+// now" — checked before minting an OpenAI Realtime session, since a call
+// that's rejected here never costs a cent, while one rejected only after
+// connecting already would have.
+export async function getVoiceMinutesAvailability(
+  supabase: DB,
+  businessId: string,
+  plan: PlanId,
+  creditSecondsBalance: number
+): Promise<VoiceMinutesAvailability> {
+  const usedSecondsThisMonth = await getVoiceSecondsUsedThisMonth(supabase, businessId)
+  const includedSecondsThisMonth = PLAN_LIMITS[plan].includedVoiceMinutes * 60
+  const remainingIncludedSeconds = Math.max(0, includedSecondsThisMonth - usedSecondsThisMonth)
+  const safeCreditSeconds = Math.max(0, creditSecondsBalance)
+  return {
+    plan,
+    usedSecondsThisMonth,
+    includedSecondsThisMonth,
+    remainingIncludedSeconds,
+    creditSecondsBalance: safeCreditSeconds,
+    availableSeconds: remainingIncludedSeconds + safeCreditSeconds,
+  }
+}
+
+// Called once a call ends, after its duration is known. A call that was
+// already fully covered by the plan's included minutes touches nothing; one
+// that crossed into (or started past) the included allowance spends the
+// overflow portion — never the whole call — from the purchased credit
+// balance, via the atomic SQL function (see schema.sql) rather than a
+// read-then-write from here.
+export async function applyVoiceUsageOverflowToCredits(
+  supabase: DB,
+  businessId: string,
+  plan: PlanId,
+  durationSeconds: number,
+  usedSecondsBeforeThisCall: number
+): Promise<void> {
+  const includedSecondsThisMonth = PLAN_LIMITS[plan].includedVoiceMinutes * 60
+  const usedBefore = Math.max(0, usedSecondsBeforeThisCall)
+  const usedAfter = usedBefore + Math.max(0, durationSeconds)
+  const overflowSeconds = Math.max(0, usedAfter - includedSecondsThisMonth) - Math.max(0, usedBefore - includedSecondsThisMonth)
+  if (overflowSeconds <= 0) return
+
+  const { error } = await supabase.rpc('adjust_voice_credit_balance' as never, {
+    p_business_id: businessId,
+    p_delta_seconds: -overflowSeconds,
+  } as never)
+  if (error) console.error('Failed to apply voice usage overflow to credits', error)
 }
