@@ -92,12 +92,33 @@ create trigger update_business_subscriptions_updated_at
 
 alter table business_subscriptions enable row level security;
 
+-- Members may only read their subscription — every write (plan changes,
+-- Stripe fields) goes through the service-role Stripe webhook. A business
+-- owner previously had "for all" here, which let them set their own plan
+-- to the paid tier for free straight from the browser.
 drop policy if exists "Business owners can view their subscription" on business_subscriptions;
-create policy "Business owners can view their subscription"
-  on business_subscriptions for select using (is_business_owner(business_id));
 drop policy if exists "Business owners can manage their subscription" on business_subscriptions;
-create policy "Business owners can manage their subscription"
-  on business_subscriptions for all using (is_business_owner(business_id));
+drop policy if exists "subscription access by business members" on business_subscriptions;
+create policy "subscription read by business members"
+  on business_subscriptions for select using (has_business_access(business_id));
+create policy "subscription writes by service role"
+  on business_subscriptions for all using (auth.role() = 'service_role');
+
+-- Auto-create a free subscription row whenever a business is created, so
+-- no client code needs INSERT permission on business_subscriptions.
+create or replace function create_default_subscription() returns trigger as $$
+begin
+  insert into business_subscriptions (business_id, plan, status)
+  values (new.id, 'free', 'active')
+  on conflict (business_id) do nothing;
+  return new;
+end;
+$$ language plpgsql security definer set search_path = public;
+
+drop trigger if exists trg_create_default_subscription on businesses;
+create trigger trg_create_default_subscription
+after insert on businesses
+for each row execute function create_default_subscription();
 
 -- 3. AI AGENTS
 create table if not exists ai_agents (

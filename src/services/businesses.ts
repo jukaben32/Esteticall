@@ -51,12 +51,10 @@ export async function createBusiness(
     .single()
   if (error) throw error
 
-  // Every new business starts on the free plan — the row must exist for
-  // plan-limit checks (agent/booking caps) to have something to read.
-  const { error: subError } = await supabase
-    .from('business_subscriptions')
-    .insert({ business_id: data.id, plan: 'free', status: 'active' })
-  if (subError) throw subError
+  // business_subscriptions is created automatically by the
+  // trg_create_default_subscription trigger right after the businesses
+  // insert above — no client insert here, since RLS only allows the
+  // service-role Stripe webhook to write that table.
 
   // Seed a default widget row so the public embed/test call works immediately,
   // without requiring a trip through Dashboard > Widget > Guardar first.
