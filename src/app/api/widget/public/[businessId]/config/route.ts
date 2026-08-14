@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { getPublicWidgetConfig, incrementWidgetImpressions } from '@/services/widgets'
+import { getPublicWidgetConfig, incrementWidgetImpressions, isOriginAllowed } from '@/services/widgets'
 
 // Admin-client fetches here aren't tied to a request's cookies/headers, so
 // Next's Data Cache would otherwise cache them indefinitely — e.g. serving a
@@ -21,6 +21,17 @@ export async function GET(request: Request, props: { params: Promise<{ businessI
     return NextResponse.json({ error: 'Widget not found or disabled' }, { status: 404 })
   }
 
+  // The embed script fetches this cross-origin from whichever site it's
+  // pasted into. Enforce the owner's allowlist here (isOriginAllowed treats
+  // an empty list as "allow any origin") and echo the origin back so the
+  // browser actually lets the embedding page read the response — without
+  // this header the fetch silently fails CORS and the widget never receives
+  // its real name/colors/greeting.
+  const origin = request.headers.get('origin')
+  if (origin && !isOriginAllowed(origin, config.allowed_origins ?? [])) {
+    return NextResponse.json({ error: 'This origin is not allowed to load this widget' }, { status: 403 })
+  }
+
   // Plain select + client-side filter — chaining .eq('status', 'live') with
   // .maybeSingle() here was silently returning no rows against a live agent
   // (confirmed against a raw REST call with the identical filter), so avoid
@@ -39,7 +50,7 @@ export async function GET(request: Request, props: { params: Promise<{ businessI
     // Best-effort — a failed counter write should never break the widget itself.
   })
 
-  return NextResponse.json({
+  const response = NextResponse.json({
     widgetId: config.id,
     widgetName: config.name,
     position: config.position,
@@ -49,4 +60,9 @@ export async function GET(request: Request, props: { params: Promise<{ businessI
     agentId: agent?.id ?? null,
     agentName: agent?.name ?? null,
   })
+  if (origin) {
+    response.headers.set('Access-Control-Allow-Origin', origin)
+    response.headers.set('Vary', 'Origin')
+  }
+  return response
 }
