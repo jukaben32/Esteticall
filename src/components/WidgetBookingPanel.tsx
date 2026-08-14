@@ -42,10 +42,12 @@ export function WidgetBookingPanel({
   businessId,
   primaryColor,
   isDark,
+  agentId,
 }: {
   businessId: string
   primaryColor: string
   isDark: boolean
+  agentId?: string | null
 }) {
   const [services, setServices] = useState<PublicService[] | null>(null)
   const [listings, setListings] = useState<PublicListing[] | null>(null)
@@ -68,11 +70,14 @@ export function WidgetBookingPanel({
       .then((r) => r.json())
       .then((d) => setServices(d.services ?? []))
       .catch(() => setServices([]))
-    fetch(`/api/widget/public/${businessId}/listings`)
+    const listingsUrl = agentId
+      ? `/api/widget/public/${businessId}/listings?agentId=${encodeURIComponent(agentId)}`
+      : `/api/widget/public/${businessId}/listings`
+    fetch(listingsUrl)
       .then((r) => r.json())
       .then((d) => setListings(d.listings ?? []))
       .catch(() => setListings([]))
-  }, [businessId])
+  }, [businessId, agentId])
 
   async function submitBooking(e: React.FormEvent) {
     e.preventDefault()

@@ -63,7 +63,7 @@ export function AgentLiveTest({ agent, businessId }: { agent: AiAgent; businessI
             <h2 className="font-display font-semibold text-[var(--text-1)]">Probar reserva de cita</h2>
             <p className="text-xs text-[var(--text-3)]">El mismo flujo que ve un cliente desde el widget público.</p>
           </div>
-          <WidgetBookingPanel businessId={businessId} primaryColor="#0e7c5a" isDark={false} />
+          <WidgetBookingPanel businessId={businessId} primaryColor="#0e7c5a" isDark={false} agentId={agent.id} />
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-stretch">

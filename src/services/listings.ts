@@ -63,9 +63,43 @@ export async function getListingById(
   return mapListingRow(data as unknown as ListingJoinRow)
 }
 
+// Listings assigned (via agent_listings) to a *different* agent than the one
+// asking. A listing with no assignment at all is never excluded — agencies
+// that never bother assigning anyone keep the old "every live agent can
+// discuss everything" behavior, so this can't silently blind an existing
+// agent to listings nobody ever restricted.
+export async function getListingIdsExcludedForAgent(
+  supabase: DB,
+  businessId: string,
+  agentId: string
+): Promise<Set<string>> {
+  const { data, error } = await supabase
+    .from('agent_listings')
+    .select('listing_id, agent_id')
+    .eq('business_id', businessId)
+  if (error) throw error
+
+  const assignedAgentsByListing = new Map<string, Set<string>>()
+  for (const row of data ?? []) {
+    if (!assignedAgentsByListing.has(row.listing_id)) assignedAgentsByListing.set(row.listing_id, new Set())
+    assignedAgentsByListing.get(row.listing_id)!.add(row.agent_id)
+  }
+
+  const excluded = new Set<string>()
+  for (const [listingId, agentIds] of assignedAgentsByListing) {
+    if (!agentIds.has(agentId)) excluded.add(listingId)
+  }
+  return excluded
+}
+
 // Listings the AI agent is allowed to discuss on a call — feeds the Realtime
-// system prompt and the `search_listings` tool the model can invoke.
-export async function listAiVisibleListings(supabase: DB, businessId: string): Promise<Listing[]> {
+// system prompt and the `search_listings` tool the model can invoke. Pass
+// the calling agent's id to also apply the per-listing assignment above.
+export async function listAiVisibleListings(
+  supabase: DB,
+  businessId: string,
+  agentId?: string | null
+): Promise<Listing[]> {
   const { data, error } = await supabase
     .from('listings')
     .select('*')
@@ -73,7 +107,11 @@ export async function listAiVisibleListings(supabase: DB, businessId: string): P
     .eq('status', 'available')
     .eq('visible_to_ai_agent', true)
   if (error) throw error
-  return data ?? []
+  const listings = data ?? []
+  if (!agentId) return listings
+
+  const excluded = await getListingIdsExcludedForAgent(supabase, businessId, agentId)
+  return excluded.size ? listings.filter((listing) => !excluded.has(listing.id)) : listings
 }
 
 export async function createListing(

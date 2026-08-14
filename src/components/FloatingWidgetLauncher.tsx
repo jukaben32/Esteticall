@@ -156,7 +156,7 @@ export function FloatingWidgetLauncher({
                 )}
               </div>
             ) : (
-              <WidgetBookingPanel businessId={businessId} primaryColor={config.primaryColor} isDark={isDark} />
+              <WidgetBookingPanel businessId={businessId} primaryColor={config.primaryColor} isDark={isDark} agentId={config.agentId} />
             )}
           </div>
         </div>

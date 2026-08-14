@@ -25,7 +25,7 @@ export async function POST(request: Request) {
   try {
     const result = await executeAiTool(
       supabase,
-      { conversationId, businessId: conversation.business_id, clientSource: 'ai_call' },
+      { conversationId, businessId: conversation.business_id, agentId: conversation.agent_id, clientSource: 'ai_call' },
       name,
       args
     )

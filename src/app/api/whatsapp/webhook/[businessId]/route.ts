@@ -99,7 +99,7 @@ export async function POST(request: Request, props: { params: Promise<{ business
   await appendMessage(supabase, businessId, conversation.id, 'caller', text)
 
   const [listings, knowledgeDocs, platformKnowledgeDocs, historyRes] = await Promise.all([
-    listAiVisibleListings(supabase, businessId),
+    listAiVisibleListings(supabase, businessId, agent.id),
     listKnowledgeDocuments(supabase, businessId),
     listPlatformKnowledgeDocuments(supabase),
     supabase
@@ -132,6 +132,7 @@ export async function POST(request: Request, props: { params: Promise<{ business
     reply = await runWhatsappAgentTurn(supabase, {
       businessId,
       conversationId: conversation.id,
+      agentId: agent.id,
       systemPrompt,
       history: chatHistory,
     })

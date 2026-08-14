@@ -38,6 +38,7 @@ export async function runWhatsappAgentTurn(
   ctx: {
     businessId: string
     conversationId: string
+    agentId?: string | null
     systemPrompt: string
     history: Array<{ role: 'user' | 'assistant'; content: string | null }>
   }
@@ -107,7 +108,7 @@ export async function runWhatsappAgentTurn(
       try {
         result = await executeAiTool(
           supabase,
-          { conversationId: ctx.conversationId, businessId: ctx.businessId, clientSource: 'whatsapp' },
+          { conversationId: ctx.conversationId, businessId: ctx.businessId, agentId: ctx.agentId, clientSource: 'whatsapp' },
           call.function.name,
           args
         )

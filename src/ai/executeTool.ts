@@ -3,6 +3,7 @@ import type { Database } from '@/types/database'
 import { getAvailableSlots, createAppointment } from '@/services/appointments'
 import { findOrCreateClientByPhone } from '@/services/clients'
 import { getSubscription } from '@/services/businesses'
+import { getListingIdsExcludedForAgent } from '@/services/listings'
 import { appendMessage, recordConversationOutcome } from '@/services/conversations'
 import { sendAppointmentConfirmationEmail, sendNewAppointmentOwnerEmail } from '@/services/email'
 import type { Client, PlanId } from '@/types'
@@ -16,11 +17,11 @@ type DB = SupabaseClient<Database>
 // regardless of which channel the caller used, so it lives here once.
 export async function executeAiTool(
   supabase: DB,
-  ctx: { conversationId: string; businessId: string; clientSource?: Client['source'] },
+  ctx: { conversationId: string; businessId: string; agentId?: string | null; clientSource?: Client['source'] },
   name: string,
   args: Record<string, unknown>
 ): Promise<unknown> {
-  const { conversationId, businessId, clientSource = 'ai_call' } = ctx
+  const { conversationId, businessId, agentId, clientSource = 'ai_call' } = ctx
 
   switch (name) {
     case 'search_listings': {
@@ -39,17 +40,23 @@ export async function executeAiTool(
       if (args.city) query = query.ilike('city', `%${args.city}%`)
       if (args.confoturOnly) query = query.eq('confotur_eligible', true)
 
-      const { data, error: searchError } = await query.limit(5)
+      // Same per-agent restriction as listAiVisibleListings. Fetch a larger
+      // candidate batch when a filter is going to be applied afterward, so
+      // excluding some rows doesn't leave fewer than 5 results when more
+      // would actually qualify.
+      const excluded = agentId ? await getListingIdsExcludedForAgent(supabase, businessId, agentId) : null
+      const { data, error: searchError } = await query.limit(excluded?.size ? 30 : 5)
       if (searchError) throw searchError
+      const results = (excluded?.size ? (data ?? []).filter((l) => !excluded.has(l.id)) : (data ?? [])).slice(0, 5)
 
       await appendMessage(
         supabase,
         businessId,
         conversationId,
         'system',
-        `search_listings(${JSON.stringify(args)}) -> ${data?.length ?? 0} result(s)`
+        `search_listings(${JSON.stringify(args)}) -> ${results.length} result(s)`
       )
-      return { listings: data }
+      return { listings: results }
     }
 
     case 'get_listing_details': {
@@ -60,18 +67,26 @@ export async function executeAiTool(
         .eq('listing_code', args.listingCode as string)
         .maybeSingle()
       if (listingError) throw listingError
+      if (data && agentId) {
+        const excluded = await getListingIdsExcludedForAgent(supabase, businessId, agentId)
+        if (excluded.has(data.id)) return { listing: null }
+      }
       return { listing: data ?? null }
     }
 
     case 'calculate_roi': {
       const { data: listing, error: listingError } = await supabase
         .from('listings')
-        .select('listing_code, title, listing_type, price, rental_period')
+        .select('id, listing_code, title, listing_type, price, rental_period')
         .eq('business_id', businessId)
         .eq('listing_code', args.listingCode as string)
         .maybeSingle()
       if (listingError) throw listingError
       if (!listing) return { error: 'Listing not found' }
+      if (agentId) {
+        const excluded = await getListingIdsExcludedForAgent(supabase, businessId, agentId)
+        if (excluded.has(listing.id)) return { error: 'Listing not found' }
+      }
       if (listing.listing_type !== 'vacation_rental') {
         return { error: 'ROI can only be calculated for vacation_rental listings' }
       }

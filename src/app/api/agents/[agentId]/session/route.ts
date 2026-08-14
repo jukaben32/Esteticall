@@ -65,7 +65,7 @@ export async function POST(request: Request, props: { params: Promise<{ agentId:
   if (businessError) return NextResponse.json({ error: businessError.message }, { status: 500 })
 
   const [listings, knowledgeDocs, platformKnowledgeDocs] = await Promise.all([
-    listAiVisibleListings(supabase, business.id),
+    listAiVisibleListings(supabase, business.id, agent.id),
     listKnowledgeDocuments(supabase, business.id),
     listPlatformKnowledgeDocuments(supabase),
   ])
