@@ -378,6 +378,14 @@ export default function LandingPage() {
           <div className="flex gap-5">
             <a href="#features" className="hover:text-[var(--text-1)] transition-colors">Funciones</a>
             <a href="#pricing" className="hover:text-[var(--text-1)] transition-colors">Precios</a>
+            <a
+              href="https://claude.ai/code/artifact/d48adc89-302b-4c4f-bf68-62d144944528"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-[var(--text-1)] transition-colors"
+            >
+              Guía del usuario
+            </a>
             <Link href="/login" className="hover:text-[var(--text-1)] transition-colors">Acceder</Link>
           </div>
         </div>
