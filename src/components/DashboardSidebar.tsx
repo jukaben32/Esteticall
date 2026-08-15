@@ -6,6 +6,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import {
   LayoutDashboard,
   House,
+  Building2,
   CalendarCheck,
   PhoneCall,
   UsersRound,
@@ -34,6 +35,7 @@ export const NAV_SECTIONS = [
       { href: '/dashboard', label: 'Inicio', icon: LayoutDashboard },
       { href: '/dashboard/analytics', label: 'Analítica', icon: BarChart3 },
       { href: '/dashboard/listings', label: 'Propiedades', icon: House },
+      { href: '/dashboard/projects', label: 'Proyectos Preventa', icon: Building2 },
       { href: '/dashboard/call-log', label: 'Llamadas', icon: PhoneCall },
       { href: '/dashboard/viewings', label: 'Citas', icon: CalendarCheck },
       { href: '/dashboard/schedule', label: 'Horario', icon: Clock },

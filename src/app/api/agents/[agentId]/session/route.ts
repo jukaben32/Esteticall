@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { startConversation } from '@/services/conversations'
 import { listAiVisibleListings, getAssignedListingIds } from '@/services/listings'
+import { listAiVisiblePreventaProjects, getAssignedPreventaProjectIds } from '@/services/preventaProjects'
 import { listKnowledgeDocuments, listPlatformKnowledgeDocuments } from '@/services/knowledge'
 import { buildSystemPrompt, REALTIME_TOOLS } from '@/ai/tools'
 import { OPENAI_REALTIME_MODEL } from '@/constants'
@@ -94,19 +95,31 @@ export async function POST(request: Request, props: { params: Promise<{ agentId:
     )
   }
 
-  const [listings, assignedListingIds, knowledgeDocs, platformKnowledgeDocs] = await Promise.all([
-    listAiVisibleListings(supabase, business.id, agent.id),
-    getAssignedListingIds(supabase, business.id, agent.id),
-    listKnowledgeDocuments(supabase, business.id),
-    listPlatformKnowledgeDocuments(supabase),
-  ])
+  const [listings, assignedListingIds, preventaProjects, assignedPreventaProjectIds, knowledgeDocs, platformKnowledgeDocs] =
+    await Promise.all([
+      listAiVisibleListings(supabase, business.id, agent.id),
+      getAssignedListingIds(supabase, business.id, agent.id),
+      listAiVisiblePreventaProjects(supabase, business.id, agent.id),
+      getAssignedPreventaProjectIds(supabase, business.id, agent.id),
+      listKnowledgeDocuments(supabase, business.id),
+      listPlatformKnowledgeDocuments(supabase),
+    ])
   const conversation = await startConversation(supabase, business.id, {
     agentId: agent.id,
     listingId,
     channel: 'widget_voice',
   })
 
-  const systemPrompt = buildSystemPrompt({ business, agent, listings, assignedListingIds, knowledgeDocs, platformKnowledgeDocs })
+  const systemPrompt = buildSystemPrompt({
+    business,
+    agent,
+    listings,
+    assignedListingIds,
+    preventaProjects,
+    assignedPreventaProjectIds,
+    knowledgeDocs,
+    platformKnowledgeDocs,
+  })
   const turnDetection = {
     type: 'server_vad',
     threshold: Number(agent.sensitivity) || 0.5,

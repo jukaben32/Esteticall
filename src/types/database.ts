@@ -164,6 +164,105 @@ export interface Database {
         Update: Partial<Database['public']['Tables']['agent_listings']['Row']>
         Relationships: []
       }
+      preventa_projects: {
+        Row: {
+          id: string
+          business_id: string
+          project_code: string
+          name: string
+          description: string | null
+          phase: 'lanzamiento' | 'en_construccion' | 'entrega'
+          status: 'active' | 'paused' | 'sold_out'
+          developer_name: string | null
+          address_line: string | null
+          area_name: string | null
+          city: string | null
+          state: string | null
+          zip: string | null
+          latitude: number | null
+          longitude: number | null
+          delivery_date: string | null
+          reservation_amount: number | null
+          reservation_currency: 'USD' | 'DOP'
+          down_payment_pct: number | null
+          financing_notes: string | null
+          finishes_description: string | null
+          amenities: string[]
+          promo_video_url: string | null
+          virtual_tour_url: string | null
+          cover_photo_url: string | null
+          featured: boolean
+          visible_to_ai_agent: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: Partial<Database['public']['Tables']['preventa_projects']['Row']> & {
+          business_id: string
+          name: string
+        }
+        Update: Partial<Database['public']['Tables']['preventa_projects']['Row']>
+        Relationships: []
+      }
+      preventa_unit_types: {
+        Row: {
+          id: string
+          project_id: string
+          business_id: string
+          name: string
+          bedrooms: number
+          bathrooms: number
+          area_sqft: number
+          parking_spaces: number
+          price: number
+          currency: 'USD' | 'DOP'
+          price_display: 'fixed' | 'negotiable' | 'starting_at' | 'contact'
+          notes: string | null
+          sort_order: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: Partial<Database['public']['Tables']['preventa_unit_types']['Row']> & {
+          project_id: string
+          business_id: string
+          name: string
+        }
+        Update: Partial<Database['public']['Tables']['preventa_unit_types']['Row']>
+        Relationships: []
+      }
+      preventa_project_photos: {
+        Row: {
+          id: string
+          project_id: string
+          business_id: string
+          url: string
+          is_cover: boolean
+          caption: string | null
+          sort_order: number
+          created_at: string
+        }
+        Insert: Partial<Database['public']['Tables']['preventa_project_photos']['Row']> & {
+          project_id: string
+          business_id: string
+          url: string
+        }
+        Update: Partial<Database['public']['Tables']['preventa_project_photos']['Row']>
+        Relationships: []
+      }
+      preventa_project_agents: {
+        Row: {
+          agent_id: string
+          project_id: string
+          business_id: string
+          created_at: string
+        }
+        Insert: Partial<Database['public']['Tables']['preventa_project_agents']['Row']> & {
+          agent_id: string
+          project_id: string
+          business_id: string
+        }
+        Update: Partial<Database['public']['Tables']['preventa_project_agents']['Row']>
+        Relationships: []
+      }
       agent_services: {
         Row: {
           agent_id: string

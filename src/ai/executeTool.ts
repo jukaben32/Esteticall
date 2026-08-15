@@ -4,6 +4,7 @@ import { getAvailableSlots, createAppointment } from '@/services/appointments'
 import { findOrCreateClientByPhone } from '@/services/clients'
 import { getSubscription } from '@/services/businesses'
 import { getAssignedListingIds } from '@/services/listings'
+import { getAssignedPreventaProjectIds } from '@/services/preventaProjects'
 import { appendMessage, recordConversationOutcome } from '@/services/conversations'
 import { sendAppointmentConfirmationEmail, sendNewAppointmentOwnerEmail } from '@/services/email'
 import type { Client, PlanId } from '@/types'
@@ -119,6 +120,65 @@ export async function executeAiTool(
         grossRoiPercent: Math.round((grossAnnualRevenue / purchasePrice) * 1000) / 10,
         netRoiPercent: Math.round((netAnnualRevenue / purchasePrice) * 1000) / 10,
       }
+    }
+
+    case 'search_presale_projects': {
+      let query = supabase
+        .from('preventa_projects')
+        .select('*, preventa_unit_types(*)')
+        .eq('business_id', businessId)
+        .eq('status', 'active')
+        .eq('visible_to_ai_agent', true)
+
+      if (args.city) query = query.ilike('city', `%${args.city}%`)
+      if (args.phase && args.phase !== 'any') {
+        query = query.eq('phase', args.phase as 'lanzamiento' | 'en_construccion' | 'entrega')
+      }
+
+      const { data, error: searchError } = await query
+      if (searchError) throw searchError
+      const projectRows = (data ?? []) as unknown as (Database['public']['Tables']['preventa_projects']['Row'] & {
+        preventa_unit_types: { price: number; bedrooms: number }[] | null
+      })[]
+
+      // maxPrice/minBedrooms describe a unit type within the project, not the
+      // project row itself — a project matches if any of its unit types does.
+      const maxPrice = args.maxPrice as number | undefined
+      const minBedrooms = args.minBedrooms as number | undefined
+      const matched = projectRows.filter((p) => {
+        const unitTypes = p.preventa_unit_types ?? []
+        if (!unitTypes.length) return !maxPrice && !minBedrooms
+        return unitTypes.some(
+          (u) => (!maxPrice || u.price <= maxPrice) && (!minBedrooms || u.bedrooms >= minBedrooms)
+        )
+      })
+
+      const assigned = agentId ? await getAssignedPreventaProjectIds(supabase, businessId, agentId) : null
+      const results = assigned?.size
+        ? [...matched].sort((a, b) => Number(assigned.has(b.id)) - Number(assigned.has(a.id))).slice(0, 5)
+        : matched.slice(0, 5)
+
+      await appendMessage(
+        supabase,
+        businessId,
+        conversationId,
+        'system',
+        `search_presale_projects(${JSON.stringify(args)}) -> ${results.length} result(s)`
+      )
+      return { projects: results }
+    }
+
+    case 'get_presale_project_details': {
+      // Same rule as get_listing_details: a caller naming a specific project
+      // code is a real inquiry — always answer in full regardless of agent.
+      const { data, error: projectError } = await supabase
+        .from('preventa_projects')
+        .select('*, preventa_unit_types(*)')
+        .eq('business_id', businessId)
+        .eq('project_code', args.projectCode as string)
+        .maybeSingle()
+      if (projectError) throw projectError
+      return { project: data ?? null }
     }
 
     case 'check_availability': {

@@ -76,6 +76,47 @@ export const listingSchema = z.object({
 })
 export type ListingInput = z.infer<typeof listingSchema>
 
+export const preventaProjectSchema = z.object({
+  name: z.string().min(3),
+  description: z.string().optional(),
+  phase: z.enum(['lanzamiento', 'en_construccion', 'entrega']).default('lanzamiento'),
+  status: z.enum(['active', 'paused', 'sold_out']).default('active'),
+  developerName: z.string().optional(),
+  addressLine: z.string().optional(),
+  areaName: z.string().optional(),
+  city: z.string().optional(),
+  state: z.string().optional(),
+  zip: z.string().optional(),
+  latitude: z.coerce.number().min(-90).max(90).optional(),
+  longitude: z.coerce.number().min(-180).max(180).optional(),
+  deliveryDate: z.string().optional().or(z.literal('')),
+  reservationAmount: z.coerce.number().nonnegative().optional(),
+  reservationCurrency: z.enum(['USD', 'DOP']).default('USD'),
+  downPaymentPct: z.coerce.number().min(0).max(100).optional(),
+  financingNotes: z.string().optional(),
+  finishesDescription: z.string().optional(),
+  amenities: z.array(z.string()).default([]),
+  promoVideoUrl: z.string().url().optional().or(z.literal('')),
+  virtualTourUrl: z.string().url().optional().or(z.literal('')),
+  featured: z.boolean().default(false),
+  visibleToAiAgent: z.boolean().default(true),
+})
+export type PreventaProjectInput = z.infer<typeof preventaProjectSchema>
+
+export const preventaUnitTypeSchema = z.object({
+  name: z.string().min(1),
+  bedrooms: z.coerce.number().int().nonnegative(),
+  bathrooms: z.coerce.number().int().nonnegative(),
+  areaSqft: z.coerce.number().int().nonnegative(),
+  parkingSpaces: z.coerce.number().int().nonnegative().default(0),
+  price: z.coerce.number().nonnegative(),
+  currency: z.enum(['USD', 'DOP']).default('USD'),
+  priceDisplay: z.enum(['fixed', 'negotiable', 'starting_at', 'contact']).default('starting_at'),
+  notes: z.string().optional(),
+  sortOrder: z.coerce.number().int().default(0),
+})
+export type PreventaUnitTypeInput = z.infer<typeof preventaUnitTypeSchema>
+
 export const aiAgentSchema = z.object({
   name: z.string().min(2),
   specialty: z.string().min(2).default('Residential Specialist'),

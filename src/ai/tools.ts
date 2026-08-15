@@ -1,4 +1,12 @@
-import type { AiAgent, Business, KnowledgeDocument, Listing, PlatformKnowledgeDocument, RealtimeTool } from '@/types'
+import type {
+  AiAgent,
+  Business,
+  KnowledgeDocument,
+  Listing,
+  PlatformKnowledgeDocument,
+  PreventaProjectWithDetails,
+  RealtimeTool,
+} from '@/types'
 import { listingPriceSuffix, isLandListing, formatListingPrice, formatDeliveryDate } from '@/lib/listingFormat'
 import { formatKnowledgeForPrompt } from '@/services/knowledge'
 
@@ -57,6 +65,36 @@ export const REALTIME_TOOLS: RealtimeTool[] = [
         },
       },
       required: ['listingCode', 'purchasePrice'],
+    },
+  },
+  {
+    type: 'function',
+    name: 'search_presale_projects',
+    description:
+      "Search this business's pre-sale/pre-construction projects (\"proyectos en preventa\") — buildings or " +
+      'developments not yet delivered, sold by unit type (e.g. multiple floorplans in one project) rather than as ' +
+      'single finished units. Use this whenever the caller asks about pre-sale, pre-construction, projects still ' +
+      'being built, or reserving/separating a unit before it is finished.',
+    parameters: {
+      type: 'object',
+      properties: {
+        maxPrice: { type: 'number', description: 'Filter by the starting price of any unit type in the project' },
+        minBedrooms: { type: 'number' },
+        city: { type: 'string' },
+        phase: { type: 'string', enum: ['lanzamiento', 'en_construccion', 'entrega', 'any'] },
+      },
+    },
+  },
+  {
+    type: 'function',
+    name: 'get_presale_project_details',
+    description:
+      'Get full details for one pre-sale project by its project code — unit types with prices, reservation amount, ' +
+      'down payment %, financing notes, finishes, amenities, and delivery date.',
+    parameters: {
+      type: 'object',
+      properties: { projectCode: { type: 'string' } },
+      required: ['projectCode'],
     },
   },
   {
@@ -124,6 +162,8 @@ export function buildSystemPrompt(opts: {
   agent: AiAgent
   listings: Listing[]
   assignedListingIds?: Set<string>
+  preventaProjects?: PreventaProjectWithDetails[]
+  assignedPreventaProjectIds?: Set<string>
   knowledgeDocs?: KnowledgeDocument[]
   platformKnowledgeDocs?: PlatformKnowledgeDocument[]
   channel?: 'voice' | 'text'
@@ -133,6 +173,8 @@ export function buildSystemPrompt(opts: {
     agent,
     listings,
     assignedListingIds,
+    preventaProjects = [],
+    assignedPreventaProjectIds,
     knowledgeDocs = [],
     platformKnowledgeDocs = [],
     channel = 'voice',
@@ -186,6 +228,51 @@ export function buildSystemPrompt(opts: {
           .join('\n')
       : listings.map(summarizeListing).join('\n')
 
+  function summarizeProject(p: PreventaProjectWithDetails): string {
+    const unitSummary = p.unitTypes.length
+      ? p.unitTypes
+          .map(
+            (u) =>
+              `${u.name} (${u.bedrooms}bd/${u.bathrooms}ba, ${u.area_sqft}sqft) from ${u.currency} ${u.price.toLocaleString()}`
+          )
+          .join('; ')
+      : 'unit types not yet listed'
+    return (
+      `- ${p.project_code}: ${p.name} — ${p.phase}, ${p.city ?? p.area_name ?? 'location on file'}, ` +
+      `units: ${unitSummary}` +
+      (p.reservation_amount
+        ? ` · reservation ${p.reservation_currency} ${p.reservation_amount.toLocaleString()}`
+        : '') +
+      (p.delivery_date ? ` · delivery ${formatDeliveryDate(p.delivery_date)}` : '')
+    )
+  }
+
+  const hasProjectSplit =
+    !!assignedPreventaProjectIds?.size && preventaProjects.some((p) => assignedPreventaProjectIds.has(p.id))
+  const primaryProjects = hasProjectSplit
+    ? preventaProjects.filter((p) => assignedPreventaProjectIds!.has(p.id))
+    : preventaProjects
+  const secondaryProjects = hasProjectSplit ? preventaProjects.filter((p) => !assignedPreventaProjectIds!.has(p.id)) : []
+
+  const projectSummaries = !preventaProjects.length
+    ? ''
+    : hasProjectSplit
+      ? [
+          'Your specialty pre-sale projects — lead with these when the caller is browsing without a specific project in mind:',
+          primaryProjects.map(summarizeProject).join('\n'),
+          secondaryProjects.length
+            ? [
+                '',
+                'Other pre-sale projects at this business — not your specialty, but still real inventory. Answer fully',
+                "if asked by name or code, never say you don't have it:",
+                secondaryProjects.map(summarizeProject).join('\n'),
+              ].join('\n')
+            : '',
+        ]
+          .filter(Boolean)
+          .join('\n')
+      : preventaProjects.map(summarizeProject).join('\n')
+
   // Santo Domingo is a fixed UTC-4 year-round (no DST since 1974), so this
   // offset trick reliably reads "today" there regardless of server timezone.
   const todayInSantoDomingo = new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString().slice(0, 10)
@@ -201,6 +288,15 @@ export function buildSystemPrompt(opts: {
     'You can discuss the following listings (use search_listings / get_listing_details for specifics instead of guessing):',
     listingSummaries,
     '',
+    projectSummaries
+      ? [
+          'You can also discuss the following pre-sale/pre-construction projects (use search_presale_projects / ' +
+            'get_presale_project_details for specifics instead of guessing). A project sells multiple unit types at ' +
+            'different prices — always confirm which unit type the caller means before quoting a price or booking:',
+          projectSummaries,
+          '',
+        ].join('\n')
+      : '',
     'When the caller wants to see a property, use check_availability to find a real open slot before proposing a time,',
     'then confirm their name and phone number before calling book_viewing. If they are not ready to book, still call',
     'capture_lead once you have their name and phone number so the business can follow up.',
@@ -209,10 +305,10 @@ export function buildSystemPrompt(opts: {
     'If the caller asks about return on investment, rental income, or cap rate for a vacation_rental listing, call',
     'calculate_roi instead of doing that math yourself — state the occupancy/expenses assumptions it returns so the',
     "caller knows those are estimates, not the property's actual performance.",
-    'Never invent listing details, prices, or availability that the tools did not return. And never refuse to discuss',
-    'or claim ignorance of a property that is actually listed above, in either section — a caller with a specific',
-    'question about a real listing is a sale in progress, and losing it to a scripted "I don\'t have that information"',
-    'is the one mistake this business cannot afford.',
+    'Never invent listing, project, or unit-type details, prices, or availability that the tools did not return. And',
+    'never refuse to discuss or claim ignorance of a property or pre-sale project that is actually listed above, in',
+    'any section — a caller with a specific question about a real listing or project is a sale in progress, and',
+    'losing it to a scripted "I don\'t have that information" is the one mistake this business cannot afford.',
     platformKnowledgeText
       ? [
           '',

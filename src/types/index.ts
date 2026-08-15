@@ -65,6 +65,18 @@ export interface ListingWithPhotos extends Listing {
   agents: Pick<AiAgent, 'id' | 'name' | 'specialty' | 'status'>[]
 }
 
+// ─── Pre-sale projects ("Proyecto en Preventa") ───────────────────────────
+export type PreventaProject = Tables<'preventa_projects'>
+export type PreventaUnitType = Tables<'preventa_unit_types'>
+export type PreventaProjectPhoto = Tables<'preventa_project_photos'>
+export type PreventaProjectAgent = Tables<'preventa_project_agents'>
+
+export interface PreventaProjectWithDetails extends PreventaProject {
+  unitTypes: PreventaUnitType[]
+  photos: PreventaProjectPhoto[]
+  agents: Pick<AiAgent, 'id' | 'name' | 'specialty' | 'status'>[]
+}
+
 export interface ConversationWithClient extends Conversation {
   client: Pick<Client, 'id' | 'name' | 'phone' | 'email'> | null
 }

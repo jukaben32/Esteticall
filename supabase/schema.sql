@@ -1129,3 +1129,148 @@ alter table listings add column if not exists lot_depth_m numeric(10,2);
 alter table listings add column if not exists cadastral_district text;
 alter table listings add column if not exists latitude numeric(10,7);
 alter table listings add column if not exists longitude numeric(10,7);
+
+-- 39. PREVENTA PROJECTS — pre-construction/off-plan real estate projects.
+-- Modeled as its own project + child unit-type tables (not a `listings` row)
+-- because a real preventa project in this market sells multiple unit types
+-- at once ("Tipo A" 3-bed, "Tipo B" 4-bed, etc.), each with its own price —
+-- one listings row per property can't represent that.
+create table if not exists preventa_projects (
+  id                    uuid primary key default gen_random_uuid(),
+  business_id           uuid not null references businesses(id) on delete cascade,
+  project_code          text not null unique default ('PRJ-' || substr(gen_random_uuid()::text, 1, 8)),
+  name                  text not null,
+  description           text,
+  phase                 text not null default 'lanzamiento'
+    check (phase in ('lanzamiento','en_construccion','entrega')),
+  status                text not null default 'active'
+    check (status in ('active','paused','sold_out')),
+  developer_name        text,
+  address_line          text,
+  area_name             text,
+  city                  text,
+  state                 text,
+  zip                   text,
+  latitude              numeric(10,7),
+  longitude             numeric(10,7),
+  delivery_date         date,
+  reservation_amount    numeric(14,2),
+  reservation_currency  text not null default 'USD' check (reservation_currency in ('USD','DOP')),
+  down_payment_pct      numeric(5,2),
+  financing_notes       text,
+  finishes_description  text,
+  amenities             text[] not null default '{}',
+  promo_video_url       text,
+  virtual_tour_url      text,
+  cover_photo_url       text,
+  featured              boolean not null default false,
+  visible_to_ai_agent   boolean not null default true,
+  created_at            timestamptz not null default now(),
+  updated_at            timestamptz not null default now()
+);
+
+create index if not exists idx_preventa_projects_business_id on preventa_projects (business_id);
+create index if not exists idx_preventa_projects_status on preventa_projects (status);
+
+drop trigger if exists update_preventa_projects_updated_at on preventa_projects;
+create trigger update_preventa_projects_updated_at
+  before update on preventa_projects
+  for each row execute function update_updated_at_column();
+
+alter table preventa_projects enable row level security;
+
+drop policy if exists "Business owners can manage their preventa projects" on preventa_projects;
+create policy "Business owners can manage their preventa projects"
+  on preventa_projects for all using (is_business_owner(business_id));
+drop policy if exists "Public can view active preventa projects" on preventa_projects;
+create policy "Public can view active preventa projects"
+  on preventa_projects for select using (status = 'active');
+
+-- 40. PREVENTA UNIT TYPES — "Tipo A", "Tipo B", "Penthouse", etc. within a
+-- project, each with its own price/specs.
+create table if not exists preventa_unit_types (
+  id              uuid primary key default gen_random_uuid(),
+  project_id      uuid not null references preventa_projects(id) on delete cascade,
+  business_id     uuid not null references businesses(id) on delete cascade,
+  name            text not null,
+  bedrooms        integer not null default 0,
+  bathrooms       integer not null default 0,
+  area_sqft       integer not null default 0,
+  parking_spaces  integer not null default 0,
+  price           numeric(14,2) not null default 0,
+  currency        text not null default 'USD' check (currency in ('USD','DOP')),
+  price_display   text not null default 'fixed'
+    check (price_display in ('fixed','negotiable','starting_at','contact')),
+  notes           text,
+  sort_order      integer not null default 0,
+  created_at      timestamptz not null default now(),
+  updated_at      timestamptz not null default now()
+);
+
+create index if not exists idx_preventa_unit_types_project_id on preventa_unit_types (project_id);
+create index if not exists idx_preventa_unit_types_business_id on preventa_unit_types (business_id);
+
+drop trigger if exists update_preventa_unit_types_updated_at on preventa_unit_types;
+create trigger update_preventa_unit_types_updated_at
+  before update on preventa_unit_types
+  for each row execute function update_updated_at_column();
+
+alter table preventa_unit_types enable row level security;
+
+drop policy if exists "Business owners can manage their preventa unit types" on preventa_unit_types;
+create policy "Business owners can manage their preventa unit types"
+  on preventa_unit_types for all using (is_business_owner(business_id));
+drop policy if exists "Public can view unit types of active projects" on preventa_unit_types;
+create policy "Public can view unit types of active projects"
+  on preventa_unit_types for select using (
+    exists (select 1 from preventa_projects p where p.id = project_id and p.status = 'active')
+  );
+
+-- 41. PREVENTA PROJECT PHOTOS — maqueta, piloto, renders, promotional stills.
+create table if not exists preventa_project_photos (
+  id           uuid primary key default gen_random_uuid(),
+  project_id   uuid not null references preventa_projects(id) on delete cascade,
+  business_id  uuid not null references businesses(id) on delete cascade,
+  url          text not null,
+  is_cover     boolean not null default false,
+  caption      text,
+  sort_order   integer not null default 0,
+  created_at   timestamptz not null default now()
+);
+
+create index if not exists idx_preventa_project_photos_project_id on preventa_project_photos (project_id);
+create index if not exists idx_preventa_project_photos_business_id on preventa_project_photos (business_id);
+create unique index if not exists uq_preventa_project_photos_one_cover
+  on preventa_project_photos (project_id) where (is_cover);
+
+alter table preventa_project_photos enable row level security;
+
+drop policy if exists "Business owners can manage their preventa project photos" on preventa_project_photos;
+create policy "Business owners can manage their preventa project photos"
+  on preventa_project_photos for all using (is_business_owner(business_id));
+drop policy if exists "Public can view photos of active preventa projects" on preventa_project_photos;
+create policy "Public can view photos of active preventa projects"
+  on preventa_project_photos for select using (
+    exists (select 1 from preventa_projects p where p.id = project_id and p.status = 'active')
+  );
+
+-- 42. PREVENTA PROJECT AGENTS (join: which AI agent(s) lead with which
+-- projects) — same ranking-only semantics as agent_listings: an assignment
+-- makes an agent lead with that project when browsing unprompted, it never
+-- hides the project from other agents (see buildSystemPrompt).
+create table if not exists preventa_project_agents (
+  agent_id     uuid not null references ai_agents(id) on delete cascade,
+  project_id   uuid not null references preventa_projects(id) on delete cascade,
+  business_id  uuid not null references businesses(id) on delete cascade,
+  created_at   timestamptz not null default now(),
+  primary key (agent_id, project_id)
+);
+
+create index if not exists idx_preventa_project_agents_business_id on preventa_project_agents (business_id);
+create index if not exists idx_preventa_project_agents_project_id on preventa_project_agents (project_id);
+
+alter table preventa_project_agents enable row level security;
+
+drop policy if exists "Business owners can manage preventa project-agent links" on preventa_project_agents;
+create policy "Business owners can manage preventa project-agent links"
+  on preventa_project_agents for all using (is_business_owner(business_id));
