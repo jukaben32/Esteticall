@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { Suspense, useEffect, useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Eye, EyeOff, Rocket, MailCheck, ArrowLeft } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { createBusiness } from '@/services/businesses'
@@ -15,8 +15,27 @@ function slugify(name: string) {
     .replace(/(^-|-$)/g, '')
 }
 
+// Set when a landing-page paid-plan card sends someone here as
+// /signup?plan=pro|business — read back on /dashboard once a business row
+// exists (see PENDING_PLAN_KEY usage there) so "Elegir plan" lands the new
+// owner straight on the payment picker instead of a bare free dashboard.
+// A query param alone doesn't survive the email-confirmation detour (the
+// user leaves the app, clicks a link in their inbox, and comes back on
+// /login with no query string), so localStorage is the durable carrier.
+const PENDING_PLAN_KEY = 'inmobiliacall_pending_plan'
+
 export default function SignupPage() {
+  return (
+    <Suspense fallback={null}>
+      <SignupForm />
+    </Suspense>
+  )
+}
+
+function SignupForm() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const requestedPlan = searchParams.get('plan')
   const [businessName, setBusinessName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -27,6 +46,12 @@ export default function SignupPage() {
   // before a session exists — matches the reference video's "we got the
   // email sending confirmation, click Back to Sign Up" screen.
   const [pendingEmail, setPendingEmail] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (requestedPlan === 'pro' || requestedPlan === 'business') {
+      localStorage.setItem(PENDING_PLAN_KEY, requestedPlan)
+    }
+  }, [requestedPlan])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -86,7 +111,12 @@ export default function SignupPage() {
     }
 
     setLoading(false)
-    router.push('/dashboard')
+    if (requestedPlan === 'pro' || requestedPlan === 'business') {
+      localStorage.removeItem(PENDING_PLAN_KEY)
+      router.push(`/dashboard/plan?upgrade=${requestedPlan}`)
+    } else {
+      router.push('/dashboard')
+    }
     router.refresh()
   }
 

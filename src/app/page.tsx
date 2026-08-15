@@ -324,14 +324,14 @@ export default function LandingPage() {
                     </li>
                   </ul>
                   <Link
-                    href="/signup"
+                    href={plan.priceUsd === 0 ? '/signup' : `/signup?plan=${plan.id}`}
                     className={
                       popular
                         ? 'mt-7 block text-center text-sm font-semibold bg-[var(--teal-700)] text-white rounded-full py-3 hover:bg-[var(--teal-800)] transition-colors'
                         : 'mt-7 block text-center text-sm font-semibold border border-[var(--border)] rounded-full py-3 hover:border-[var(--teal-700)]/40 transition-colors'
                     }
                   >
-                    {plan.priceUsd === 0 ? 'Empezar' : 'Probar gratis'}
+                    {plan.priceUsd === 0 ? 'Empezar' : 'Elegir plan'}
                   </Link>
                 </div>
               )

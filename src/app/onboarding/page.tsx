@@ -13,6 +13,11 @@ function slugify(name: string) {
     .replace(/(^-|-$)/g, '')
 }
 
+// Mirrors the same key /signup writes when a landing-page paid-plan card
+// sends someone to /signup?plan=pro|business — this is the path that
+// survives the email-confirmation detour (see the comment in signup/page.tsx).
+const PENDING_PLAN_KEY = 'inmobiliacall_pending_plan'
+
 // Lands here when a user has a confirmed, logged-in session but no business
 // row yet — e.g. their first signup attempt failed partway through (RLS
 // rejected the insert because email confirmation was still pending at the
@@ -64,7 +69,13 @@ export default function OnboardingPage() {
     }
 
     setLoading(false)
-    router.push('/dashboard')
+    const pendingPlan = localStorage.getItem(PENDING_PLAN_KEY)
+    if (pendingPlan === 'pro' || pendingPlan === 'business') {
+      localStorage.removeItem(PENDING_PLAN_KEY)
+      router.push(`/dashboard/plan?upgrade=${pendingPlan}`)
+    } else {
+      router.push('/dashboard')
+    }
     router.refresh()
   }
 

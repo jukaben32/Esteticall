@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { CreditCard, Bot, CalendarCheck, CheckCircle2, Phone, Landmark } from 'lucide-react'
 import type { BankTransferPayment, BusinessSubscription, PlanId } from '@/types'
 import { PLAN_LIMITS, VOICE_RECHARGE_BLOCK_MINUTES, VOICE_RECHARGE_PRICE_USD } from '@/constants'
@@ -19,10 +20,23 @@ export function PlanBilling({
   bankConfig: PlatformBankConfig | null
   initialPendingBankTransfer: BankTransferPayment | null
 }) {
+  // Set when a landing-page plan card sends a brand-new owner through
+  // /signup?plan=pro|business — see PENDING_PLAN_KEY in signup/page.tsx.
+  // Highlights the matching card instead of forcing a payment method, since
+  // the point is offering the same choice (card or transfer) the dashboard
+  // already has, not picking one for them.
+  const searchParams = useSearchParams()
+  const highlightPlan = searchParams.get('upgrade')
+
   const [loadingPlan, setLoadingPlan] = useState<PlanId | 'portal' | 'recharge' | null>(null)
   const [pendingTransfer, setPendingTransfer] = useState(initialPendingBankTransfer)
   const [transferModalPlan, setTransferModalPlan] = useState<Exclude<PlanId, 'free'> | null>(null)
   const currentPlan: PlanId = (subscription?.plan as PlanId) ?? 'free'
+
+  useEffect(() => {
+    if (!highlightPlan) return
+    document.getElementById(`plan-card-${highlightPlan}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }, [highlightPlan])
 
   async function upgrade(plan: Exclude<PlanId, 'free'>) {
     setLoadingPlan(plan)
@@ -128,7 +142,16 @@ export function PlanBilling({
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {(Object.values(PLAN_LIMITS) as (typeof PLAN_LIMITS)[PlanId][]).map((plan) => (
-          <div key={plan.id} className={`card-surface p-4 ${plan.id === currentPlan ? 'card-glow' : ''}`}>
+          <div
+            key={plan.id}
+            id={`plan-card-${plan.id}`}
+            className={`card-surface p-4 ${plan.id === currentPlan ? 'card-glow' : ''} ${
+              plan.id === highlightPlan ? 'ring-2 ring-[var(--teal-600)]' : ''
+            }`}
+          >
+            {plan.id === highlightPlan && plan.id !== currentPlan && (
+              <p className="text-xs font-semibold text-[var(--teal-700)] mb-1.5">Elige cómo pagar tu plan</p>
+            )}
             <p className="font-semibold text-[var(--text-1)]">{plan.name}</p>
             <p className="font-display text-2xl font-semibold mt-1 text-[var(--teal-700)]">
               ${plan.priceUsd}
