@@ -263,6 +263,28 @@ export interface Database {
         Update: Partial<Database['public']['Tables']['preventa_project_agents']['Row']>
         Relationships: []
       }
+      bank_transfer_payments: {
+        Row: {
+          id: string
+          business_id: string
+          reference_code: string
+          plan: 'pro' | 'business'
+          amount_usd: number
+          receipt_url: string | null
+          status: 'pending' | 'approved' | 'rejected'
+          reviewed_by: string | null
+          reviewed_at: string | null
+          rejection_reason: string | null
+          created_at: string
+        }
+        Insert: Partial<Database['public']['Tables']['bank_transfer_payments']['Row']> & {
+          business_id: string
+          plan: 'pro' | 'business'
+          amount_usd: number
+        }
+        Update: Partial<Database['public']['Tables']['bank_transfer_payments']['Row']>
+        Relationships: []
+      }
       agent_services: {
         Row: {
           agent_id: string

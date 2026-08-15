@@ -1,19 +1,27 @@
 'use client'
 
 import { useState } from 'react'
-import { CreditCard, Bot, CalendarCheck, CheckCircle2, Phone } from 'lucide-react'
-import type { BusinessSubscription, PlanId } from '@/types'
+import { CreditCard, Bot, CalendarCheck, CheckCircle2, Phone, Landmark } from 'lucide-react'
+import type { BankTransferPayment, BusinessSubscription, PlanId } from '@/types'
 import { PLAN_LIMITS, VOICE_RECHARGE_BLOCK_MINUTES, VOICE_RECHARGE_PRICE_USD } from '@/constants'
 import type { VoiceMinutesAvailability } from '@/services/aiUsage'
+import type { PlatformBankConfig } from '@/lib/platformBank'
+import { BankTransferModal } from '@/components/BankTransferModal'
 
 export function PlanBilling({
   subscription,
   voiceMinutes,
+  bankConfig,
+  initialPendingBankTransfer,
 }: {
   subscription: BusinessSubscription | null
   voiceMinutes: VoiceMinutesAvailability
+  bankConfig: PlatformBankConfig | null
+  initialPendingBankTransfer: BankTransferPayment | null
 }) {
   const [loadingPlan, setLoadingPlan] = useState<PlanId | 'portal' | 'recharge' | null>(null)
+  const [pendingTransfer, setPendingTransfer] = useState(initialPendingBankTransfer)
+  const [transferModalPlan, setTransferModalPlan] = useState<Exclude<PlanId, 'free'> | null>(null)
   const currentPlan: PlanId = (subscription?.plan as PlanId) ?? 'free'
 
   async function upgrade(plan: Exclude<PlanId, 'free'>) {
@@ -52,6 +60,29 @@ export function PlanBilling({
 
   return (
     <div className="space-y-4">
+      {pendingTransfer && pendingTransfer.status === 'pending' && (
+        <div className="card-glow p-4 flex items-start gap-3">
+          <span className="w-9 h-9 rounded-full bg-[var(--gold)]/15 text-[var(--gold)] grid place-items-center shrink-0">
+            <Landmark className="w-4 h-4" />
+          </span>
+          <div>
+            <p className="text-sm font-medium text-[var(--text-1)]">
+              Transferencia en revisión — plan {PLAN_LIMITS[pendingTransfer.plan].name}
+            </p>
+            <p className="text-xs text-[var(--text-3)] mt-0.5">
+              Referencia <span className="font-mono">{pendingTransfer.reference_code}</span> · se activa apenas
+              verifiquemos el pago.
+            </p>
+            <button
+              className="btn-secondary text-xs px-3 py-1.5 mt-2"
+              onClick={() => setTransferModalPlan(pendingTransfer.plan)}
+            >
+              Ver detalles / subir comprobante
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="stat-card p-4 flex items-start gap-3">
         <span className="w-9 h-9 rounded-full bg-[var(--teal-50)] text-[var(--teal-700)] grid place-items-center shrink-0">
           <CreditCard className="w-4 h-4" />
@@ -118,13 +149,23 @@ export function PlanBilling({
               </li>
             </ul>
             {plan.id !== 'free' && plan.id !== currentPlan && (
-              <button
-                className="btn-primary mt-3 w-full"
-                onClick={() => upgrade(plan.id as Exclude<PlanId, 'free'>)}
-                disabled={loadingPlan === plan.id}
-              >
-                {loadingPlan === plan.id ? 'Redirigiendo…' : `Mejorar a ${plan.name}`}
-              </button>
+              <>
+                <button
+                  className="btn-primary mt-3 w-full"
+                  onClick={() => upgrade(plan.id as Exclude<PlanId, 'free'>)}
+                  disabled={loadingPlan === plan.id}
+                >
+                  {loadingPlan === plan.id ? 'Redirigiendo…' : `Mejorar a ${plan.name}`}
+                </button>
+                {bankConfig && !pendingTransfer && (
+                  <button
+                    className="btn-secondary mt-2 w-full text-xs"
+                    onClick={() => setTransferModalPlan(plan.id as Exclude<PlanId, 'free'>)}
+                  >
+                    <Landmark className="w-3.5 h-3.5" /> Pagar por transferencia
+                  </button>
+                )}
+              </>
             )}
             {plan.id === currentPlan && (
               <p className="mt-3 text-xs font-semibold text-[var(--teal-700)] flex items-center gap-1.5">
@@ -134,6 +175,16 @@ export function PlanBilling({
           </div>
         ))}
       </div>
+
+      {transferModalPlan && bankConfig && (
+        <BankTransferModal
+          plan={transferModalPlan}
+          bankConfig={bankConfig}
+          initialTransfer={pendingTransfer && pendingTransfer.plan === transferModalPlan ? pendingTransfer : null}
+          onCreated={setPendingTransfer}
+          onClose={() => setTransferModalPlan(null)}
+        />
+      )}
     </div>
   )
 }

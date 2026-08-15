@@ -2,6 +2,8 @@ import { CreditCard } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { getBusinessForOwner, getSubscription } from '@/services/businesses'
 import { getVoiceMinutesAvailability } from '@/services/aiUsage'
+import { getPendingBankTransfer } from '@/services/bankTransfers'
+import { getPlatformBankConfig } from '@/lib/platformBank'
 import { PlanBilling } from '@/components/PlanBilling'
 import type { PlanId } from '@/types'
 
@@ -20,6 +22,8 @@ export default async function PlanPage() {
     (subscription?.plan as PlanId) ?? 'free',
     subscription?.voice_credit_seconds_balance ?? 0
   )
+  const pendingBankTransfer = await getPendingBankTransfer(supabase, business.id)
+  const bankConfig = getPlatformBankConfig()
 
   return (
     <div>
@@ -32,7 +36,12 @@ export default async function PlanPage() {
           <p className="text-sm text-[var(--text-3)]">Administra tu suscripción y método de pago.</p>
         </div>
       </div>
-      <PlanBilling subscription={subscription} voiceMinutes={voiceMinutes} />
+      <PlanBilling
+        subscription={subscription}
+        voiceMinutes={voiceMinutes}
+        bankConfig={bankConfig}
+        initialPendingBankTransfer={pendingBankTransfer}
+      />
     </div>
   )
 }

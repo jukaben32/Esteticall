@@ -1274,3 +1274,44 @@ alter table preventa_project_agents enable row level security;
 drop policy if exists "Business owners can manage preventa project-agent links" on preventa_project_agents;
 create policy "Business owners can manage preventa project-agent links"
   on preventa_project_agents for all using (is_business_owner(business_id));
+
+-- 43. BANK TRANSFER PAYMENTS — manual bank-transfer payment method for plan
+-- upgrades, alongside Stripe/Paddle checkout. A bank transfer has no
+-- real-time confirmation the way a card charge does, so this models an
+-- explicit review queue instead of pretending it's instant: the business
+-- submits proof of transfer, a platform admin (PLATFORM_ADMIN_EMAILS)
+-- verifies the money actually landed in the real bank account, and only
+-- then does approving it run the exact same plan-activation effect Stripe's
+-- checkout.session.completed webhook produces — see billing.ts.
+-- No update/delete policy for business owners on purpose: only the
+-- service-role (admin) client can attach a receipt or approve/reject, with
+-- ownership checked in application code — mirrors the listing-photos upload
+-- route. Letting an authenticated business owner UPDATE their own row would
+-- let them set status = 'approved' on themselves and get a free plan.
+create table if not exists bank_transfer_payments (
+  id                uuid primary key default gen_random_uuid(),
+  business_id       uuid not null references businesses(id) on delete cascade,
+  reference_code    text not null unique default ('TRF-' || substr(gen_random_uuid()::text, 1, 8)),
+  plan              text not null check (plan in ('pro','business')),
+  amount_usd        numeric(10,2) not null,
+  receipt_url       text,
+  status            text not null default 'pending'
+    check (status in ('pending','approved','rejected')),
+  reviewed_by       text,
+  reviewed_at       timestamptz,
+  rejection_reason  text,
+  created_at        timestamptz not null default now()
+);
+
+create index if not exists idx_bank_transfer_payments_business_id on bank_transfer_payments (business_id);
+create index if not exists idx_bank_transfer_payments_status on bank_transfer_payments (status);
+
+alter table bank_transfer_payments enable row level security;
+
+drop policy if exists "Business owners can view their own bank transfer requests" on bank_transfer_payments;
+create policy "Business owners can view their own bank transfer requests"
+  on bank_transfer_payments for select using (is_business_owner(business_id));
+
+drop policy if exists "Business owners can create their own bank transfer requests" on bank_transfer_payments;
+create policy "Business owners can create their own bank transfer requests"
+  on bank_transfer_payments for insert with check (is_business_owner(business_id) and status = 'pending');

@@ -136,6 +136,21 @@ export async function createWebsiteBuilderCheckoutSession(opts: {
   })
 }
 
+// Shared by every plan-upgrade path (Stripe checkout, and the bank-transfer
+// admin approval flow) so "what happens when a business goes Pro/Business"
+// is defined once — a transfer approved by an admin must have the exact
+// same effect as a card payment confirmed by Stripe.
+export async function activatePlanForBusiness(
+  supabase: DB,
+  businessId: string,
+  plan: Exclude<PlanId, 'free'>
+): Promise<void> {
+  await supabase
+    .from('business_subscriptions')
+    .update({ plan, status: 'active' })
+    .eq('business_id', businessId)
+}
+
 export async function createBillingPortalSession(opts: { stripeCustomerId: string; returnUrl: string }) {
   const stripe = getStripeClient()
   return stripe.billingPortal.sessions.create({
@@ -175,12 +190,11 @@ export async function syncSubscriptionFromStripeEvent(
         return
       }
 
-      const plan = (session.metadata?.plan as PlanId) ?? 'pro'
+      const plan = ((session.metadata?.plan as PlanId) ?? 'pro') as Exclude<PlanId, 'free'>
+      await activatePlanForBusiness(supabase, businessId, plan)
       await supabase
         .from('business_subscriptions')
         .update({
-          plan,
-          status: 'active',
           stripe_customer_id: String(session.customer),
           stripe_subscription_id: String(session.subscription),
         })

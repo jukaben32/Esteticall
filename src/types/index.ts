@@ -77,6 +77,9 @@ export interface PreventaProjectWithDetails extends PreventaProject {
   agents: Pick<AiAgent, 'id' | 'name' | 'specialty' | 'status'>[]
 }
 
+// ─── Bank transfer payments (manual plan-upgrade path) ────────────────────
+export type BankTransferPayment = Tables<'bank_transfer_payments'>
+
 export interface ConversationWithClient extends Conversation {
   client: Pick<Client, 'id' | 'name' | 'phone' | 'email'> | null
 }

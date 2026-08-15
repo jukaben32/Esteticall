@@ -33,6 +33,14 @@ export default async function AdminLayout({ children }: { children: ReactNode })
           Volver al dashboard
         </Link>
       </header>
+      <nav className="max-w-4xl mx-auto px-4 lg:px-6 pt-4 flex gap-2">
+        <Link href="/admin/knowledge" className="btn-secondary text-xs px-3 py-1.5">
+          Conocimiento
+        </Link>
+        <Link href="/admin/bank-transfers" className="btn-secondary text-xs px-3 py-1.5">
+          Transferencias bancarias
+        </Link>
+      </nav>
       <main className="max-w-4xl mx-auto p-4 lg:p-6">{children}</main>
     </div>
   )
