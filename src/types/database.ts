@@ -110,6 +110,11 @@ export interface Database {
           state: string | null
           zip: string | null
           price_display: 'fixed' | 'negotiable' | 'starting_at' | 'contact'
+          lot_frontage_m: number | null
+          lot_depth_m: number | null
+          cadastral_district: string | null
+          latitude: number | null
+          longitude: number | null
           amenities: string[]
           featured: boolean
           visible_to_ai_agent: boolean

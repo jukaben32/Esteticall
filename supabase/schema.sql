@@ -1118,3 +1118,14 @@ alter table listings drop constraint if exists listings_currency_check;
 alter table listings add constraint listings_currency_check check (currency in ('USD', 'DOP'));
 alter table listings add column if not exists confotur_eligible boolean not null default false;
 alter table listings add column if not exists delivery_date date;
+
+-- 38. LISTINGS — land/solar-specific fields. Bedrooms, bathrooms, and
+-- year_built are meaningless for a `land` listing (already hidden in the UI
+-- for that property type) but the form had nothing land-specific to show
+-- in their place. All optional/nullable — applies to any property_type,
+-- though the UI only surfaces them when property_type = 'land'.
+alter table listings add column if not exists lot_frontage_m numeric(10,2);
+alter table listings add column if not exists lot_depth_m numeric(10,2);
+alter table listings add column if not exists cadastral_district text;
+alter table listings add column if not exists latitude numeric(10,7);
+alter table listings add column if not exists longitude numeric(10,7);

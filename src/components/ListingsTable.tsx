@@ -120,6 +120,7 @@ export function ListingsTable({
 
       {showForm && (
         <NewListingForm
+          initialPropertyType={type !== 'all' && type !== 'airbnb' ? type : undefined}
           onCreated={(listing) => {
             setListings((prev) => [{ ...listing, photos: [], agents: [] }, ...prev])
             setShowForm(false)

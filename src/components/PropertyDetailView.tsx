@@ -415,10 +415,44 @@ export function PropertyDetailView({
                 <dt className="text-[var(--text-3)]">Listado</dt>
                 <dd className="text-[var(--text-1)]">{LISTING_TYPE_LABELS[listing.listing_type] ?? listing.listing_type}</dd>
               </div>
-              <div className="flex items-center justify-between">
-                <dt className="text-[var(--text-3)]">Año de construcción</dt>
-                <dd className="text-[var(--text-1)]">{listing.year_built ?? '—'}</dd>
-              </div>
+              {isLandListing(listing) ? (
+                <>
+                  {(listing.lot_frontage_m || listing.lot_depth_m) && (
+                    <div className="flex items-center justify-between">
+                      <dt className="text-[var(--text-3)]">Frente x Fondo</dt>
+                      <dd className="text-[var(--text-1)]">
+                        {listing.lot_frontage_m ?? '—'} m × {listing.lot_depth_m ?? '—'} m
+                      </dd>
+                    </div>
+                  )}
+                  {listing.cadastral_district && (
+                    <div className="flex items-center justify-between">
+                      <dt className="text-[var(--text-3)]">Distrito catastral</dt>
+                      <dd className="text-[var(--text-1)]">{listing.cadastral_district}</dd>
+                    </div>
+                  )}
+                  {listing.latitude && listing.longitude && (
+                    <div className="flex items-center justify-between">
+                      <dt className="text-[var(--text-3)]">Ubicación</dt>
+                      <dd>
+                        <a
+                          href={`https://www.google.com/maps?q=${listing.latitude},${listing.longitude}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center gap-1 text-[var(--teal-700)] hover:underline"
+                        >
+                          Ver vista aérea <ExternalLink className="w-3 h-3" />
+                        </a>
+                      </dd>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="flex items-center justify-between">
+                  <dt className="text-[var(--text-3)]">Año de construcción</dt>
+                  <dd className="text-[var(--text-1)]">{listing.year_built ?? '—'}</dd>
+                </div>
+              )}
               <div className="flex items-center justify-between">
                 <dt className="text-[var(--text-3)]">Publicado</dt>
                 <dd className="text-[var(--text-1)]">{formatDate(listing.listed_at)}</dd>

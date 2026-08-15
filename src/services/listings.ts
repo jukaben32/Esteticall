@@ -138,6 +138,11 @@ export async function createListing(
       featured: input.featured,
       visible_to_ai_agent: input.visibleToAiAgent,
       virtual_tour_url: input.virtualTourUrl || null,
+      lot_frontage_m: input.lotFrontageM || null,
+      lot_depth_m: input.lotDepthM || null,
+      cadastral_district: input.cadastralDistrict || null,
+      latitude: input.latitude || null,
+      longitude: input.longitude || null,
     })
     .select('*')
     .single()

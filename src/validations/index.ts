@@ -68,6 +68,11 @@ export const listingSchema = z.object({
   featured: z.boolean().default(false),
   visibleToAiAgent: z.boolean().default(true),
   virtualTourUrl: z.string().url().optional().or(z.literal('')),
+  lotFrontageM: z.coerce.number().nonnegative().optional(),
+  lotDepthM: z.coerce.number().nonnegative().optional(),
+  cadastralDistrict: z.string().optional(),
+  latitude: z.coerce.number().min(-90).max(90).optional(),
+  longitude: z.coerce.number().min(-180).max(180).optional(),
 })
 export type ListingInput = z.infer<typeof listingSchema>
 

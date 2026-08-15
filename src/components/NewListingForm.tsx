@@ -24,13 +24,19 @@ const LISTING_TYPE_LABELS: Record<string, string> = {
 interface NewListingFormProps {
   onCreated: (listing: Listing) => void
   onClose: () => void
+  // Seeds "Tipo de propiedad" from whatever filter tab was active in the
+  // listings table — without this, the form always opened defaulted to
+  // "Casa" regardless of context, so clicking "Agregar propiedad" while
+  // filtered to "Solar" still showed house fields (bedrooms/bathrooms/year
+  // built) until the user noticed and changed the dropdown themselves.
+  initialPropertyType?: string
 }
 
-export function NewListingForm({ onCreated, onClose }: NewListingFormProps) {
+export function NewListingForm({ onCreated, onClose, initialPropertyType }: NewListingFormProps) {
   const [form, setForm] = useState({
     title: '',
     listingType: 'sale',
-    propertyType: 'house',
+    propertyType: initialPropertyType ?? 'house',
     price: '',
     currency: 'USD',
     bedrooms: '',
@@ -41,6 +47,11 @@ export function NewListingForm({ onCreated, onClose }: NewListingFormProps) {
     rentalPeriod: 'night',
     confoturEligible: false,
     deliveryDate: '',
+    lotFrontageM: '',
+    lotDepthM: '',
+    cadastralDistrict: '',
+    latitude: '',
+    longitude: '',
   })
   const [photo, setPhoto] = useState<File | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -186,6 +197,46 @@ export function NewListingForm({ onCreated, onClose }: NewListingFormProps) {
           className="input-field"
         />
       )}
+      {form.propertyType === 'land' && (
+        <>
+          <input
+            placeholder="Frente del solar (m)"
+            type="number"
+            value={form.lotFrontageM}
+            onChange={(e) => setForm({ ...form, lotFrontageM: e.target.value })}
+            className="input-field"
+          />
+          <input
+            placeholder="Fondo del solar (m)"
+            type="number"
+            value={form.lotDepthM}
+            onChange={(e) => setForm({ ...form, lotDepthM: e.target.value })}
+            className="input-field"
+          />
+          <input
+            placeholder="Distrito catastral"
+            value={form.cadastralDistrict}
+            onChange={(e) => setForm({ ...form, cadastralDistrict: e.target.value })}
+            className="input-field col-span-2"
+          />
+          <input
+            placeholder="Latitud (ej. 18.4861)"
+            type="number"
+            step="any"
+            value={form.latitude}
+            onChange={(e) => setForm({ ...form, latitude: e.target.value })}
+            className="input-field"
+          />
+          <input
+            placeholder="Longitud (ej. -69.9312)"
+            type="number"
+            step="any"
+            value={form.longitude}
+            onChange={(e) => setForm({ ...form, longitude: e.target.value })}
+            className="input-field"
+          />
+        </>
+      )}
       <div>
         <label className="text-xs text-[var(--text-3)]">Fecha de entrega (proyectos en plano)</label>
         <input
@@ -195,13 +246,14 @@ export function NewListingForm({ onCreated, onClose }: NewListingFormProps) {
           className="input-field w-full"
         />
       </div>
-      <label className="flex items-center gap-2 text-sm text-[var(--text-2)]">
+      <label className="col-span-2 flex items-center gap-2 text-sm text-[var(--text-2)]">
         <input
           type="checkbox"
           checked={form.confoturEligible}
           onChange={(e) => setForm({ ...form, confoturEligible: e.target.checked })}
+          className="w-4 h-4 shrink-0 accent-[var(--teal-700)]"
         />
-        Elegible para exención CONFOTUR (Ley 158-01)
+        <span>Elegible para exención CONFOTUR (Ley 158-01)</span>
       </label>
       <div className="col-span-2">
         <label className="text-xs text-[var(--text-3)]">Foto de portada (opcional)</label>

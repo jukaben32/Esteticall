@@ -62,6 +62,11 @@ export function EditListingModal({ listing, agents, onSaved, onClose }: EditList
     virtualTourUrl: listing.virtual_tour_url ?? '',
     featured: listing.featured,
     visibleToAiAgent: listing.visible_to_ai_agent,
+    lotFrontageM: listing.lot_frontage_m ? String(listing.lot_frontage_m) : '',
+    lotDepthM: listing.lot_depth_m ? String(listing.lot_depth_m) : '',
+    cadastralDistrict: listing.cadastral_district ?? '',
+    latitude: listing.latitude ? String(listing.latitude) : '',
+    longitude: listing.longitude ? String(listing.longitude) : '',
   })
   const [amenities, setAmenities] = useState<string[]>(listing.amenities ?? [])
   const [customAmenity, setCustomAmenity] = useState('')
@@ -172,6 +177,11 @@ export function EditListingModal({ listing, agents, onSaved, onClose }: EditList
         parking_spaces: Number(form.parkingSpaces) || 0,
         year_built: form.yearBuilt ? Number(form.yearBuilt) : null,
         virtual_tour_url: form.virtualTourUrl || null,
+        lot_frontage_m: form.lotFrontageM ? Number(form.lotFrontageM) : null,
+        lot_depth_m: form.lotDepthM ? Number(form.lotDepthM) : null,
+        cadastral_district: form.cadastralDistrict || null,
+        latitude: form.latitude ? Number(form.latitude) : null,
+        longitude: form.longitude ? Number(form.longitude) : null,
         amenities,
         featured: form.featured,
         visible_to_ai_agent: form.visibleToAiAgent,
@@ -365,8 +375,9 @@ export function EditListingModal({ listing, agents, onSaved, onClose }: EditList
               type="checkbox"
               checked={form.confoturEligible}
               onChange={(e) => setForm({ ...form, confoturEligible: e.target.checked })}
+              className="w-4 h-4 shrink-0 accent-[var(--teal-700)]"
             />
-            Elegible para exención CONFOTUR (Ley 158-01)
+            <span>Elegible para exención CONFOTUR (Ley 158-01)</span>
           </label>
         </div>
 
@@ -386,6 +397,11 @@ export function EditListingModal({ listing, agents, onSaved, onClose }: EditList
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <input placeholder="Área del solar (m²)" type="number" value={form.areaSqft} onChange={(e) => setForm({ ...form, areaSqft: e.target.value })} className="input-field" />
             <input placeholder="URL de tour virtual" value={form.virtualTourUrl} onChange={(e) => setForm({ ...form, virtualTourUrl: e.target.value })} className="input-field" />
+            <input placeholder="Frente del solar (m)" type="number" value={form.lotFrontageM} onChange={(e) => setForm({ ...form, lotFrontageM: e.target.value })} className="input-field" />
+            <input placeholder="Fondo del solar (m)" type="number" value={form.lotDepthM} onChange={(e) => setForm({ ...form, lotDepthM: e.target.value })} className="input-field" />
+            <input placeholder="Distrito catastral" value={form.cadastralDistrict} onChange={(e) => setForm({ ...form, cadastralDistrict: e.target.value })} className="input-field sm:col-span-2" />
+            <input placeholder="Latitud (ej. 18.4861)" type="number" step="any" value={form.latitude} onChange={(e) => setForm({ ...form, latitude: e.target.value })} className="input-field" />
+            <input placeholder="Longitud (ej. -69.9312)" type="number" step="any" value={form.longitude} onChange={(e) => setForm({ ...form, longitude: e.target.value })} className="input-field" />
           </div>
         ) : (
           <>
@@ -492,16 +508,18 @@ export function EditListingModal({ listing, agents, onSaved, onClose }: EditList
               type="checkbox"
               checked={form.visibleToAiAgent}
               onChange={(e) => setForm({ ...form, visibleToAiAgent: e.target.checked })}
+              className="w-4 h-4 shrink-0 accent-[var(--teal-700)]"
             />
-            Activa (visible para la IA)
+            <span>Activa (visible para la IA)</span>
           </label>
           <label className="flex items-center gap-2 text-sm">
             <input
               type="checkbox"
               checked={form.featured}
               onChange={(e) => setForm({ ...form, featured: e.target.checked })}
+              className="w-4 h-4 shrink-0 accent-[var(--teal-700)]"
             />
-            Propiedad destacada
+            <span>Propiedad destacada</span>
           </label>
         </div>
 
