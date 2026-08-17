@@ -11,12 +11,13 @@ const CHAT_MODEL_PRICING_PER_MILLION_TOKENS: Record<string, { input: number; out
 }
 const DEFAULT_CHAT_MODEL = 'gpt-4o-mini'
 
-// gpt-realtime audio pricing: $32/1M input tokens, $64/1M output tokens.
+// gpt-realtime-mini audio pricing: $10/1M input tokens, $20/1M output tokens
+// (switched from full gpt-realtime's $32/$64 — see OPENAI_REALTIME_MODEL).
 // A minute of input (caller) audio is ~600 tokens; a minute of generated (agent) speech is ~1200 tokens.
 // Voice calls only record total duration, not separate input/output time, so this estimates both
 // channels running for the full call duration — a reasonable upper-bound proxy, not exact metering.
-// Plus gpt-4o-mini-transcribe (used for input transcription on this repo's realtime sessions): ~$0.003/min.
-const REALTIME_VOICE_COST_PER_SECOND_USD = (600 / 60) * (32 / 1_000_000) + (1200 / 60) * (64 / 1_000_000) + 0.003 / 60
+// Plus whisper-1 (used for input transcription on this repo's realtime sessions): $0.006/min.
+const REALTIME_VOICE_COST_PER_SECOND_USD = (600 / 60) * (10 / 1_000_000) + (1200 / 60) * (20 / 1_000_000) + 0.006 / 60
 
 export function chatCompletionCostUsd(inputTokens: number, outputTokens: number, model: string = DEFAULT_CHAT_MODEL) {
   const pricing = CHAT_MODEL_PRICING_PER_MILLION_TOKENS[model] ?? CHAT_MODEL_PRICING_PER_MILLION_TOKENS[DEFAULT_CHAT_MODEL]

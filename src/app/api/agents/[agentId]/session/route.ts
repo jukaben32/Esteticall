@@ -147,7 +147,14 @@ export async function POST(request: Request, props: { params: Promise<{ agentId:
           // transcription defaults to off in the GA API — without it, the
           // caller's side of the conversation is never transcribed, so
           // conversation.item.input_audio_transcription.completed never fires.
-          input: { turn_detection: turnDetection, transcription: { model: 'gpt-4o-mini-transcribe' } },
+          // whisper-1, not gpt-4o-mini-transcribe: only whisper-1 officially
+          // accepts a `language` hint. Without it, Spanish audio gets
+          // transcribed with an English bias — the same bug DriveIA/
+          // Beauty-Barber/Healthcare already hit and fixed this way.
+          input: {
+            turn_detection: turnDetection,
+            transcription: { model: 'whisper-1', language: agent.language || undefined },
+          },
         },
       },
     }),
