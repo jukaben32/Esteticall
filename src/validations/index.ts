@@ -364,6 +364,63 @@ export const platformKnowledgeDocumentSchema = z.object({
 })
 export type PlatformKnowledgeDocumentInput = z.infer<typeof platformKnowledgeDocumentSchema>
 
+// ─── Channels (Airbnb/Booking/VRBO real, via channel-manager co-hosting) ──
+export const channelProviderAccountSchema = z.object({
+  accountId: z.string().min(1, 'El Account ID de Hostaway es requerido'),
+  clientSecret: z.string().min(1, 'El Client Secret es requerido'),
+  webhookSecret: z.string().optional().or(z.literal('')),
+})
+export type ChannelProviderAccountInput = z.infer<typeof channelProviderAccountSchema>
+
+export const channelHostConnectionSchema = z.object({
+  ownerName: z.string().min(2, 'El nombre del propietario es requerido'),
+  ownerPhone: z.string().optional().or(z.literal('')),
+  ownerEmail: z.string().email().optional().or(z.literal('')),
+  channel: z.enum(['airbnb', 'booking', 'vrbo']),
+  commissionPct: z.coerce.number().min(0).max(100).default(18),
+  clientId: z.string().uuid().optional().or(z.literal('')),
+})
+export type ChannelHostConnectionInput = z.infer<typeof channelHostConnectionSchema>
+
+// Only fields a business owner should ever be able to PATCH directly —
+// status is deliberately limited to the two manual transitions (pause /
+// resume); 'error' and 'pending' are only ever system-set by the sync layer.
+export const channelHostConnectionPatchSchema = z.object({
+  ownerName: z.string().min(2).optional(),
+  ownerPhone: z.string().optional().or(z.literal('')),
+  ownerEmail: z.string().email().optional().or(z.literal('')),
+  commissionPct: z.coerce.number().min(0).max(100).optional(),
+  status: z.enum(['active', 'disabled']).optional(),
+})
+export type ChannelHostConnectionPatchInput = z.infer<typeof channelHostConnectionPatchSchema>
+
+export const channelListingLinkSchema = z.object({
+  listingId: z.string().uuid(),
+  hostConnectionId: z.string().uuid(),
+  overridePrice: z.boolean().default(false),
+  nightlyPrice: z.coerce.number().nonnegative().optional(),
+  currency: z.enum(['USD', 'DOP']).optional(),
+})
+export type ChannelListingLinkInput = z.infer<typeof channelListingLinkSchema>
+
+export const channelListingPatchSchema = z.object({
+  overridePrice: z.boolean().optional(),
+  nightlyPrice: z.coerce.number().nonnegative().optional(),
+  currency: z.enum(['USD', 'DOP']).optional(),
+})
+export type ChannelListingPatchInput = z.infer<typeof channelListingPatchSchema>
+
+export const channelBookingPatchSchema = z.object({
+  commissionStatus: z.enum(['pending', 'invoiced', 'paid']),
+})
+export type ChannelBookingPatchInput = z.infer<typeof channelBookingPatchSchema>
+
+export const bookingAffiliateSettingsSchema = z.object({
+  affiliateId: z.string().optional().or(z.literal('')),
+  isEnabled: z.boolean().default(false),
+})
+export type BookingAffiliateSettingsInput = z.infer<typeof bookingAffiliateSettingsSchema>
+
 export const businessServiceSchema = z.object({
   name: z.string().min(2),
   description: z.string().optional(),

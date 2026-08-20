@@ -77,6 +77,34 @@ export interface PreventaProjectWithDetails extends PreventaProject {
   agents: Pick<AiAgent, 'id' | 'name' | 'specialty' | 'status'>[]
 }
 
+// ─── Channels (Airbnb/Booking/VRBO real, via channel-manager co-hosting) ──
+export type ChannelProviderAccount = Tables<'channel_provider_accounts'>
+export type ChannelHostConnection = Tables<'channel_host_connections'>
+export type ChannelListing = Tables<'channel_listings'>
+export type ChannelBooking = Tables<'channel_bookings'>
+export type ChannelSyncLogEntry = Tables<'channel_sync_log'>
+export type BookingAffiliateSettings = Tables<'booking_affiliate_settings'>
+
+export interface ChannelHostConnectionWithStats extends ChannelHostConnection {
+  listingCount: number
+  activeListingCount: number
+  pendingCommission: number
+  paidCommission: number
+}
+
+export interface ChannelListingWithDetails extends ChannelListing {
+  listing: Pick<Listing, 'id' | 'title' | 'listing_code' | 'price' | 'currency' | 'cover_photo_url' | 'listing_type' | 'rental_period'>
+  hostConnection: Pick<ChannelHostConnection, 'id' | 'owner_name' | 'channel' | 'status' | 'commission_pct'>
+}
+
+export interface ChannelBookingWithDetails extends ChannelBooking {
+  listing: Pick<ChannelListing, 'id' | 'listing_id'> & {
+    listingTitle: string
+    ownerName: string
+    channel: ChannelHostConnection['channel']
+  }
+}
+
 // ─── Bank transfer payments (manual plan-upgrade path) ────────────────────
 export type BankTransferPayment = Tables<'bank_transfer_payments'>
 

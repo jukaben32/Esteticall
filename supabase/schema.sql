@@ -1315,3 +1315,238 @@ create policy "Business owners can view their own bank transfer requests"
 drop policy if exists "Business owners can create their own bank transfer requests" on bank_transfer_payments;
 create policy "Business owners can create their own bank transfer requests"
   on bank_transfer_payments for insert with check (is_business_owner(business_id) and status = 'pending');
+
+-- 44. CHANNEL PROVIDER ACCOUNTS — the business's own master account with a
+-- certified Airbnb/Booking/VRBO channel-manager partner (Hostaway to start;
+-- `provider` stays a column, not a hardcoded assumption, so Guesty/Lodgify
+-- can be added later without a schema change). There is no such thing as a
+-- direct "Airbnb API key" — Airbnb only grants API access to vetted PMS
+-- partners, so every real-Airbnb feature in this app goes through this one
+-- account. client_secret_encrypted is the Hostaway OAuth client secret,
+-- ENCRYPTED at the application layer (src/lib/encryption.ts) before it ever
+-- reaches Postgres — never store it, or read it back, as plaintext.
+create table if not exists channel_provider_accounts (
+  id                       uuid primary key default gen_random_uuid(),
+  business_id              uuid not null references businesses(id) on delete cascade,
+  provider                 text not null default 'hostaway' check (provider in ('hostaway')),
+  account_id               text,
+  client_secret_encrypted  text,
+  -- Each business connects its OWN Hostaway account, and Hostaway lets each
+  -- account define its own webhook signing secret — a single app-wide
+  -- HOSTAWAY_WEBHOOK_SECRET env var would only work for one tenant. Stored
+  -- encrypted for the same reason as client_secret_encrypted.
+  webhook_secret_encrypted text,
+  status                   text not null default 'pending'
+    check (status in ('pending','active','error','disabled')),
+  error_message            text,
+  connected_at             timestamptz,
+  created_at               timestamptz not null default now(),
+  updated_at               timestamptz not null default now()
+);
+
+create unique index if not exists uq_channel_provider_accounts_business_id
+  on channel_provider_accounts (business_id);
+
+drop trigger if exists update_channel_provider_accounts_updated_at on channel_provider_accounts;
+create trigger update_channel_provider_accounts_updated_at
+  before update on channel_provider_accounts
+  for each row execute function update_updated_at_column();
+
+alter table channel_provider_accounts enable row level security;
+
+drop policy if exists "Business owners can manage their channel provider account" on channel_provider_accounts;
+create policy "Business owners can manage their channel provider account"
+  on channel_provider_accounts for all using (is_business_owner(business_id));
+
+-- 45. CHANNEL HOST CONNECTIONS — one row per THIRD-PARTY property owner's own
+-- Airbnb/Booking/VRBO account under co-hosting, not one row per business.
+-- Airbnb requires each owner to keep their own separate account (mixing
+-- several owners' properties under one login violates its policies), so the
+-- business's single channel_provider_accounts row fans out into many of
+-- these — each carrying the commission_pct this business negotiated
+-- directly with that owner (Airbnb is not involved in that cut; the formal
+-- "Co-Host Network" marketplace isn't available in the Dominican Republic
+-- yet, so these connections come from the agency's own client pipeline).
+-- client_id optionally links back to an existing CRM lead, but onboarding a
+-- property never requires one to exist first.
+create table if not exists channel_host_connections (
+  id                   uuid primary key default gen_random_uuid(),
+  business_id          uuid not null references businesses(id) on delete cascade,
+  provider_account_id  uuid not null references channel_provider_accounts(id) on delete cascade,
+  client_id            uuid references clients(id) on delete set null,
+  owner_name           text not null,
+  owner_phone          text,
+  owner_email          text,
+  channel              text not null check (channel in ('airbnb','booking','vrbo')),
+  external_account_id  text,
+  commission_pct       numeric(5,2) not null default 18
+    check (commission_pct >= 0 and commission_pct <= 100),
+  status               text not null default 'pending'
+    check (status in ('pending','active','error','disabled')),
+  error_message        text,
+  last_sync_at         timestamptz,
+  created_at           timestamptz not null default now(),
+  updated_at           timestamptz not null default now()
+);
+
+create index if not exists idx_channel_host_connections_business_id on channel_host_connections (business_id);
+create index if not exists idx_channel_host_connections_provider_account_id
+  on channel_host_connections (provider_account_id);
+
+drop trigger if exists update_channel_host_connections_updated_at on channel_host_connections;
+create trigger update_channel_host_connections_updated_at
+  before update on channel_host_connections
+  for each row execute function update_updated_at_column();
+
+alter table channel_host_connections enable row level security;
+
+drop policy if exists "Business owners can manage their channel host connections" on channel_host_connections;
+create policy "Business owners can manage their channel host connections"
+  on channel_host_connections for all using (is_business_owner(business_id));
+
+-- 46. CHANNEL LISTINGS — mapping: a local `listings` row (must be
+-- listing_type = 'vacation_rental', enforced in src/services/channels.ts,
+-- not here, since it's a cross-table rule) linked to the specific owner's
+-- channel_host_connections row it publishes under. nightly_price is the
+-- normalized per-night rate actually pushed to the channel — `listings.price`
+-- alone is ambiguous (it can be a sale price, a monthly rent, or a nightly
+-- vacation rate depending on listing_type/rental_period), so this column is
+-- always what gets sent, whether computed automatically or overridden.
+create table if not exists channel_listings (
+  id                   uuid primary key default gen_random_uuid(),
+  business_id          uuid not null references businesses(id) on delete cascade,
+  host_connection_id   uuid not null references channel_host_connections(id) on delete cascade,
+  listing_id           uuid not null references listings(id) on delete cascade,
+  external_listing_id  text,
+  channel_status       text not null default 'pending'
+    check (channel_status in ('pending','syncing','active','paused','error')),
+  nightly_price        numeric(14,2),
+  currency             text not null default 'USD' check (currency in ('USD','DOP')),
+  override_price       boolean not null default false,
+  error_message        text,
+  last_synced_at       timestamptz,
+  created_at           timestamptz not null default now(),
+  updated_at           timestamptz not null default now()
+);
+
+create index if not exists idx_channel_listings_business_id on channel_listings (business_id);
+create index if not exists idx_channel_listings_host_connection_id on channel_listings (host_connection_id);
+create index if not exists idx_channel_listings_listing_id on channel_listings (listing_id);
+create unique index if not exists uq_channel_listings_listing_host_connection
+  on channel_listings (listing_id, host_connection_id);
+
+drop trigger if exists update_channel_listings_updated_at on channel_listings;
+create trigger update_channel_listings_updated_at
+  before update on channel_listings
+  for each row execute function update_updated_at_column();
+
+alter table channel_listings enable row level security;
+
+drop policy if exists "Business owners can manage their channel listings" on channel_listings;
+create policy "Business owners can manage their channel listings"
+  on channel_listings for all using (is_business_owner(business_id));
+
+-- 47. CHANNEL BOOKINGS — real reservations pulled in from Airbnb/Booking/VRBO
+-- via the channel manager. This is the piece a pure "listing sync" plan is
+-- missing: without persisted bookings there is no way to (a) block a
+-- calendar date so the same property can't double-book across channels, or
+-- (b) know how much co-host commission is owed. commission_pct/amount are
+-- snapshotted at booking time — the owner's negotiated rate can change later
+-- without rewriting the history of what was actually earned on past stays.
+create table if not exists channel_bookings (
+  id                   uuid primary key default gen_random_uuid(),
+  business_id          uuid not null references businesses(id) on delete cascade,
+  channel_listing_id   uuid not null references channel_listings(id) on delete cascade,
+  external_booking_id  text,
+  guest_name           text,
+  guest_email          text,
+  guest_phone          text,
+  check_in             date not null,
+  check_out            date not null,
+  nights               integer not null default 0,
+  gross_amount         numeric(14,2) not null default 0,
+  currency             text not null default 'USD' check (currency in ('USD','DOP')),
+  commission_pct       numeric(5,2) not null default 0,
+  commission_amount    numeric(14,2) not null default 0,
+  commission_status    text not null default 'pending'
+    check (commission_status in ('pending','invoiced','paid')),
+  status               text not null default 'confirmed'
+    check (status in ('confirmed','cancelled','completed')),
+  created_at           timestamptz not null default now(),
+  updated_at           timestamptz not null default now()
+);
+
+create index if not exists idx_channel_bookings_business_id on channel_bookings (business_id);
+create index if not exists idx_channel_bookings_channel_listing_id on channel_bookings (channel_listing_id);
+create index if not exists idx_channel_bookings_check_in on channel_bookings (check_in);
+create unique index if not exists uq_channel_bookings_listing_external_id
+  on channel_bookings (channel_listing_id, external_booking_id)
+  where external_booking_id is not null;
+
+drop trigger if exists update_channel_bookings_updated_at on channel_bookings;
+create trigger update_channel_bookings_updated_at
+  before update on channel_bookings
+  for each row execute function update_updated_at_column();
+
+alter table channel_bookings enable row level security;
+
+drop policy if exists "Business owners can manage their channel bookings" on channel_bookings;
+create policy "Business owners can manage their channel bookings"
+  on channel_bookings for all using (is_business_owner(business_id));
+
+-- 48. CHANNEL SYNC LOG — audit trail for every push/pull/webhook event across
+-- the channel-manager integration, scoped to whichever host connection or
+-- listing it concerns (both nullable: a webhook whose payload doesn't match
+-- anything local still gets logged for visibility instead of silently
+-- dropped).
+create table if not exists channel_sync_log (
+  id                   uuid primary key default gen_random_uuid(),
+  business_id          uuid not null references businesses(id) on delete cascade,
+  host_connection_id   uuid references channel_host_connections(id) on delete set null,
+  listing_id           uuid references listings(id) on delete set null,
+  action               text not null check (action in ('push','pull','sync','connect','disconnect','webhook')),
+  direction            text not null check (direction in ('outbound','inbound')),
+  status               text not null default 'success'
+    check (status in ('success','error','pending')),
+  payload              jsonb,
+  error_message        text,
+  created_at           timestamptz not null default now()
+);
+
+create index if not exists idx_channel_sync_log_business_id on channel_sync_log (business_id);
+create index if not exists idx_channel_sync_log_created_at on channel_sync_log (created_at);
+
+alter table channel_sync_log enable row level security;
+
+drop policy if exists "Business owners can view their channel sync log" on channel_sync_log;
+create policy "Business owners can view their channel sync log"
+  on channel_sync_log for select using (is_business_owner(business_id));
+
+-- 49. BOOKING.COM AFFILIATE SETTINGS — unlike Airbnb (closed its open
+-- affiliate program in 2021, now invite-only for large-audience creators),
+-- Booking.com runs a genuinely open, self-serve affiliate program. This just
+-- stores the business's own affiliate ID ("aid") so the website builder
+-- (src/services/websites.ts) can render a tracked search widget — no API
+-- credentials, no channel manager involved.
+create table if not exists booking_affiliate_settings (
+  id           uuid primary key default gen_random_uuid(),
+  business_id  uuid not null references businesses(id) on delete cascade,
+  affiliate_id text,
+  is_enabled   boolean not null default false,
+  created_at   timestamptz not null default now(),
+  updated_at   timestamptz not null default now()
+);
+
+create unique index if not exists uq_booking_affiliate_settings_business_id
+  on booking_affiliate_settings (business_id);
+
+drop trigger if exists update_booking_affiliate_settings_updated_at on booking_affiliate_settings;
+create trigger update_booking_affiliate_settings_updated_at
+  before update on booking_affiliate_settings
+  for each row execute function update_updated_at_column();
+
+alter table booking_affiliate_settings enable row level security;
+
+drop policy if exists "Business owners can manage their booking affiliate settings" on booking_affiliate_settings;
+create policy "Business owners can manage their booking affiliate settings"
+  on booking_affiliate_settings for all using (is_business_owner(business_id));

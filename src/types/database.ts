@@ -285,6 +285,143 @@ export interface Database {
         Update: Partial<Database['public']['Tables']['bank_transfer_payments']['Row']>
         Relationships: []
       }
+      channel_provider_accounts: {
+        Row: {
+          id: string
+          business_id: string
+          provider: 'hostaway'
+          account_id: string | null
+          client_secret_encrypted: string | null
+          webhook_secret_encrypted: string | null
+          status: 'pending' | 'active' | 'error' | 'disabled'
+          error_message: string | null
+          connected_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: Partial<Database['public']['Tables']['channel_provider_accounts']['Row']> & {
+          business_id: string
+        }
+        Update: Partial<Database['public']['Tables']['channel_provider_accounts']['Row']>
+        Relationships: []
+      }
+      channel_host_connections: {
+        Row: {
+          id: string
+          business_id: string
+          provider_account_id: string
+          client_id: string | null
+          owner_name: string
+          owner_phone: string | null
+          owner_email: string | null
+          channel: 'airbnb' | 'booking' | 'vrbo'
+          external_account_id: string | null
+          commission_pct: number
+          status: 'pending' | 'active' | 'error' | 'disabled'
+          error_message: string | null
+          last_sync_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: Partial<Database['public']['Tables']['channel_host_connections']['Row']> & {
+          business_id: string
+          provider_account_id: string
+          owner_name: string
+          channel: 'airbnb' | 'booking' | 'vrbo'
+        }
+        Update: Partial<Database['public']['Tables']['channel_host_connections']['Row']>
+        Relationships: []
+      }
+      channel_listings: {
+        Row: {
+          id: string
+          business_id: string
+          host_connection_id: string
+          listing_id: string
+          external_listing_id: string | null
+          channel_status: 'pending' | 'syncing' | 'active' | 'paused' | 'error'
+          nightly_price: number | null
+          currency: 'USD' | 'DOP'
+          override_price: boolean
+          error_message: string | null
+          last_synced_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: Partial<Database['public']['Tables']['channel_listings']['Row']> & {
+          business_id: string
+          host_connection_id: string
+          listing_id: string
+        }
+        Update: Partial<Database['public']['Tables']['channel_listings']['Row']>
+        Relationships: []
+      }
+      channel_bookings: {
+        Row: {
+          id: string
+          business_id: string
+          channel_listing_id: string
+          external_booking_id: string | null
+          guest_name: string | null
+          guest_email: string | null
+          guest_phone: string | null
+          check_in: string
+          check_out: string
+          nights: number
+          gross_amount: number
+          currency: 'USD' | 'DOP'
+          commission_pct: number
+          commission_amount: number
+          commission_status: 'pending' | 'invoiced' | 'paid'
+          status: 'confirmed' | 'cancelled' | 'completed'
+          created_at: string
+          updated_at: string
+        }
+        Insert: Partial<Database['public']['Tables']['channel_bookings']['Row']> & {
+          business_id: string
+          channel_listing_id: string
+          check_in: string
+          check_out: string
+        }
+        Update: Partial<Database['public']['Tables']['channel_bookings']['Row']>
+        Relationships: []
+      }
+      channel_sync_log: {
+        Row: {
+          id: string
+          business_id: string
+          host_connection_id: string | null
+          listing_id: string | null
+          action: 'push' | 'pull' | 'sync' | 'connect' | 'disconnect' | 'webhook'
+          direction: 'outbound' | 'inbound'
+          status: 'success' | 'error' | 'pending'
+          payload: Json | null
+          error_message: string | null
+          created_at: string
+        }
+        Insert: Partial<Database['public']['Tables']['channel_sync_log']['Row']> & {
+          business_id: string
+          action: 'push' | 'pull' | 'sync' | 'connect' | 'disconnect' | 'webhook'
+          direction: 'outbound' | 'inbound'
+        }
+        Update: Partial<Database['public']['Tables']['channel_sync_log']['Row']>
+        Relationships: []
+      }
+      booking_affiliate_settings: {
+        Row: {
+          id: string
+          business_id: string
+          affiliate_id: string | null
+          is_enabled: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: Partial<Database['public']['Tables']['booking_affiliate_settings']['Row']> & {
+          business_id: string
+        }
+        Update: Partial<Database['public']['Tables']['booking_affiliate_settings']['Row']>
+        Relationships: []
+      }
       agent_services: {
         Row: {
           agent_id: string
