@@ -1010,6 +1010,32 @@ plantilla adaptable.**
 - Commit y push proactivos para no perder trabajo.
 - El backend Express anterior sigue siendo recuperable desde el historial de `main`,
   en el commit `ee3a7d9`.
+
+## NOTA TÉCNICA — Next.js: no pasar funciones de Server a Client Components (22 agosto 2026)
+
+Si se le agrega un formateador de valores (ej. "%", moneda) a `AnalyticsCharts.tsx`
+o `OverviewTrendChart.tsx` (hoy no lo tienen, solo reciben arrays de datos),
+**nunca pasarle una función inline** desde la página que los renderiza si esa
+página es un Server Component:
+
+```tsx
+// MAL -- revienta con "Algo salió mal" (función no serializable)
+<OverviewTrendChart valueFormatter={(v) => `${v}%`} />
+```
+
+Next.js no puede serializar funciones a través del límite servidor→cliente.
+En su lugar, pasar un string plano y resolver el formateador *dentro* del
+componente `'use client'`:
+
+```tsx
+// BIEN
+<OverviewTrendChart valueFormat="percent" />
+```
+
+Encontrado y corregido en el proyecto hermano `n8n-school-expert-landingpage`
+(página de Analíticas, confirmado con los logs de Vercel). Aplica este mismo
+patrón si se le agrega formato a estos gráficos.
+
 ## ACTUALIZACION 9 DE AGOSTO DE 2026
 
 Se dejo preparado el proyecto de referencia para quedar al mismo nivel
