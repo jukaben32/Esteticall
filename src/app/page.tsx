@@ -12,10 +12,30 @@ const STEPS = [
 ]
 
 const DEMO_TREATMENTS = [
-  { title: 'Toxina Botulínica - Frente', price: 'Desde $250', category: 'Inyectables' },
-  { title: 'HydraFacial', price: '$150', category: 'Faciales' },
-  { title: 'Depilación Láser - Piernas', price: '$200', category: 'Láser' },
-  { title: 'Criolipólisis', price: 'Desde $300', category: 'Corporal' },
+  {
+    title: 'Toxina Botulínica - Frente',
+    price: 'Desde $250',
+    category: 'Inyectables',
+    image: 'https://images.unsplash.com/photo-1746708810803-722593e53772?w=800&q=80&auto=format&fit=crop',
+  },
+  {
+    title: 'HydraFacial',
+    price: '$150',
+    category: 'Faciales',
+    image: 'https://images.unsplash.com/photo-1643684391140-c5056cfd3436?w=800&q=80&auto=format&fit=crop',
+  },
+  {
+    title: 'Depilación Láser - Piernas',
+    price: '$200',
+    category: 'Láser',
+    image: 'https://images.unsplash.com/photo-1700760933574-9f0f4ea9aa3b?w=800&q=80&auto=format&fit=crop',
+  },
+  {
+    title: 'Criolipólisis',
+    price: 'Desde $300',
+    category: 'Corporal',
+    image: 'https://images.unsplash.com/photo-1761819922058-d15028ed9817?w=800&q=80&auto=format&fit=crop',
+  },
 ]
 
 export default function LandingPage() {
@@ -265,7 +285,10 @@ export default function LandingPage() {
           <div className="mt-10 grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
             {DEMO_TREATMENTS.map((t) => (
               <div key={t.title} className="card-surface p-5">
-                <div className="aspect-video rounded-xl bg-[var(--teal-50)] mb-4" />
+                <div className="aspect-video rounded-xl bg-[var(--teal-50)] mb-4 overflow-hidden">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={t.image} alt={t.title} className="w-full h-full object-cover" loading="lazy" />
+                </div>
                 <p className="font-semibold text-[var(--text-1)]">{t.title}</p>
                 <p className="text-[var(--teal-700)] font-semibold mt-1">{t.price}</p>
                 <p className="text-xs text-[var(--text-3)] mt-1">{t.category}</p>
@@ -378,6 +401,14 @@ export default function LandingPage() {
           <div className="flex gap-5">
             <a href="#features" className="hover:text-[var(--text-1)] transition-colors">Funciones</a>
             <a href="#pricing" className="hover:text-[var(--text-1)] transition-colors">Precios</a>
+            <a
+              href="https://claude.ai/code/artifact/51c2981f-6c20-496b-a99b-f6a8690886df"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-[var(--text-1)] transition-colors"
+            >
+              Guía del usuario
+            </a>
             <Link href="/login" className="hover:text-[var(--text-1)] transition-colors">Acceder</Link>
           </div>
         </div>
