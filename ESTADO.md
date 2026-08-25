@@ -62,19 +62,48 @@ remote de GitHub configurado todavía).
   nuevos enlaces.
 - `npx tsc --noEmit` y `npm run build` siguen pasando limpio con todo esto.
 
+## PROYECTO SUPABASE REAL (25 agosto 2026)
+
+Conectado a un proyecto Supabase real: `fmdkifhpngvihwcmltpp`
+(`https://fmdkifhpngvihwcmltpp.supabase.co`).
+
+- `supabase/schema.sql` aplicado — las 32 tablas verificadas contra
+  `information_schema.tables`.
+- Buckets de Storage creados: `listing-photos` (público, para fotos del
+  website builder) y `patient-photos` (privado, para Antes y Después).
+- Auth: `mailer_autoconfirm` activado para que el signup dé sesión
+  inmediata en dev sin depender de que Resend esté configurado todavía
+  (`site_url` ya apuntaba a `http://localhost:3000`). Volver a exigir
+  confirmación de correo antes de ir a producción real.
+- `.env.local` creado con las credenciales de este proyecto +
+  `HEALTH_DATA_ENCRYPTION_KEY` y `CRON_SECRET` generados localmente.
+  **No está en git** (confirmado contra `.gitignore`).
+- Probado de punta a punta: signup contra Supabase real devuelve sesión
+  inmediata (usuario de prueba creado y borrado después).
+- `npm run dev` corriendo en `http://localhost:3000`.
+
+⚠️ El Personal Access Token de la Management API (`sbp_...`) que se usó para
+esta configuración se compartió en el chat — recomendado rotarlo desde
+Supabase (Account → Access Tokens) una vez terminada la puesta en marcha,
+ya que da acceso de administración a toda la cuenta, no solo a este proyecto.
+
 ## PENDIENTE
 
-Todo lo que queda requiere cuentas/credenciales reales que solo el usuario
-puede proveer — no es código pendiente, es configuración de infraestructura:
+Lo que queda son credenciales de terceros que el usuario debe decidir cuándo
+cargar (en `.env.local`, ver `.env.example` para cada una):
 
-1. **Proyecto Supabase real** — crear el proyecto, correr `supabase/schema.sql`,
-   y crear el bucket privado `patient-photos` (Storage → New bucket → Public:
-   OFF) para que Antes y Después funcione.
-2. **Variables de entorno reales** — llenar `.env.local` a partir de
-   `.env.example` (Supabase, OpenAI, Resend, `HEALTH_DATA_ENCRYPTION_KEY`,
-   `CRON_SECRET`).
-3. **Deploy en Vercel** — crear un remote de GitHub (o conectar el repo local
-   directo) y desplegar; el cron de recordatorios (`vercel.json`) solo corre
-   una vez desplegado, no en local.
-4. **Stripe/WhatsApp reales** — keys de Stripe (modo test primero) y una
-   instancia propia de Evolution API si se quiere WhatsApp funcional.
+1. **`OPENAI_API_KEY`** — sin esto el agente de voz (Realtime API) no
+   funciona.
+2. **`RESEND_API_KEY`** — sin esto no salen correos (confirmaciones de
+   cita, recordatorios). Mientras tanto el signup ya funciona por el punto
+   anterior (autoconfirm), pero las notificaciones por email no.
+3. **Stripe** (`NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`, `STRIPE_SECRET_KEY`,
+   `STRIPE_WEBHOOK_SECRET`) — modo test primero.
+4. **WhatsApp** (`EVOLUTION_API_URL`, `EVOLUTION_API_KEY`) — requiere
+   levantar tu propia instancia de Evolution API en un VPS; sin esto
+   `/dashboard/whatsapp` muestra "no configurado" en vez de fallar.
+5. **Deploy en Vercel** — crear un remote de GitHub (o conectar el repo
+   local directo) y desplegar; el cron de recordatorios (`vercel.json`)
+   solo corre una vez desplegado, no en local. Ahí también hay que cargar
+   `CRON_SECRET` como env var del proyecto en Vercel (mismo valor que en
+   `.env.local`, o generar uno nuevo).
