@@ -24,6 +24,9 @@ import {
   LifeBuoy,
   Settings,
   ShieldCheck,
+  Package,
+  FileSignature,
+  Images,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
@@ -43,6 +46,9 @@ export const NAV_SECTIONS = [
     items: [
       { href: '/dashboard/ai-agents', label: 'Agentes IA', icon: Bot },
       { href: '/dashboard/services', label: 'Tratamientos', icon: Briefcase },
+      { href: '/dashboard/paquetes', label: 'Paquetes', icon: Package },
+      { href: '/dashboard/consentimientos', label: 'Consentimientos', icon: FileSignature },
+      { href: '/dashboard/antes-despues', label: 'Antes y Después', icon: Images },
       { href: '/dashboard/knowledge', label: 'Conocimiento', icon: BookOpen },
       { href: '/dashboard/widget', label: 'Widget', icon: MessagesSquare },
       { href: '/dashboard/whatsapp', label: 'WhatsApp', icon: MessageCircle },

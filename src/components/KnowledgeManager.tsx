@@ -21,15 +21,15 @@ import { FAQ_CATEGORIES, FAQ_TEMPLATES, type FaqTemplate } from '@/data/faqTempl
 type ToastMsg = { id: string; message: string }
 
 const CATEGORY_BADGE: Record<string, string> = {
-  'Visitas a propiedades': 'bg-[var(--teal-50)] text-[var(--teal-700)]',
-  Compra: 'bg-emerald-50 text-emerald-700',
-  Venta: 'bg-purple-50 text-purple-700',
-  Alquiler: 'bg-amber-50 text-amber-700',
-  'Horario y ubicación': 'bg-red-50 text-red-700',
-  'Propiedades de inversión': 'bg-sky-50 text-sky-700',
-  'Construcción nueva': 'bg-indigo-50 text-indigo-700',
-  'Mercado y precios': 'bg-pink-50 text-pink-700',
-  'Proceso y legal': 'bg-slate-100 text-slate-700',
+  Citas: 'bg-[var(--teal-50)] text-[var(--teal-700)]',
+  'Tratamientos faciales': 'bg-emerald-50 text-emerald-700',
+  'Tratamientos corporales': 'bg-purple-50 text-purple-700',
+  'Toxina botulínica y rellenos': 'bg-amber-50 text-amber-700',
+  'Depilación láser': 'bg-red-50 text-red-700',
+  'Horario y ubicación': 'bg-sky-50 text-sky-700',
+  'Paquetes y membresías': 'bg-indigo-50 text-indigo-700',
+  'Seguridad y contraindicaciones': 'bg-pink-50 text-pink-700',
+  'Pagos y políticas': 'bg-slate-100 text-slate-700',
 }
 const DEFAULT_BADGE = 'bg-[var(--bg-raised)] text-[var(--text-3)]'
 

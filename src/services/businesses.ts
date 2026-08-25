@@ -62,7 +62,7 @@ export async function createBusiness(
     business_id: data.id,
     is_enabled: true,
     primary_color: '#0E7C5A',
-    greeting_message: '¡Hola! Pregúntame sobre cualquiera de nuestras propiedades.',
+    greeting_message: '¡Hola! Pregúntame sobre nuestros tratamientos y disponibilidad.',
     allowed_origins: [],
   })
   if (widgetError) throw widgetError

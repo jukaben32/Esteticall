@@ -21,9 +21,9 @@ export default async function ServicesPage() {
           <Briefcase className="w-4 h-4" />
         </span>
         <div>
-          <h1 className="font-display font-semibold text-xl text-[var(--text-1)]">Servicios</h1>
+          <h1 className="font-display font-semibold text-xl text-[var(--text-1)]">Tratamientos</h1>
           <p className="text-sm text-[var(--text-3)]">
-            Lo que tus agentes IA pueden ofrecer a quien llama, sin depender de una sola propiedad.
+            Lo que tus agentes IA pueden ofrecer a quien llama: tu catálogo de tratamientos.
           </p>
         </div>
       </div>

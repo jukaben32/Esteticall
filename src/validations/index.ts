@@ -308,3 +308,25 @@ export const packageSchema = z.object({
   isActive: z.boolean().default(true),
 })
 export type PackageInput = z.infer<typeof packageSchema>
+
+export const sellPackageSchema = z.object({
+  clientId: z.string().uuid(),
+  packageId: z.string().uuid(),
+  sessionsTotal: z.coerce.number().int().positive(),
+  validityDays: z.coerce.number().int().positive().optional(),
+})
+export type SellPackageInput = z.infer<typeof sellPackageSchema>
+
+export const consentFormSchema = z.object({
+  clientId: z.string().uuid(),
+  serviceId: z.string().uuid().optional(),
+  appointmentId: z.string().uuid().optional(),
+  title: z.string().min(3),
+  content: z.string().min(10),
+})
+export type ConsentFormCreateInput = z.infer<typeof consentFormSchema>
+
+export const consentFormSignSchema = z.object({
+  signatureName: z.string().min(2, 'Escribe tu nombre completo'),
+})
+export type ConsentFormSignInput = z.infer<typeof consentFormSignSchema>
