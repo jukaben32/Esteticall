@@ -28,8 +28,6 @@ export async function POST(request: Request) {
     name: input.clientName,
     phone: input.clientPhone,
     email: input.clientEmail || undefined,
-    budget: input.budget,
-    preApprovalNumber: input.preApprovalNumber,
     source: 'manual',
   })
 
@@ -38,7 +36,6 @@ export async function POST(request: Request) {
 
   try {
     const appointment = await createAppointment(supabase, business.id, plan, {
-      listingId: input.listingId,
       serviceId: input.serviceId,
       clientId: client.id,
       scheduledAt: input.scheduledAt,

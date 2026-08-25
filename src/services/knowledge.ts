@@ -118,7 +118,7 @@ export async function deletePlatformKnowledgeDocument(supabase: DB, documentId: 
 }
 
 // Concatenated into the Realtime system prompt (see src/ai) so the agent can
-// ground answers in business-specific facts beyond what's in `listings`.
+// ground answers in business-specific facts beyond what's in `business_services`.
 // PlatformKnowledgeDocument has no is_active toggle (always published), so
 // only KnowledgeDocument rows get filtered here.
 export function formatKnowledgeForPrompt(docs: (KnowledgeDocument | PlatformKnowledgeDocument)[]): string {

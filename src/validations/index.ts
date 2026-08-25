@@ -42,88 +42,13 @@ export const supportTicketStatusSchema = z.object({
 })
 export type SupportTicketStatusInput = z.infer<typeof supportTicketStatusSchema>
 
-export const listingSchema = z.object({
-  title: z.string().min(3),
-  description: z.string().optional(),
-  listingType: z.enum(['sale', 'rent', 'vacation_rental']),
-  propertyType: z.enum(['house', 'apartment', 'townhouse', 'commercial', 'condo', 'land', 'industrial', 'other']),
-  status: z.enum(['available', 'pending', 'sold', 'rented', 'withdrawn']).default('available'),
-  price: z.coerce.number().nonnegative(),
-  currency: z.enum(['USD', 'DOP']).default('USD'),
-  priceDisplay: z.enum(['fixed', 'negotiable', 'starting_at', 'contact']).default('fixed'),
-  rentalPeriod: z.enum(['night', 'week', 'month']).optional(),
-  confoturEligible: z.boolean().default(false),
-  deliveryDate: z.string().optional().or(z.literal('')),
-  bedrooms: z.coerce.number().int().nonnegative(),
-  bathrooms: z.coerce.number().int().nonnegative(),
-  areaSqft: z.coerce.number().int().nonnegative(),
-  parkingSpaces: z.coerce.number().int().nonnegative().default(0),
-  yearBuilt: z.coerce.number().int().optional(),
-  addressLine: z.string().optional(),
-  areaName: z.string().optional(),
-  city: z.string().optional(),
-  state: z.string().optional(),
-  zip: z.string().optional(),
-  amenities: z.array(z.string()).default([]),
-  featured: z.boolean().default(false),
-  visibleToAiAgent: z.boolean().default(true),
-  virtualTourUrl: z.string().url().optional().or(z.literal('')),
-  lotFrontageM: z.coerce.number().nonnegative().optional(),
-  lotDepthM: z.coerce.number().nonnegative().optional(),
-  cadastralDistrict: z.string().optional(),
-  latitude: z.coerce.number().min(-90).max(90).optional(),
-  longitude: z.coerce.number().min(-180).max(180).optional(),
-})
-export type ListingInput = z.infer<typeof listingSchema>
-
-export const preventaProjectSchema = z.object({
-  name: z.string().min(3),
-  description: z.string().optional(),
-  phase: z.enum(['lanzamiento', 'en_construccion', 'entrega']).default('lanzamiento'),
-  status: z.enum(['active', 'paused', 'sold_out']).default('active'),
-  developerName: z.string().optional(),
-  addressLine: z.string().optional(),
-  areaName: z.string().optional(),
-  city: z.string().optional(),
-  state: z.string().optional(),
-  zip: z.string().optional(),
-  latitude: z.coerce.number().min(-90).max(90).optional(),
-  longitude: z.coerce.number().min(-180).max(180).optional(),
-  deliveryDate: z.string().optional().or(z.literal('')),
-  reservationAmount: z.coerce.number().nonnegative().optional(),
-  reservationCurrency: z.enum(['USD', 'DOP']).default('USD'),
-  downPaymentPct: z.coerce.number().min(0).max(100).optional(),
-  financingNotes: z.string().optional(),
-  finishesDescription: z.string().optional(),
-  amenities: z.array(z.string()).default([]),
-  promoVideoUrl: z.string().url().optional().or(z.literal('')),
-  virtualTourUrl: z.string().url().optional().or(z.literal('')),
-  featured: z.boolean().default(false),
-  visibleToAiAgent: z.boolean().default(true),
-})
-export type PreventaProjectInput = z.infer<typeof preventaProjectSchema>
-
-export const preventaUnitTypeSchema = z.object({
-  name: z.string().min(1),
-  bedrooms: z.coerce.number().int().nonnegative(),
-  bathrooms: z.coerce.number().int().nonnegative(),
-  areaSqft: z.coerce.number().int().nonnegative(),
-  parkingSpaces: z.coerce.number().int().nonnegative().default(0),
-  price: z.coerce.number().nonnegative(),
-  currency: z.enum(['USD', 'DOP']).default('USD'),
-  priceDisplay: z.enum(['fixed', 'negotiable', 'starting_at', 'contact']).default('starting_at'),
-  notes: z.string().optional(),
-  sortOrder: z.coerce.number().int().default(0),
-})
-export type PreventaUnitTypeInput = z.infer<typeof preventaUnitTypeSchema>
-
 export const aiAgentSchema = z.object({
   name: z.string().min(2),
-  specialty: z.string().min(2).default('Residential Specialist'),
+  specialty: z.string().min(2).default('Aesthetic Consultant'),
   voice: z.string().default('alloy'),
   personality: z.string().default('friendly'),
   sensitivity: z.coerce.number().min(0).max(1).default(0.5),
-  language: z.string().default('en'),
+  language: z.string().default('es'),
   greetingMessage: z.string().min(5),
   systemPrompt: z.string().optional(),
   status: z.enum(['draft', 'live', 'paused']).default('draft'),
@@ -132,14 +57,11 @@ export const aiAgentSchema = z.object({
 export type AiAgentInput = z.infer<typeof aiAgentSchema>
 
 export const appointmentSchema = z.object({
-  listingId: z.string().uuid().optional(),
   serviceId: z.string().uuid().optional(),
   clientId: z.string().uuid().optional(),
   clientName: z.string().min(1).optional(),
   clientPhone: z.string().optional(),
   clientEmail: z.string().email().optional().or(z.literal('')),
-  budget: z.coerce.number().nonnegative().optional(),
-  preApprovalNumber: z.string().optional(),
   scheduledAt: z.string().datetime(),
   status: z.enum(['scheduled', 'pending_confirmation', 'completed', 'cancelled', 'no_show']).default('pending_confirmation'),
   notes: z.string().optional(),
@@ -179,12 +101,12 @@ export const websiteSchema = z.object({
   siteDescription: z.string().optional(),
   heroSubheadline: z.string().optional(),
   heroImageUrl: z.string().optional(),
-  ctaPrimaryText: z.string().default('Book a Viewing'),
-  ctaSecondaryText: z.string().default('Call Now'),
+  ctaPrimaryText: z.string().default('Reservar una Cita'),
+  ctaSecondaryText: z.string().default('Llamar Ahora'),
   yearsExperience: z.coerce.number().int().nonnegative().nullable().optional(),
   clientsServed: z.coerce.number().int().nonnegative().nullable().optional(),
   satisfactionPct: z.coerce.number().int().min(0).max(100).nullable().optional(),
-  aboutTitle: z.string().default('About Us'),
+  aboutTitle: z.string().default('Sobre Nosotros'),
   aboutStory: z.string().optional(),
   aboutPhotoUrl: z.string().optional(),
   trustBadges: z.array(z.string()).default([]),
@@ -293,12 +215,10 @@ export type WebsiteSiteUrlInput = z.infer<typeof websiteSiteUrlSchema>
 // site (no auth: any site visitor can hit this, scoped by businessId only).
 export const publicBookingSchema = z.object({
   serviceId: z.string().uuid().nullable().optional(),
-  listingId: z.string().uuid().nullable().optional(),
   scheduledAt: z.string().min(1, 'Pick a time'),
   clientName: z.string().min(1, 'Name is required'),
   clientEmail: z.string().email('Invalid email'),
   clientPhone: z.string().optional(),
-  budget: z.string().optional(),
   notes: z.string().optional(),
 })
 export type PublicBookingInput = z.infer<typeof publicBookingSchema>
@@ -364,63 +284,6 @@ export const platformKnowledgeDocumentSchema = z.object({
 })
 export type PlatformKnowledgeDocumentInput = z.infer<typeof platformKnowledgeDocumentSchema>
 
-// ─── Channels (Airbnb/Booking/VRBO real, via channel-manager co-hosting) ──
-export const channelProviderAccountSchema = z.object({
-  accountId: z.string().min(1, 'El Account ID de Hostaway es requerido'),
-  clientSecret: z.string().min(1, 'El Client Secret es requerido'),
-  webhookSecret: z.string().optional().or(z.literal('')),
-})
-export type ChannelProviderAccountInput = z.infer<typeof channelProviderAccountSchema>
-
-export const channelHostConnectionSchema = z.object({
-  ownerName: z.string().min(2, 'El nombre del propietario es requerido'),
-  ownerPhone: z.string().optional().or(z.literal('')),
-  ownerEmail: z.string().email().optional().or(z.literal('')),
-  channel: z.enum(['airbnb', 'booking', 'vrbo']),
-  commissionPct: z.coerce.number().min(0).max(100).default(18),
-  clientId: z.string().uuid().optional().or(z.literal('')),
-})
-export type ChannelHostConnectionInput = z.infer<typeof channelHostConnectionSchema>
-
-// Only fields a business owner should ever be able to PATCH directly —
-// status is deliberately limited to the two manual transitions (pause /
-// resume); 'error' and 'pending' are only ever system-set by the sync layer.
-export const channelHostConnectionPatchSchema = z.object({
-  ownerName: z.string().min(2).optional(),
-  ownerPhone: z.string().optional().or(z.literal('')),
-  ownerEmail: z.string().email().optional().or(z.literal('')),
-  commissionPct: z.coerce.number().min(0).max(100).optional(),
-  status: z.enum(['active', 'disabled']).optional(),
-})
-export type ChannelHostConnectionPatchInput = z.infer<typeof channelHostConnectionPatchSchema>
-
-export const channelListingLinkSchema = z.object({
-  listingId: z.string().uuid(),
-  hostConnectionId: z.string().uuid(),
-  overridePrice: z.boolean().default(false),
-  nightlyPrice: z.coerce.number().nonnegative().optional(),
-  currency: z.enum(['USD', 'DOP']).optional(),
-})
-export type ChannelListingLinkInput = z.infer<typeof channelListingLinkSchema>
-
-export const channelListingPatchSchema = z.object({
-  overridePrice: z.boolean().optional(),
-  nightlyPrice: z.coerce.number().nonnegative().optional(),
-  currency: z.enum(['USD', 'DOP']).optional(),
-})
-export type ChannelListingPatchInput = z.infer<typeof channelListingPatchSchema>
-
-export const channelBookingPatchSchema = z.object({
-  commissionStatus: z.enum(['pending', 'invoiced', 'paid']),
-})
-export type ChannelBookingPatchInput = z.infer<typeof channelBookingPatchSchema>
-
-export const bookingAffiliateSettingsSchema = z.object({
-  affiliateId: z.string().optional().or(z.literal('')),
-  isEnabled: z.boolean().default(false),
-})
-export type BookingAffiliateSettingsInput = z.infer<typeof bookingAffiliateSettingsSchema>
-
 export const businessServiceSchema = z.object({
   name: z.string().min(2),
   description: z.string().optional(),
@@ -428,8 +291,20 @@ export const businessServiceSchema = z.object({
   priceMax: z.coerce.number().nonnegative().optional(),
   priceType: z.enum(['fixed', 'starting_at', 'price_range', 'call_for_price']).default('fixed'),
   durationMinutes: z.coerce.number().int().positive().default(60),
+  requiresConsent: z.boolean().default(false),
   catalogKey: z.string().optional(),
   isActive: z.boolean().default(true),
   sortOrder: z.coerce.number().int().default(0),
 })
 export type BusinessServiceInput = z.infer<typeof businessServiceSchema>
+
+export const packageSchema = z.object({
+  name: z.string().min(2),
+  description: z.string().optional(),
+  serviceId: z.string().uuid().nullable().optional(),
+  sessionCount: z.coerce.number().int().positive().default(1),
+  price: z.coerce.number().nonnegative(),
+  validityDays: z.coerce.number().int().positive().optional(),
+  isActive: z.boolean().default(true),
+})
+export type PackageInput = z.infer<typeof packageSchema>

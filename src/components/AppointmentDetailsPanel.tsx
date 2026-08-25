@@ -1,6 +1,6 @@
 'use client'
 
-import { User, Phone, Mail, DollarSign, CalendarClock, Clock3, Tag, StickyNote, X } from 'lucide-react'
+import { User, Phone, Mail, CalendarClock, Clock3, Tag, StickyNote, X } from 'lucide-react'
 import type { AppointmentWithDetails } from '@/types'
 import { formatDateTime } from '@/lib/formatDate'
 import {
@@ -82,27 +82,14 @@ export function AppointmentDetailsPanel({
           </section>
 
           <section>
-            <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-3)] mb-2">
-              Financiamiento
-            </p>
-            <div className="card-surface p-3.5">
-              <InfoRow
-                icon={DollarSign}
-                label="Presupuesto"
-                value={appt.client?.budget ? `$${appt.client.budget.toLocaleString()}` : '—'}
-              />
-            </div>
-          </section>
-
-          <section>
             <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-3)] mb-2">Cita</p>
             <div className="card-surface p-3.5 space-y-3">
               <InfoRow icon={CalendarClock} label="Programada" value={formatDateTime(appt.scheduled_at)} />
               <InfoRow icon={Clock3} label="Duración" value={`${durationMinutes} minutos`} />
               <InfoRow
                 icon={Tag}
-                label="Servicio"
-                value={appt.service?.name ?? appt.listing?.title ?? 'Visita de propiedad'}
+                label="Tratamiento"
+                value={appt.service?.name ?? 'Sin tratamiento asignado'}
               />
             </div>
           </section>

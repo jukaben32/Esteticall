@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { CalendarPlus, X } from 'lucide-react'
-import type { AppointmentWithDetails, BusinessService, Listing } from '@/types'
+import type { AppointmentWithDetails, BusinessService } from '@/types'
 import { APPOINTMENT_STATUSES } from '@/constants'
 
 const STATUS_LABELS: Record<string, string> = {
@@ -13,21 +13,17 @@ const STATUS_LABELS: Record<string, string> = {
   no_show: 'No asistió',
 }
 
-interface NewViewingModalProps {
+interface NewAppointmentModalProps {
   services: BusinessService[]
-  listings: Pick<Listing, 'id' | 'title' | 'listing_code' | 'status'>[]
   onCreated: (appointment: AppointmentWithDetails) => void
   onClose: () => void
 }
 
-export function NewViewingModal({ services, listings, onCreated, onClose }: NewViewingModalProps) {
+export function NewAppointmentModal({ services, onCreated, onClose }: NewAppointmentModalProps) {
   const [form, setForm] = useState({
     clientName: '',
     clientPhone: '',
     clientEmail: '',
-    budget: '',
-    listingId: '',
-    preApprovalNumber: '',
     serviceId: '',
     scheduledAt: '',
     status: 'pending_confirmation',
@@ -48,9 +44,6 @@ export function NewViewingModal({ services, listings, onCreated, onClose }: NewV
         clientName: form.clientName,
         clientPhone: form.clientPhone || undefined,
         clientEmail: form.clientEmail || undefined,
-        budget: form.budget || undefined,
-        listingId: form.listingId || undefined,
-        preApprovalNumber: form.preApprovalNumber || undefined,
         serviceId: form.serviceId || undefined,
         scheduledAt: new Date(form.scheduledAt).toISOString(),
         status: form.status,
@@ -83,8 +76,8 @@ export function NewViewingModal({ services, listings, onCreated, onClose }: NewV
               <CalendarPlus className="w-4 h-4" />
             </span>
             <div>
-              <h2 className="font-display font-semibold text-lg text-[var(--text-1)]">Nueva visita</h2>
-              <p className="text-xs text-[var(--text-3)]">Crea manualmente una visita a propiedad para un cliente</p>
+              <h2 className="font-display font-semibold text-lg text-[var(--text-1)]">Nueva cita</h2>
+              <p className="text-xs text-[var(--text-3)]">Agenda manualmente una cita para un cliente</p>
             </div>
           </div>
           <button type="button" onClick={onClose} aria-label="Cerrar" className="text-[var(--text-3)] hover:text-[var(--text-1)]">
@@ -137,46 +130,14 @@ export function NewViewingModal({ services, listings, onCreated, onClose }: NewV
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label className="block text-[10px] font-semibold uppercase tracking-wide text-[var(--text-3)] mb-1">
-              Rango de presupuesto
-            </label>
-            <input
-              placeholder="Presupuesto"
-              type="number"
-              value={form.budget}
-              onChange={(e) => setForm({ ...form, budget: e.target.value })}
-              className="input-field w-full"
-            />
-          </div>
-          <div>
-            <label className="block text-[10px] font-semibold uppercase tracking-wide text-[var(--text-3)] mb-1">
-              Propiedad de interés
-            </label>
-            <select
-              value={form.listingId}
-              onChange={(e) => setForm({ ...form, listingId: e.target.value })}
-              className="input-field w-full"
-            >
-              <option value="">— Seleccionar propiedad —</option>
-              {listings.map((l) => (
-                <option key={l.id} value={l.id}>
-                  {l.title} · {l.listing_code}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div>
-            <label className="block text-[10px] font-semibold uppercase tracking-wide text-[var(--text-3)] mb-1">
-              Servicio
+              Tratamiento
             </label>
             <select
               value={form.serviceId}
               onChange={(e) => setForm({ ...form, serviceId: e.target.value })}
               className="input-field w-full"
             >
-              <option value="">— Seleccionar servicio —</option>
+              <option value="">— Seleccionar tratamiento —</option>
               {services.map((s) => (
                 <option key={s.id} value={s.id}>{s.name}</option>
               ))}
@@ -194,18 +155,6 @@ export function NewViewingModal({ services, listings, onCreated, onClose }: NewV
               required
             />
           </div>
-        </div>
-
-        <div>
-          <label className="block text-[10px] font-semibold uppercase tracking-wide text-[var(--text-3)] mb-1">
-            No. de pre-aprobación
-          </label>
-          <input
-            placeholder="No. de pre-aprobación (opcional)"
-            value={form.preApprovalNumber}
-            onChange={(e) => setForm({ ...form, preApprovalNumber: e.target.value })}
-            className="input-field w-full"
-          />
         </div>
 
         <div>
@@ -243,7 +192,7 @@ export function NewViewingModal({ services, listings, onCreated, onClose }: NewV
         <div className="flex gap-2 justify-end pt-2">
           <button type="button" onClick={onClose} className="btn-secondary">Cancelar</button>
           <button type="submit" className="btn-primary" disabled={saving}>
-            {saving ? 'Agendando…' : 'Agendar visita'}
+            {saving ? 'Agendando…' : 'Agendar cita'}
           </button>
         </div>
       </form>

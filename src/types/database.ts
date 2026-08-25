@@ -68,12 +68,12 @@ export interface Database {
           specialty: string
           voice: string
           personality: string
+          language: string
           sensitivity: number
           greeting_message: string
           system_prompt: string
           status: 'draft' | 'live' | 'paused'
           calls_handled: number
-          language: string
           created_at: string
           updated_at: string
         }
@@ -84,359 +84,6 @@ export interface Database {
         Update: Partial<Database['public']['Tables']['ai_agents']['Row']>
         Relationships: []
       }
-      listings: {
-        Row: {
-          id: string
-          business_id: string
-          listing_code: string
-          title: string
-          description: string | null
-          listing_type: 'sale' | 'rent' | 'vacation_rental'
-          property_type: 'house' | 'apartment' | 'townhouse' | 'commercial' | 'condo' | 'land' | 'industrial' | 'other'
-          rental_period: 'night' | 'week' | 'month' | null
-          status: 'available' | 'pending' | 'sold' | 'rented' | 'withdrawn'
-          price: number
-          currency: 'USD' | 'DOP'
-          confotur_eligible: boolean
-          delivery_date: string | null
-          bedrooms: number
-          bathrooms: number
-          area_sqft: number
-          parking_spaces: number
-          year_built: number | null
-          address_line: string | null
-          area_name: string | null
-          city: string | null
-          state: string | null
-          zip: string | null
-          price_display: 'fixed' | 'negotiable' | 'starting_at' | 'contact'
-          lot_frontage_m: number | null
-          lot_depth_m: number | null
-          cadastral_district: string | null
-          latitude: number | null
-          longitude: number | null
-          amenities: string[]
-          featured: boolean
-          visible_to_ai_agent: boolean
-          virtual_tour_url: string | null
-          cover_photo_url: string | null
-          listed_at: string
-          created_at: string
-          updated_at: string
-        }
-        Insert: Partial<Database['public']['Tables']['listings']['Row']> & {
-          business_id: string
-          title: string
-        }
-        Update: Partial<Database['public']['Tables']['listings']['Row']>
-        Relationships: []
-      }
-      listing_photos: {
-        Row: {
-          id: string
-          listing_id: string
-          business_id: string
-          url: string
-          is_cover: boolean
-          sort_order: number
-          created_at: string
-        }
-        Insert: Partial<Database['public']['Tables']['listing_photos']['Row']> & {
-          listing_id: string
-          business_id: string
-          url: string
-        }
-        Update: Partial<Database['public']['Tables']['listing_photos']['Row']>
-        Relationships: []
-      }
-      agent_listings: {
-        Row: {
-          agent_id: string
-          listing_id: string
-          business_id: string
-          created_at: string
-        }
-        Insert: Partial<Database['public']['Tables']['agent_listings']['Row']> & {
-          agent_id: string
-          listing_id: string
-          business_id: string
-        }
-        Update: Partial<Database['public']['Tables']['agent_listings']['Row']>
-        Relationships: []
-      }
-      preventa_projects: {
-        Row: {
-          id: string
-          business_id: string
-          project_code: string
-          name: string
-          description: string | null
-          phase: 'lanzamiento' | 'en_construccion' | 'entrega'
-          status: 'active' | 'paused' | 'sold_out'
-          developer_name: string | null
-          address_line: string | null
-          area_name: string | null
-          city: string | null
-          state: string | null
-          zip: string | null
-          latitude: number | null
-          longitude: number | null
-          delivery_date: string | null
-          reservation_amount: number | null
-          reservation_currency: 'USD' | 'DOP'
-          down_payment_pct: number | null
-          financing_notes: string | null
-          finishes_description: string | null
-          amenities: string[]
-          promo_video_url: string | null
-          virtual_tour_url: string | null
-          cover_photo_url: string | null
-          featured: boolean
-          visible_to_ai_agent: boolean
-          created_at: string
-          updated_at: string
-        }
-        Insert: Partial<Database['public']['Tables']['preventa_projects']['Row']> & {
-          business_id: string
-          name: string
-        }
-        Update: Partial<Database['public']['Tables']['preventa_projects']['Row']>
-        Relationships: []
-      }
-      preventa_unit_types: {
-        Row: {
-          id: string
-          project_id: string
-          business_id: string
-          name: string
-          bedrooms: number
-          bathrooms: number
-          area_sqft: number
-          parking_spaces: number
-          price: number
-          currency: 'USD' | 'DOP'
-          price_display: 'fixed' | 'negotiable' | 'starting_at' | 'contact'
-          notes: string | null
-          sort_order: number
-          created_at: string
-          updated_at: string
-        }
-        Insert: Partial<Database['public']['Tables']['preventa_unit_types']['Row']> & {
-          project_id: string
-          business_id: string
-          name: string
-        }
-        Update: Partial<Database['public']['Tables']['preventa_unit_types']['Row']>
-        Relationships: []
-      }
-      preventa_project_photos: {
-        Row: {
-          id: string
-          project_id: string
-          business_id: string
-          url: string
-          is_cover: boolean
-          caption: string | null
-          sort_order: number
-          created_at: string
-        }
-        Insert: Partial<Database['public']['Tables']['preventa_project_photos']['Row']> & {
-          project_id: string
-          business_id: string
-          url: string
-        }
-        Update: Partial<Database['public']['Tables']['preventa_project_photos']['Row']>
-        Relationships: []
-      }
-      preventa_project_agents: {
-        Row: {
-          agent_id: string
-          project_id: string
-          business_id: string
-          created_at: string
-        }
-        Insert: Partial<Database['public']['Tables']['preventa_project_agents']['Row']> & {
-          agent_id: string
-          project_id: string
-          business_id: string
-        }
-        Update: Partial<Database['public']['Tables']['preventa_project_agents']['Row']>
-        Relationships: []
-      }
-      bank_transfer_payments: {
-        Row: {
-          id: string
-          business_id: string
-          reference_code: string
-          plan: 'pro' | 'business'
-          amount_usd: number
-          receipt_url: string | null
-          status: 'pending' | 'approved' | 'rejected'
-          reviewed_by: string | null
-          reviewed_at: string | null
-          rejection_reason: string | null
-          created_at: string
-        }
-        Insert: Partial<Database['public']['Tables']['bank_transfer_payments']['Row']> & {
-          business_id: string
-          plan: 'pro' | 'business'
-          amount_usd: number
-        }
-        Update: Partial<Database['public']['Tables']['bank_transfer_payments']['Row']>
-        Relationships: []
-      }
-      channel_provider_accounts: {
-        Row: {
-          id: string
-          business_id: string
-          provider: 'hostaway'
-          account_id: string | null
-          client_secret_encrypted: string | null
-          webhook_secret_encrypted: string | null
-          status: 'pending' | 'active' | 'error' | 'disabled'
-          error_message: string | null
-          connected_at: string | null
-          created_at: string
-          updated_at: string
-        }
-        Insert: Partial<Database['public']['Tables']['channel_provider_accounts']['Row']> & {
-          business_id: string
-        }
-        Update: Partial<Database['public']['Tables']['channel_provider_accounts']['Row']>
-        Relationships: []
-      }
-      channel_host_connections: {
-        Row: {
-          id: string
-          business_id: string
-          provider_account_id: string
-          client_id: string | null
-          owner_name: string
-          owner_phone: string | null
-          owner_email: string | null
-          channel: 'airbnb' | 'booking' | 'vrbo'
-          external_account_id: string | null
-          commission_pct: number
-          status: 'pending' | 'active' | 'error' | 'disabled'
-          error_message: string | null
-          last_sync_at: string | null
-          created_at: string
-          updated_at: string
-        }
-        Insert: Partial<Database['public']['Tables']['channel_host_connections']['Row']> & {
-          business_id: string
-          provider_account_id: string
-          owner_name: string
-          channel: 'airbnb' | 'booking' | 'vrbo'
-        }
-        Update: Partial<Database['public']['Tables']['channel_host_connections']['Row']>
-        Relationships: []
-      }
-      channel_listings: {
-        Row: {
-          id: string
-          business_id: string
-          host_connection_id: string
-          listing_id: string
-          external_listing_id: string | null
-          channel_status: 'pending' | 'syncing' | 'active' | 'paused' | 'error'
-          nightly_price: number | null
-          currency: 'USD' | 'DOP'
-          override_price: boolean
-          error_message: string | null
-          last_synced_at: string | null
-          created_at: string
-          updated_at: string
-        }
-        Insert: Partial<Database['public']['Tables']['channel_listings']['Row']> & {
-          business_id: string
-          host_connection_id: string
-          listing_id: string
-        }
-        Update: Partial<Database['public']['Tables']['channel_listings']['Row']>
-        Relationships: []
-      }
-      channel_bookings: {
-        Row: {
-          id: string
-          business_id: string
-          channel_listing_id: string
-          external_booking_id: string | null
-          guest_name: string | null
-          guest_email: string | null
-          guest_phone: string | null
-          check_in: string
-          check_out: string
-          nights: number
-          gross_amount: number
-          currency: 'USD' | 'DOP'
-          commission_pct: number
-          commission_amount: number
-          commission_status: 'pending' | 'invoiced' | 'paid'
-          status: 'confirmed' | 'cancelled' | 'completed'
-          created_at: string
-          updated_at: string
-        }
-        Insert: Partial<Database['public']['Tables']['channel_bookings']['Row']> & {
-          business_id: string
-          channel_listing_id: string
-          check_in: string
-          check_out: string
-        }
-        Update: Partial<Database['public']['Tables']['channel_bookings']['Row']>
-        Relationships: []
-      }
-      channel_sync_log: {
-        Row: {
-          id: string
-          business_id: string
-          host_connection_id: string | null
-          listing_id: string | null
-          action: 'push' | 'pull' | 'sync' | 'connect' | 'disconnect' | 'webhook'
-          direction: 'outbound' | 'inbound'
-          status: 'success' | 'error' | 'pending'
-          payload: Json | null
-          error_message: string | null
-          created_at: string
-        }
-        Insert: Partial<Database['public']['Tables']['channel_sync_log']['Row']> & {
-          business_id: string
-          action: 'push' | 'pull' | 'sync' | 'connect' | 'disconnect' | 'webhook'
-          direction: 'outbound' | 'inbound'
-        }
-        Update: Partial<Database['public']['Tables']['channel_sync_log']['Row']>
-        Relationships: []
-      }
-      booking_affiliate_settings: {
-        Row: {
-          id: string
-          business_id: string
-          affiliate_id: string | null
-          is_enabled: boolean
-          created_at: string
-          updated_at: string
-        }
-        Insert: Partial<Database['public']['Tables']['booking_affiliate_settings']['Row']> & {
-          business_id: string
-        }
-        Update: Partial<Database['public']['Tables']['booking_affiliate_settings']['Row']>
-        Relationships: []
-      }
-      agent_services: {
-        Row: {
-          agent_id: string
-          service_id: string
-          business_id: string
-          created_at: string
-        }
-        Insert: Partial<Database['public']['Tables']['agent_services']['Row']> & {
-          agent_id: string
-          service_id: string
-          business_id: string
-        }
-        Update: Partial<Database['public']['Tables']['agent_services']['Row']>
-        Relationships: []
-      }
       clients: {
         Row: {
           id: string
@@ -445,8 +92,10 @@ export interface Database {
           name: string
           phone: string | null
           email: string | null
-          budget: number | null
-          pre_approval_number: string | null
+          date_of_birth: string | null
+          allergies: string | null
+          contraindications: string | null
+          skin_type: string | null
           source: 'ai_call' | 'widget_chat' | 'manual' | 'website_form' | 'whatsapp'
           notes: string | null
           created_at: string
@@ -464,11 +113,10 @@ export interface Database {
           business_id: string
           agent_id: string | null
           client_id: string | null
-          listing_id: string | null
           channel: 'widget_voice' | 'widget_chat' | 'phone' | 'whatsapp'
           status: 'in_progress' | 'completed' | 'failed'
           duration_seconds: number
-          outcome: 'booked_viewing' | 'qualified_lead' | 'no_action' | 'escalated' | null
+          outcome: 'appointment_booked' | 'qualified_lead' | 'no_action' | 'escalated' | null
           sentiment: 'positive' | 'neutral' | 'negative' | null
           started_at: string
           ended_at: string | null
@@ -517,14 +165,98 @@ export interface Database {
         Update: Partial<Database['public']['Tables']['ai_usage_events']['Row']>
         Relationships: []
       }
+      business_services: {
+        Row: {
+          id: string
+          business_id: string
+          name: string
+          description: string | null
+          price: number | null
+          price_max: number | null
+          price_type: 'fixed' | 'starting_at' | 'price_range' | 'call_for_price'
+          duration_minutes: number
+          requires_consent: boolean
+          catalog_key: string | null
+          is_active: boolean
+          sort_order: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: Partial<Database['public']['Tables']['business_services']['Row']> & {
+          business_id: string
+          name: string
+        }
+        Update: Partial<Database['public']['Tables']['business_services']['Row']>
+        Relationships: []
+      }
+      agent_services: {
+        Row: {
+          agent_id: string
+          service_id: string
+          business_id: string
+          created_at: string
+        }
+        Insert: Partial<Database['public']['Tables']['agent_services']['Row']> & {
+          agent_id: string
+          service_id: string
+          business_id: string
+        }
+        Update: Partial<Database['public']['Tables']['agent_services']['Row']>
+        Relationships: []
+      }
+      packages: {
+        Row: {
+          id: string
+          business_id: string
+          service_id: string | null
+          name: string
+          description: string | null
+          session_count: number
+          price: number
+          validity_days: number | null
+          is_active: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: Partial<Database['public']['Tables']['packages']['Row']> & {
+          business_id: string
+          name: string
+        }
+        Update: Partial<Database['public']['Tables']['packages']['Row']>
+        Relationships: []
+      }
+      client_package_credits: {
+        Row: {
+          id: string
+          business_id: string
+          client_id: string
+          package_id: string
+          sessions_total: number
+          sessions_used: number
+          payment_status: 'pending' | 'paid' | 'refunded'
+          stripe_checkout_session_id: string | null
+          purchased_at: string
+          expires_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: Partial<Database['public']['Tables']['client_package_credits']['Row']> & {
+          business_id: string
+          client_id: string
+          package_id: string
+          sessions_total: number
+        }
+        Update: Partial<Database['public']['Tables']['client_package_credits']['Row']>
+        Relationships: []
+      }
       appointments: {
         Row: {
           id: string
           business_id: string
-          listing_id: string | null
           client_id: string | null
-          conversation_id: string | null
           service_id: string | null
+          package_credit_id: string | null
+          conversation_id: string | null
           scheduled_at: string
           status: 'scheduled' | 'pending_confirmation' | 'completed' | 'cancelled' | 'no_show'
           notes: string | null
@@ -550,6 +282,90 @@ export interface Database {
           scheduled_at: string
         }
         Update: Partial<Database['public']['Tables']['appointments']['Row']>
+        Relationships: []
+      }
+      treatment_records: {
+        Row: {
+          id: string
+          business_id: string
+          client_id: string
+          appointment_id: string | null
+          service_id: string | null
+          treated_by: string | null
+          notes_encrypted: string | null
+          contraindications_flagged: boolean
+          next_recommended_date: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: Partial<Database['public']['Tables']['treatment_records']['Row']> & {
+          business_id: string
+          client_id: string
+        }
+        Update: Partial<Database['public']['Tables']['treatment_records']['Row']>
+        Relationships: []
+      }
+      consent_forms: {
+        Row: {
+          id: string
+          business_id: string
+          client_id: string
+          service_id: string | null
+          appointment_id: string | null
+          title: string
+          content_encrypted: string
+          status: 'pending' | 'signed' | 'declined'
+          signature_name: string | null
+          signed_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: Partial<Database['public']['Tables']['consent_forms']['Row']> & {
+          business_id: string
+          client_id: string
+          title: string
+          content_encrypted: string
+        }
+        Update: Partial<Database['public']['Tables']['consent_forms']['Row']>
+        Relationships: []
+      }
+      before_after_photos: {
+        Row: {
+          id: string
+          business_id: string
+          client_id: string
+          treatment_record_id: string | null
+          photo_type: 'before' | 'after'
+          url: string
+          taken_at: string
+          created_at: string
+        }
+        Insert: Partial<Database['public']['Tables']['before_after_photos']['Row']> & {
+          business_id: string
+          client_id: string
+          photo_type: 'before' | 'after'
+          url: string
+        }
+        Update: Partial<Database['public']['Tables']['before_after_photos']['Row']>
+        Relationships: []
+      }
+      audit_log: {
+        Row: {
+          id: string
+          business_id: string
+          actor_label: string
+          action: string
+          entity_type: string
+          entity_id: string | null
+          created_at: string
+        }
+        Insert: Partial<Database['public']['Tables']['audit_log']['Row']> & {
+          business_id: string
+          actor_label: string
+          action: string
+          entity_type: string
+        }
+        Update: Partial<Database['public']['Tables']['audit_log']['Row']>
         Relationships: []
       }
       business_availability: {
@@ -578,10 +394,10 @@ export interface Database {
           business_id: string
           title: string
           content: string
-          source_url: string | null
-          is_active: boolean
           category: string | null
           catalog_key: string | null
+          source_url: string | null
+          is_active: boolean
           created_at: string
           updated_at: string
         }
@@ -610,37 +426,16 @@ export interface Database {
         Update: Partial<Database['public']['Tables']['platform_knowledge_documents']['Row']>
         Relationships: []
       }
-      whatsapp_connections: {
-        Row: {
-          id: string
-          business_id: string
-          agent_id: string | null
-          provider: 'evolution'
-          instance_name: string
-          instance_token: string | null
-          phone_number: string | null
-          status: 'disconnected' | 'connecting' | 'connected'
-          is_enabled: boolean
-          created_at: string
-          updated_at: string
-        }
-        Insert: Partial<Database['public']['Tables']['whatsapp_connections']['Row']> & {
-          business_id: string
-          instance_name: string
-        }
-        Update: Partial<Database['public']['Tables']['whatsapp_connections']['Row']>
-        Relationships: []
-      }
       widgets: {
         Row: {
           id: string
           business_id: string
           agent_id: string | null
           name: string
-          position: 'bottom-right' | 'bottom-left'
-          theme: 'light' | 'dark'
           is_enabled: boolean
           primary_color: string
+          position: 'bottom-right' | 'bottom-left'
+          theme: 'light' | 'dark'
           greeting_message: string
           allowed_origins: string[]
           impressions: number
@@ -659,18 +454,16 @@ export interface Database {
           id: string
           business_id: string
           is_published: boolean
-          headline: string | null
-          about: string | null
-          theme: string
-          custom_domain: string | null
           template: 'clarity' | 'pulse' | 'serenity'
           primary_color: string
           secondary_color: string
           font: 'inter' | 'playfair' | 'poppins'
           ai_agent_id: string | null
+          custom_domain: string | null
           logo_url: string | null
           site_title: string | null
           site_description: string | null
+          headline: string | null
           hero_subheadline: string | null
           hero_image_url: string | null
           cta_primary_text: string
@@ -679,10 +472,10 @@ export interface Database {
           clients_served: number | null
           satisfaction_pct: number | null
           about_title: string
+          about: string | null
           about_story: string | null
           about_photo_url: string | null
           trust_badges: string[]
-          featured_service_ids: string[]
           footer_tagline: string | null
           footer_copyright: string | null
           contact_phone: string | null
@@ -697,6 +490,7 @@ export interface Database {
           social_linkedin: string | null
           social_pinterest: string | null
           social_twitter: string | null
+          theme: string
           created_at: string
           updated_at: string
         }
@@ -704,24 +498,6 @@ export interface Database {
           business_id: string
         }
         Update: Partial<Database['public']['Tables']['websites']['Row']>
-        Relationships: []
-      }
-      website_subscribers: {
-        Row: {
-          id: string
-          business_id: string
-          email: string
-          name: string | null
-          phone: string | null
-          message: string | null
-          source: string
-          created_at: string
-        }
-        Insert: Partial<Database['public']['Tables']['website_subscribers']['Row']> & {
-          business_id: string
-          email: string
-        }
-        Update: Partial<Database['public']['Tables']['website_subscribers']['Row']>
         Relationships: []
       }
       website_team_members: {
@@ -740,25 +516,6 @@ export interface Database {
           business_id: string
         }
         Update: Partial<Database['public']['Tables']['website_team_members']['Row']>
-        Relationships: []
-      }
-      website_services: {
-        Row: {
-          id: string
-          business_id: string
-          icon: string
-          name: string
-          description: string | null
-          duration: string | null
-          price: string | null
-          sort_order: number
-          created_at: string
-          updated_at: string
-        }
-        Insert: Partial<Database['public']['Tables']['website_services']['Row']> & {
-          business_id: string
-        }
-        Update: Partial<Database['public']['Tables']['website_services']['Row']>
         Relationships: []
       }
       website_testimonials: {
@@ -808,6 +565,43 @@ export interface Database {
         Update: Partial<Database['public']['Tables']['website_faqs']['Row']>
         Relationships: []
       }
+      website_services: {
+        Row: {
+          id: string
+          business_id: string
+          icon: string
+          name: string
+          description: string | null
+          duration: string | null
+          price: string | null
+          sort_order: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: Partial<Database['public']['Tables']['website_services']['Row']> & {
+          business_id: string
+        }
+        Update: Partial<Database['public']['Tables']['website_services']['Row']>
+        Relationships: []
+      }
+      website_subscribers: {
+        Row: {
+          id: string
+          business_id: string
+          email: string
+          name: string | null
+          phone: string | null
+          message: string | null
+          source: string
+          created_at: string
+        }
+        Insert: Partial<Database['public']['Tables']['website_subscribers']['Row']> & {
+          business_id: string
+          email: string
+        }
+        Update: Partial<Database['public']['Tables']['website_subscribers']['Row']>
+        Relationships: []
+      }
       notifications: {
         Row: {
           id: string
@@ -820,7 +614,7 @@ export interface Database {
         }
         Insert: Partial<Database['public']['Tables']['notifications']['Row']> & {
           business_id: string
-          type: Database['public']['Tables']['notifications']['Row']['type']
+          type: 'new_lead' | 'appointment_booked' | 'appointment_cancelled' | 'subscription' | 'system'
           title: string
         }
         Update: Partial<Database['public']['Tables']['notifications']['Row']>
@@ -860,27 +654,47 @@ export interface Database {
         Update: Partial<Database['public']['Tables']['support_messages']['Row']>
         Relationships: []
       }
-      business_services: {
+      whatsapp_connections: {
         Row: {
           id: string
           business_id: string
-          name: string
-          description: string | null
-          price: number | null
-          price_max: number | null
-          price_type: 'fixed' | 'starting_at' | 'price_range' | 'call_for_price'
-          duration_minutes: number
-          catalog_key: string | null
-          is_active: boolean
-          sort_order: number
+          agent_id: string | null
+          provider: 'evolution'
+          instance_name: string
+          instance_token: string | null
+          phone_number: string | null
+          status: 'disconnected' | 'connecting' | 'connected'
+          is_enabled: boolean
           created_at: string
           updated_at: string
         }
-        Insert: Partial<Database['public']['Tables']['business_services']['Row']> & {
+        Insert: Partial<Database['public']['Tables']['whatsapp_connections']['Row']> & {
           business_id: string
-          name: string
+          instance_name: string
         }
-        Update: Partial<Database['public']['Tables']['business_services']['Row']>
+        Update: Partial<Database['public']['Tables']['whatsapp_connections']['Row']>
+        Relationships: []
+      }
+      bank_transfer_payments: {
+        Row: {
+          id: string
+          business_id: string
+          reference_code: string
+          plan: 'pro' | 'business'
+          amount_usd: number
+          receipt_url: string | null
+          status: 'pending' | 'approved' | 'rejected'
+          reviewed_by: string | null
+          reviewed_at: string | null
+          rejection_reason: string | null
+          created_at: string
+        }
+        Insert: Partial<Database['public']['Tables']['bank_transfer_payments']['Row']> & {
+          business_id: string
+          plan: 'pro' | 'business'
+          amount_usd: number
+        }
+        Update: Partial<Database['public']['Tables']['bank_transfer_payments']['Row']>
         Relationships: []
       }
     }

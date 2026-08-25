@@ -27,12 +27,11 @@ export async function PATCH(request: Request, props: { params: Promise<{ appoint
   if ('error' in ctx) return NextResponse.json({ error: ctx.error }, { status: 401 })
 
   const body = await request.json()
-  const { status, scheduled_at, notes, service_id, listing_id, cancellationReason, payment_status } = body as {
+  const { status, scheduled_at, notes, service_id, cancellationReason, payment_status } = body as {
     status?: Appointment['status']
     scheduled_at?: string
     notes?: string
     service_id?: string | null
-    listing_id?: string | null
     cancellationReason?: string
     payment_status?: Appointment['payment_status']
   }
@@ -49,7 +48,6 @@ export async function PATCH(request: Request, props: { params: Promise<{ appoint
       ...(scheduled_at !== undefined && { scheduled_at }),
       ...(notes !== undefined && { notes }),
       ...(service_id !== undefined && { service_id }),
-      ...(listing_id !== undefined && { listing_id }),
     })
   }
 
@@ -63,7 +61,7 @@ export async function PATCH(request: Request, props: { params: Promise<{ appoint
           to: details.client.email,
           clientName: details.client.name,
           businessName: ctx.business.name,
-          listingTitle: details.listing?.title,
+          serviceName: details.service?.name,
         }
         if (status === 'scheduled') {
           void sendAppointmentConfirmationEmail({ ...emailOpts, scheduledAt: appointment.scheduled_at }).catch(() => {})

@@ -8,7 +8,7 @@ import { portalRescheduleSchema } from '@/validations'
 
 // Reschedules go to 'pending_confirmation', not straight to the new time —
 // matches the reference video: the business has to confirm it (by setting
-// the status back to 'scheduled' from /dashboard/viewings, which already
+// the status back to 'scheduled' from /dashboard/citas, which already
 // emails the client) before it's final.
 export async function PATCH(request: Request, props: { params: Promise<{ appointmentId: string }> }) {
   const params = await props.params;

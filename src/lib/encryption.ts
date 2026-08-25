@@ -1,20 +1,19 @@
 import { createCipheriv, createDecipheriv, randomBytes } from 'crypto'
 
-// AES-256-GCM helpers for encrypting third-party API secrets (Hostaway
-// client secret, etc.) before they touch Postgres. Channel-manager
-// credentials control real, live Airbnb/Booking/VRBO accounts belonging to
-// third-party property owners, not just this business — a database leak
-// must not hand those over in plaintext.
+// AES-256-GCM helpers for encrypting sensitive health data (clinical notes,
+// consent form content) before it touches Postgres — treatment_records and
+// consent_forms store only the ciphertext, so a database leak alone never
+// exposes a patient's clinical history in plaintext.
 const ALGORITHM = 'aes-256-gcm'
 const IV_LENGTH = 12
 const AUTH_TAG_LENGTH = 16
 
 function getKey(): Buffer {
-  const raw = process.env.CHANNEL_CREDENTIALS_ENCRYPTION_KEY
-  if (!raw) throw new Error('CHANNEL_CREDENTIALS_ENCRYPTION_KEY is not configured')
+  const raw = process.env.HEALTH_DATA_ENCRYPTION_KEY
+  if (!raw) throw new Error('HEALTH_DATA_ENCRYPTION_KEY is not configured')
   const key = Buffer.from(raw, 'base64')
   if (key.length !== 32) {
-    throw new Error('CHANNEL_CREDENTIALS_ENCRYPTION_KEY must decode to exactly 32 bytes (base64)')
+    throw new Error('HEALTH_DATA_ENCRYPTION_KEY must decode to exactly 32 bytes (base64)')
   }
   return key
 }

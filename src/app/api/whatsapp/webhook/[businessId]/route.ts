@@ -2,8 +2,8 @@ import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { findOrCreateClientByPhone } from '@/services/clients'
 import { startConversation, appendMessage } from '@/services/conversations'
-import { listAiVisibleListings, getAssignedListingIds } from '@/services/listings'
-import { listAiVisiblePreventaProjects, getAssignedPreventaProjectIds } from '@/services/preventaProjects'
+import { listServicesForBusiness } from '@/services/businessServices'
+import { listServiceIdsForAgent } from '@/services/agentServices'
 import { listKnowledgeDocuments, listPlatformKnowledgeDocuments } from '@/services/knowledge'
 import { getWhatsappConnection, sendWhatsappMessage } from '@/services/whatsapp'
 import { buildSystemPrompt } from '@/ai/tools'
@@ -99,28 +99,25 @@ export async function POST(request: Request, props: { params: Promise<{ business
 
   await appendMessage(supabase, businessId, conversation.id, 'caller', text)
 
-  const [listings, assignedListingIds, preventaProjects, assignedPreventaProjectIds, knowledgeDocs, platformKnowledgeDocs, historyRes] =
-    await Promise.all([
-      listAiVisibleListings(supabase, businessId, agent.id),
-      getAssignedListingIds(supabase, businessId, agent.id),
-      listAiVisiblePreventaProjects(supabase, businessId, agent.id),
-      getAssignedPreventaProjectIds(supabase, businessId, agent.id),
-      listKnowledgeDocuments(supabase, businessId),
-      listPlatformKnowledgeDocuments(supabase),
-      supabase
-        .from('conversation_messages')
-        .select('role, content')
-        .eq('conversation_id', conversation.id)
-        .order('created_at', { ascending: true }),
-    ])
+  const [allServices, assignedServiceIds, packagesResult, knowledgeDocs, platformKnowledgeDocs, historyRes] = await Promise.all([
+    listServicesForBusiness(supabase, businessId),
+    listServiceIdsForAgent(supabase, agent.id),
+    supabase.from('packages').select('*').eq('business_id', businessId).eq('is_active', true),
+    listKnowledgeDocuments(supabase, businessId),
+    listPlatformKnowledgeDocuments(supabase),
+    supabase
+      .from('conversation_messages')
+      .select('role, content')
+      .eq('conversation_id', conversation.id)
+      .order('created_at', { ascending: true }),
+  ])
 
   const systemPrompt = buildSystemPrompt({
     business,
     agent,
-    listings,
-    assignedListingIds,
-    preventaProjects,
-    assignedPreventaProjectIds,
+    services: allServices.filter((s) => s.is_active),
+    assignedServiceIds: new Set(assignedServiceIds),
+    packages: packagesResult.data ?? [],
     knowledgeDocs,
     platformKnowledgeDocs,
     channel: 'text',

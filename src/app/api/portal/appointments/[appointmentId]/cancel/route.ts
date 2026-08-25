@@ -41,7 +41,7 @@ export async function PATCH(request: Request, props: { params: Promise<{ appoint
       clientName,
       businessName,
       scheduledAt: appointment.scheduled_at,
-      listingTitle: appointment.listing?.title,
+      serviceName: appointment.service?.name,
       reason: parsed.data.reason,
     }).catch(() => {})
   }
@@ -52,7 +52,7 @@ export async function PATCH(request: Request, props: { params: Promise<{ appoint
       businessName,
       clientName,
       scheduledAt: appointment.scheduled_at,
-      listingTitle: appointment.listing?.title,
+      serviceName: appointment.service?.name,
       reason: parsed.data.reason,
     }).catch(() => {})
   }

@@ -3,8 +3,6 @@ import type { Tables } from './database'
 export type Business = Tables<'businesses'>
 export type BusinessSubscription = Tables<'business_subscriptions'>
 export type AiAgent = Tables<'ai_agents'>
-export type Listing = Tables<'listings'>
-export type ListingPhoto = Tables<'listing_photos'>
 export type Client = Tables<'clients'>
 export type Conversation = Tables<'conversations'>
 export type ConversationMessage = Tables<'conversation_messages'>
@@ -60,49 +58,25 @@ export interface DashboardAnalytics {
   appointments_this_week: number
 }
 
-export interface ListingWithPhotos extends Listing {
-  photos: ListingPhoto[]
-  agents: Pick<AiAgent, 'id' | 'name' | 'specialty' | 'status'>[]
+// ─── Packages / membresías (prepaid session bundles) ──────────────────────
+export type Package = Tables<'packages'>
+export type ClientPackageCredit = Tables<'client_package_credits'>
+
+export interface ClientPackageCreditWithDetails extends ClientPackageCredit {
+  client: Pick<Client, 'id' | 'name' | 'phone' | 'email'> | null
+  package: Pick<Package, 'id' | 'name' | 'session_count' | 'price'> | null
 }
 
-// ─── Pre-sale projects ("Proyecto en Preventa") ───────────────────────────
-export type PreventaProject = Tables<'preventa_projects'>
-export type PreventaUnitType = Tables<'preventa_unit_types'>
-export type PreventaProjectPhoto = Tables<'preventa_project_photos'>
-export type PreventaProjectAgent = Tables<'preventa_project_agents'>
+// ─── Fichas de tratamiento / consentimientos / antes-después ──────────────
+export type TreatmentRecord = Tables<'treatment_records'>
+export type ConsentForm = Tables<'consent_forms'>
+export type BeforeAfterPhoto = Tables<'before_after_photos'>
+export type AuditLogEntry = Tables<'audit_log'>
 
-export interface PreventaProjectWithDetails extends PreventaProject {
-  unitTypes: PreventaUnitType[]
-  photos: PreventaProjectPhoto[]
-  agents: Pick<AiAgent, 'id' | 'name' | 'specialty' | 'status'>[]
-}
-
-// ─── Channels (Airbnb/Booking/VRBO real, via channel-manager co-hosting) ──
-export type ChannelProviderAccount = Tables<'channel_provider_accounts'>
-export type ChannelHostConnection = Tables<'channel_host_connections'>
-export type ChannelListing = Tables<'channel_listings'>
-export type ChannelBooking = Tables<'channel_bookings'>
-export type ChannelSyncLogEntry = Tables<'channel_sync_log'>
-export type BookingAffiliateSettings = Tables<'booking_affiliate_settings'>
-
-export interface ChannelHostConnectionWithStats extends ChannelHostConnection {
-  listingCount: number
-  activeListingCount: number
-  pendingCommission: number
-  paidCommission: number
-}
-
-export interface ChannelListingWithDetails extends ChannelListing {
-  listing: Pick<Listing, 'id' | 'title' | 'listing_code' | 'price' | 'currency' | 'cover_photo_url' | 'listing_type' | 'rental_period'>
-  hostConnection: Pick<ChannelHostConnection, 'id' | 'owner_name' | 'channel' | 'status' | 'commission_pct'>
-}
-
-export interface ChannelBookingWithDetails extends ChannelBooking {
-  listing: Pick<ChannelListing, 'id' | 'listing_id'> & {
-    listingTitle: string
-    ownerName: string
-    channel: ChannelHostConnection['channel']
-  }
+export interface TreatmentRecordWithDetails extends TreatmentRecord {
+  client: Pick<Client, 'id' | 'name' | 'phone' | 'email'> | null
+  service: Pick<BusinessService, 'id' | 'name'> | null
+  photos: BeforeAfterPhoto[]
 }
 
 // ─── Bank transfer payments (manual plan-upgrade path) ────────────────────
@@ -113,9 +87,8 @@ export interface ConversationWithClient extends Conversation {
 }
 
 export interface AppointmentWithDetails extends Appointment {
-  client: Pick<Client, 'id' | 'name' | 'phone' | 'email' | 'budget' | 'pre_approval_number'> | null
+  client: Pick<Client, 'id' | 'name' | 'phone' | 'email'> | null
   service: Pick<BusinessService, 'id' | 'name' | 'price' | 'duration_minutes'> | null
-  listing: Pick<Listing, 'id' | 'title' | 'listing_code'> | null
 }
 
 // Client Portal — same shape, plus which business it's with (a client can
@@ -168,13 +141,12 @@ export interface RealtimeSessionResponse {
 export interface VoiceCallOutcome {
   clientName?: string
   clientPhone?: string
-  budget?: number
-  listingId?: string
+  serviceId?: string
   appointment?: {
     date: string
     time: string
   }
-  outcome: 'booked_viewing' | 'qualified_lead' | 'no_action' | 'escalated'
+  outcome: 'appointment_booked' | 'qualified_lead' | 'no_action' | 'escalated'
 }
 
 // ─── API response envelope ────────────────────────────────────────────────

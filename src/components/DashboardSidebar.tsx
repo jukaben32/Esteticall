@@ -5,14 +5,11 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import {
   LayoutDashboard,
-  House,
-  Building2,
   CalendarCheck,
   PhoneCall,
   UsersRound,
   Bot,
   BarChart3,
-  Palmtree,
   Briefcase,
   BookOpen,
   MessagesSquare,
@@ -35,11 +32,8 @@ export const NAV_SECTIONS = [
     items: [
       { href: '/dashboard', label: 'Inicio', icon: LayoutDashboard },
       { href: '/dashboard/analytics', label: 'Analítica', icon: BarChart3 },
-      { href: '/dashboard/listings', label: 'Propiedades', icon: House },
-      { href: '/dashboard/projects', label: 'Proyectos Preventa', icon: Building2 },
-      { href: '/dashboard/channels', label: 'Airbnb & Canales', icon: Palmtree },
       { href: '/dashboard/call-log', label: 'Llamadas', icon: PhoneCall },
-      { href: '/dashboard/viewings', label: 'Citas', icon: CalendarCheck },
+      { href: '/dashboard/citas', label: 'Citas', icon: CalendarCheck },
       { href: '/dashboard/schedule', label: 'Horario', icon: Clock },
       { href: '/dashboard/clients', label: 'Clientes', icon: UsersRound },
     ],
@@ -48,7 +42,7 @@ export const NAV_SECTIONS = [
     title: 'Herramientas',
     items: [
       { href: '/dashboard/ai-agents', label: 'Agentes IA', icon: Bot },
-      { href: '/dashboard/services', label: 'Servicios', icon: Briefcase },
+      { href: '/dashboard/services', label: 'Tratamientos', icon: Briefcase },
       { href: '/dashboard/knowledge', label: 'Conocimiento', icon: BookOpen },
       { href: '/dashboard/widget', label: 'Widget', icon: MessagesSquare },
       { href: '/dashboard/whatsapp', label: 'WhatsApp', icon: MessageCircle },
@@ -98,10 +92,10 @@ export function DashboardSidebar({
       <header className="lg:hidden h-14 shrink-0 flex items-center justify-between px-4 bg-[var(--teal-900)] text-[var(--bg-page)]">
         <div className="flex items-center gap-2">
           <span className="grid place-items-center w-8 h-8 rounded-lg bg-[var(--teal-700)] text-white font-display font-bold">
-            I
+            E
           </span>
           <span className="font-display font-semibold">
-            Inmobil<span className="text-[var(--teal-400)]">IA</span>Call
+Esteti<span className="text-[var(--teal-400)]">C</span>all
           </span>
         </div>
         <button
@@ -129,10 +123,10 @@ export function DashboardSidebar({
         <div className="h-16 flex items-center justify-between gap-2 px-6 border-b border-white/10 shrink-0">
           <div className="flex items-center gap-2">
             <span className="grid place-items-center w-9 h-9 rounded-xl bg-[var(--teal-700)] text-white font-display font-bold text-lg">
-              I
+              E
             </span>
             <span className="font-display font-semibold text-lg">
-              Inmobil<span className="text-[var(--teal-400)]">IA</span>Call
+  Esteti<span className="text-[var(--teal-400)]">C</span>all
             </span>
           </div>
           <button

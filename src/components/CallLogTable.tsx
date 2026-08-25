@@ -189,10 +189,7 @@ function FormBookingDetails({ appointment, onClose }: { appointment: Appointment
       onClose={onClose}
     >
       <div className="flex flex-wrap gap-2">
-        <span className="badge bg-[var(--teal-50)] border-transparent text-[var(--teal-800)]">✓ Visita agendada</span>
-        {appointment.listing && (
-          <span className="badge bg-[var(--bg-raised)] border-transparent text-[var(--text-3)]">{appointment.listing.title}</span>
-        )}
+        <span className="badge bg-[var(--teal-50)] border-transparent text-[var(--teal-800)]">✓ Cita agendada</span>
         {appointment.service && (
           <span className="badge bg-[var(--bg-raised)] border-transparent text-[var(--text-3)]">{appointment.service.name}</span>
         )}

@@ -23,7 +23,7 @@ function dayLabel(key: string): string {
 }
 
 const OUTCOME_LABELS: Record<string, string> = {
-  'booked_viewing': 'Cita agendada',
+  'appointment_booked': 'Cita agendada',
   'qualified_lead': 'Lead calificado',
   'no_action': 'Sin acción',
   'escalated': 'Escalado',
@@ -84,7 +84,7 @@ export default async function AnalyticsPage() {
   const avgMinutes = Math.floor(avgDurationSeconds / 60)
   const avgSeconds = avgDurationSeconds % 60
 
-  const bookedCount = conversations.filter((c) => c.outcome === 'booked_viewing').length
+  const bookedCount = conversations.filter((c) => c.outcome === 'appointment_booked').length
   const conversionRate = conversations.length
     ? Math.round((bookedCount / conversations.length) * 100)
     : 0

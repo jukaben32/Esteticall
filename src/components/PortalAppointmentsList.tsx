@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { ChevronDown, RefreshCw, CalendarClock, Ban, MapPin, Building2, CreditCard } from 'lucide-react'
+import { ChevronDown, RefreshCw, CalendarClock, Ban, Building2, CreditCard } from 'lucide-react'
 import type { PortalAppointment } from '@/types'
 import { formatDateTime } from '@/lib/formatDate'
 import { APPOINTMENT_STATUS_LABELS, APPOINTMENT_STATUS_STYLES, PAYMENT_LABELS, PAYMENT_STYLES } from '@/lib/appointmentFormat'
@@ -190,7 +190,7 @@ function AppointmentCard({
   now: number
 }) {
   const { month, day } = dateBadgeParts(appt.scheduled_at)
-  const title = appt.service?.name ?? appt.listing?.title ?? 'Cita'
+  const title = appt.service?.name ?? 'Cita'
   const canAct = appt.status !== 'cancelled' && appt.status !== 'completed' && new Date(appt.scheduled_at).getTime() >= now
 
   return (
@@ -223,12 +223,6 @@ function AppointmentCard({
             <Building2 className="w-3.5 h-3.5 text-[var(--text-4)]" />
             {appt.business?.name ?? '—'}
           </p>
-          {appt.listing?.title && (
-            <p className="flex items-center gap-2 text-[var(--text-2)]">
-              <MapPin className="w-3.5 h-3.5 text-[var(--text-4)]" />
-              {appt.listing.title}
-            </p>
-          )}
           {appt.notes && <p className="text-[var(--text-3)] text-xs">{appt.notes}</p>}
           {appt.status === 'cancelled' && appt.cancellation_reason && (
             <p className="text-xs text-red-600">Motivo de cancelación: {appt.cancellation_reason}</p>

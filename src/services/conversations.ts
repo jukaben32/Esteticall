@@ -7,14 +7,13 @@ type DB = SupabaseClient<Database>
 export async function startConversation(
   supabase: DB,
   businessId: string,
-  input: { agentId: string; listingId?: string; channel?: Conversation['channel']; clientId?: string }
+  input: { agentId: string; channel?: Conversation['channel']; clientId?: string }
 ): Promise<Conversation> {
   const { data, error } = await supabase
     .from('conversations')
     .insert({
       business_id: businessId,
       agent_id: input.agentId,
-      listing_id: input.listingId,
       client_id: input.clientId,
       channel: input.channel ?? 'widget_voice',
       status: 'in_progress',
@@ -83,8 +82,8 @@ export async function listConversationsForBusiness(
 // call log reflects who called and what happened even if the call itself
 // never cleanly reaches endConversation() (dropped connection, closed tab).
 // Never downgrades a stronger outcome already set earlier in the same call
-// (e.g. a booked_viewing shouldn't be overwritten by a later qualified_lead).
-const OUTCOME_RANK: Record<string, number> = { no_action: 0, qualified_lead: 1, escalated: 1, booked_viewing: 2 }
+// (e.g. an appointment_booked shouldn't be overwritten by a later qualified_lead).
+const OUTCOME_RANK: Record<string, number> = { no_action: 0, qualified_lead: 1, escalated: 1, appointment_booked: 2 }
 
 export async function recordConversationOutcome(
   supabase: DB,

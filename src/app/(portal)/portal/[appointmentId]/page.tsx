@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { CheckCircle2, Calendar, Phone, Mail, MapPin, Wallet } from 'lucide-react'
+import { CheckCircle2, Calendar, Phone, Mail, MapPin, Sparkles } from 'lucide-react'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getAppointmentPublic } from '@/services/appointments'
 
@@ -32,7 +32,7 @@ export default async function ClientPortalPage(props: { params: Promise<{ appoin
         <div className="gradient-teal text-white p-6 text-center">
           <CheckCircle2 className="w-10 h-10 mx-auto mb-2" />
           <p className="text-lg font-display font-semibold">
-            {appointment.status === 'cancelled' ? 'Booking Cancelled' : 'Viewing Confirmed'}
+            {appointment.status === 'cancelled' ? 'Booking Cancelled' : 'Appointment Confirmed'}
           </p>
           <p className="text-sm opacity-90 mt-1">{appointment.business?.name ?? 'Your appointment'}</p>
         </div>
@@ -53,19 +53,10 @@ export default async function ClientPortalPage(props: { params: Promise<{ appoin
             </div>
             {appointment.service && (
               <div className="flex items-start gap-3">
-                <MapPin className="w-4 h-4 mt-0.5 text-[var(--teal-700)]" />
+                <Sparkles className="w-4 h-4 mt-0.5 text-[var(--teal-700)]" />
                 <div>
-                  <p className="text-[var(--text-3)] text-xs">Property / Service</p>
+                  <p className="text-[var(--text-3)] text-xs">Treatment</p>
                   <p className="font-medium text-[var(--text-1)]">{appointment.service.name}</p>
-                </div>
-              </div>
-            )}
-            {appointment.client?.budget && (
-              <div className="flex items-start gap-3">
-                <Wallet className="w-4 h-4 mt-0.5 text-[var(--teal-700)]" />
-                <div>
-                  <p className="text-[var(--text-3)] text-xs">Budget Range</p>
-                  <p className="font-medium text-[var(--text-1)]">${appointment.client.budget.toLocaleString()}</p>
                 </div>
               </div>
             )}
@@ -73,7 +64,7 @@ export default async function ClientPortalPage(props: { params: Promise<{ appoin
               <div className="flex items-start gap-3">
                 <MapPin className="w-4 h-4 mt-0.5 text-[var(--teal-700)]" />
                 <div>
-                  <p className="text-[var(--text-3)] text-xs">Agency Location</p>
+                  <p className="text-[var(--text-3)] text-xs">Location</p>
                   <p className="font-medium text-[var(--text-1)]">{appointment.business.address}</p>
                 </div>
               </div>

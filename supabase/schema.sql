@@ -1,6 +1,14 @@
 -- ═══════════════════════════════════════════════════════════════════════════
--- Real Estate AI Calling Agent SaaS — Database Schema
+-- EstetiCall — Database Schema
 -- Postgres / Supabase. Multi-tenant: every domain table hangs off `businesses`.
+-- Adaptado del schema de Real-Estate-Multi-AI-Agent-SaaS (InmobilIACall) para
+-- el vertical de spas médico-estéticos / clínicas estéticas. Se conserva el
+-- núcleo genérico (negocio, suscripción, agentes IA, citas, conversaciones,
+-- knowledge base, widget, website builder, WhatsApp, soporte) y se reemplaza
+-- lo específico de bienes raíces (listings, preventa, channels/Hostaway) por
+-- las tablas propias de un spa médico-estético: fichas de tratamiento,
+-- consentimientos informados, galería antes/después, paquetes/membresías y
+-- bitácora de auditoría para datos de salud.
 -- ═══════════════════════════════════════════════════════════════════════════
 
 -- 0. EXTENSIONS & SHARED HELPERS
@@ -20,12 +28,19 @@ create table if not exists businesses (
   owner_id          uuid not null references auth.users(id) on delete cascade,
   name              text not null,
   slug              text not null unique,
-  industry          text not null default 'real_estate',
+  industry          text not null default 'medspa',
   logo_url          text,
   phone             text,
   contact_email     text,
   address           text,
+  website           text,
+  city              text,
+  state             text,
+  zip_code          text,
   timezone          text not null default 'UTC',
+  stripe_publishable_key text,
+  stripe_secret_key      text,
+  stripe_connected       boolean not null default false,
   onboarding_step   text not null default 'created'
     check (onboarding_step in ('created','profile','agent','billing','done')),
   created_at        timestamptz not null default now(),
@@ -49,6 +64,13 @@ returns boolean as $$
     where id = target_business_id
       and owner_id = auth.uid()
   );
+$$ language sql stable security definer;
+
+-- Alias kept for parity with services that read business-scoped data (no
+-- separate staff/team-member table exists yet — access is owner-only today).
+create or replace function has_business_access(target_business_id uuid)
+returns boolean as $$
+  select is_business_owner(target_business_id);
 $$ language sql stable security definer;
 
 drop policy if exists "Owners can view their own business" on businesses;
@@ -87,10 +109,10 @@ create index if not exists idx_business_subscriptions_business_id on business_su
 create index if not exists idx_business_subscriptions_stripe_customer_id on business_subscriptions (stripe_customer_id);
 
 -- Purchased voice-minute recharge balance, in seconds — topped up by the
--- one-time Stripe checkout in services/billing.ts, spent by
--- /api/conversations/[conversationId]/end once a business's plan-included
--- monthly voice minutes run out. A plpgsql function (not a plain UPDATE from
--- the app) keeps the +/- arithmetic atomic under concurrent calls.
+-- one-time Stripe checkout in services/billing.ts, spent once a business's
+-- plan-included monthly voice minutes run out. A plpgsql function (not a
+-- plain UPDATE from the app) keeps the +/- arithmetic atomic under
+-- concurrent calls.
 create or replace function adjust_voice_credit_balance(p_business_id uuid, p_delta_seconds integer) returns void as $$
 begin
   update business_subscriptions
@@ -107,19 +129,16 @@ create trigger update_business_subscriptions_updated_at
 alter table business_subscriptions enable row level security;
 
 -- Members may only read their subscription — every write (plan changes,
--- Stripe fields) goes through the service-role Stripe webhook. A business
--- owner previously had "for all" here, which let them set their own plan
--- to the paid tier for free straight from the browser.
-drop policy if exists "Business owners can view their subscription" on business_subscriptions;
-drop policy if exists "Business owners can manage their subscription" on business_subscriptions;
-drop policy if exists "subscription access by business members" on business_subscriptions;
+-- Stripe fields) goes through the service-role Stripe webhook.
+drop policy if exists "subscription read by business members" on business_subscriptions;
 create policy "subscription read by business members"
   on business_subscriptions for select using (has_business_access(business_id));
+drop policy if exists "subscription writes by service role" on business_subscriptions;
 create policy "subscription writes by service role"
   on business_subscriptions for all using (auth.role() = 'service_role');
 
--- Auto-create a free subscription row whenever a business is created, so
--- no client code needs INSERT permission on business_subscriptions.
+-- Auto-create a free subscription row whenever a business is created, so no
+-- client code needs INSERT permission on business_subscriptions.
 create or replace function create_default_subscription() returns trigger as $$
 begin
   insert into business_subscriptions (business_id, plan, status)
@@ -139,11 +158,12 @@ create table if not exists ai_agents (
   id                uuid primary key default gen_random_uuid(),
   business_id       uuid not null references businesses(id) on delete cascade,
   name              text not null,
-  specialty         text not null default 'Residential Specialist',
+  specialty         text not null default 'Aesthetic Consultant',
   voice             text not null default 'alloy',
   personality       text not null default 'friendly',
+  language          text not null default 'es',
   sensitivity       numeric(3,2) not null default 0.5 check (sensitivity between 0 and 1),
-  greeting_message  text not null default 'Hello! Thank you for calling. How can I help you today?',
+  greeting_message  text not null default '¡Hola! Gracias por contactarnos. ¿En qué puedo ayudarte hoy?',
   system_prompt     text not null default '',
   status            text not null default 'draft'
     check (status in ('draft','live','paused')),
@@ -168,114 +188,23 @@ drop policy if exists "Public can view live agents" on ai_agents;
 create policy "Public can view live agents"
   on ai_agents for select using (status = 'live');
 
--- 4. LISTINGS
-create table if not exists listings (
-  id                  uuid primary key default gen_random_uuid(),
-  business_id         uuid not null references businesses(id) on delete cascade,
-  listing_code        text not null unique default ('LST-' || substr(gen_random_uuid()::text, 1, 8)),
-  title               text not null,
-  description         text,
-  listing_type        text not null default 'sale'
-    check (listing_type in ('sale','rent')),
-  property_type       text not null default 'house'
-    check (property_type in ('house','apartment','townhouse','commercial','condo','land')),
-  status              text not null default 'available'
-    check (status in ('available','pending','sold','rented','withdrawn')),
-  price               numeric(14,2) not null default 0,
-  bedrooms            integer not null default 0,
-  bathrooms           integer not null default 0,
-  area_sqft           integer not null default 0,
-  parking_spaces      integer not null default 0,
-  year_built          integer,
-  address_line        text,
-  area_name           text,
-  city                text,
-  amenities           text[] not null default '{}',
-  featured            boolean not null default false,
-  visible_to_ai_agent boolean not null default true,
-  virtual_tour_url    text,
-  cover_photo_url     text,
-  listed_at           timestamptz not null default now(),
-  created_at          timestamptz not null default now(),
-  updated_at          timestamptz not null default now()
-);
-
-create index if not exists idx_listings_business_id on listings (business_id);
-create index if not exists idx_listings_status on listings (status);
-
-drop trigger if exists update_listings_updated_at on listings;
-create trigger update_listings_updated_at
-  before update on listings
-  for each row execute function update_updated_at_column();
-
-alter table listings enable row level security;
-
-drop policy if exists "Business owners can manage their listings" on listings;
-create policy "Business owners can manage their listings"
-  on listings for all using (is_business_owner(business_id));
-drop policy if exists "Public can view available listings" on listings;
-create policy "Public can view available listings"
-  on listings for select using (status = 'available');
-
--- 5. LISTING PHOTOS
-create table if not exists listing_photos (
-  id           uuid primary key default gen_random_uuid(),
-  listing_id   uuid not null references listings(id) on delete cascade,
-  business_id  uuid not null references businesses(id) on delete cascade,
-  url          text not null,
-  is_cover     boolean not null default false,
-  sort_order   integer not null default 0,
-  created_at   timestamptz not null default now()
-);
-
-create index if not exists idx_listing_photos_listing_id on listing_photos (listing_id);
-create index if not exists idx_listing_photos_business_id on listing_photos (business_id);
-create unique index if not exists uq_listing_photos_one_cover
-  on listing_photos (listing_id) where (is_cover);
-
-alter table listing_photos enable row level security;
-
-drop policy if exists "Business owners can manage their listing photos" on listing_photos;
-create policy "Business owners can manage their listing photos"
-  on listing_photos for all using (is_business_owner(business_id));
-drop policy if exists "Public can view photos of available listings" on listing_photos;
-create policy "Public can view photos of available listings"
-  on listing_photos for select using (
-    exists (select 1 from listings l where l.id = listing_id and l.status = 'available')
-  );
-
--- 6. AGENT LISTINGS (join: which AI agent(s) can talk about which listings)
-create table if not exists agent_listings (
-  agent_id     uuid not null references ai_agents(id) on delete cascade,
-  listing_id   uuid not null references listings(id) on delete cascade,
-  business_id  uuid not null references businesses(id) on delete cascade,
-  created_at   timestamptz not null default now(),
-  primary key (agent_id, listing_id)
-);
-
-create index if not exists idx_agent_listings_business_id on agent_listings (business_id);
-create index if not exists idx_agent_listings_listing_id on agent_listings (listing_id);
-
-alter table agent_listings enable row level security;
-
-drop policy if exists "Business owners can manage agent-listing links" on agent_listings;
-create policy "Business owners can manage agent-listing links"
-  on agent_listings for all using (is_business_owner(business_id));
-
--- 7. CLIENTS (leads / customers — may or may not have a portal login)
+-- 4. CLIENTS (patients — leads / customers, may or may not have a portal login)
 create table if not exists clients (
-  id            uuid primary key default gen_random_uuid(),
-  business_id   uuid not null references businesses(id) on delete cascade,
-  auth_user_id  uuid references auth.users(id) on delete set null,
-  name          text not null default 'Unknown',
-  phone         text,
-  email         text,
-  budget        numeric(14,2),
-  source        text not null default 'ai_call'
-    check (source in ('ai_call','widget_chat','manual','website_form')),
-  notes         text,
-  created_at    timestamptz not null default now(),
-  updated_at    timestamptz not null default now()
+  id                uuid primary key default gen_random_uuid(),
+  business_id       uuid not null references businesses(id) on delete cascade,
+  auth_user_id      uuid references auth.users(id) on delete set null,
+  name              text not null default 'Unknown',
+  phone             text,
+  email             text,
+  date_of_birth     date,
+  allergies         text,
+  contraindications text,
+  skin_type         text,
+  source            text not null default 'ai_call'
+    check (source in ('ai_call','widget_chat','manual','website_form','whatsapp')),
+  notes             text,
+  created_at        timestamptz not null default now(),
+  updated_at        timestamptz not null default now()
 );
 
 create index if not exists idx_clients_business_id on clients (business_id);
@@ -296,20 +225,20 @@ drop policy if exists "Clients can view their own record" on clients;
 create policy "Clients can view their own record"
   on clients for select using (auth.uid() = auth_user_id);
 
--- 8. CONVERSATIONS (call log — one row per AI voice/chat session)
+-- 5. CONVERSATIONS (call log — one row per AI voice/chat session)
 create table if not exists conversations (
   id                 uuid primary key default gen_random_uuid(),
   business_id        uuid not null references businesses(id) on delete cascade,
   agent_id           uuid references ai_agents(id) on delete set null,
   client_id          uuid references clients(id) on delete set null,
-  listing_id         uuid references listings(id) on delete set null,
   channel            text not null default 'widget_voice'
-    check (channel in ('widget_voice','widget_chat','phone')),
+    check (channel in ('widget_voice','widget_chat','phone','whatsapp')),
   status             text not null default 'in_progress'
     check (status in ('in_progress','completed','failed')),
   duration_seconds   integer not null default 0,
   outcome            text
-    check (outcome is null or outcome in ('booked_viewing','qualified_lead','no_action','escalated')),
+    check (outcome is null or outcome in ('appointment_booked','qualified_lead','no_action','escalated')),
+  sentiment          text check (sentiment in ('positive', 'neutral', 'negative')),
   started_at         timestamptz not null default now(),
   ended_at           timestamptz,
   created_at         timestamptz not null default now()
@@ -328,7 +257,7 @@ drop policy if exists "Service role can manage conversations" on conversations;
 create policy "Service role can manage conversations"
   on conversations for all using (auth.role() = 'service_role');
 
--- 9. CONVERSATION MESSAGES (transcript turns)
+-- 6. CONVERSATION MESSAGES (transcript turns)
 create table if not exists conversation_messages (
   id               uuid primary key default gen_random_uuid(),
   conversation_id  uuid not null references conversations(id) on delete cascade,
@@ -350,7 +279,8 @@ drop policy if exists "Service role can manage conversation messages" on convers
 create policy "Service role can manage conversation messages"
   on conversation_messages for all using (auth.role() = 'service_role');
 
--- 9a. AI USAGE EVENTS (chat_completion + realtime_voice cost tracking, feeds the Analytics "AI API Spend" indicator)
+-- 7. AI USAGE EVENTS (chat_completion + realtime_voice cost tracking, feeds
+-- the Analytics "AI API Spend" indicator)
 create table if not exists ai_usage_events (
   id               uuid primary key default gen_random_uuid(),
   business_id      uuid not null references businesses(id) on delete cascade,
@@ -375,19 +305,160 @@ drop policy if exists "Service role can manage ai usage events" on ai_usage_even
 create policy "Service role can manage ai usage events"
   on ai_usage_events for all using (auth.role() = 'service_role');
 
--- 10. APPOINTMENTS (viewings)
-create table if not exists appointments (
+-- 8. BUSINESS SERVICES (the treatment catalog — e.g. "Toxina Botulínica",
+-- "Limpieza Facial Profunda" — that a business's AI agents can quote and
+-- clients can book against)
+create table if not exists business_services (
+  id                uuid primary key default gen_random_uuid(),
+  business_id       uuid not null references businesses(id) on delete cascade,
+  name              text not null,
+  description       text,
+  price             numeric(14,2),
+  price_max         numeric(14,2),
+  price_type        text not null default 'fixed'
+    check (price_type in ('fixed', 'starting_at', 'price_range', 'call_for_price')),
+  duration_minutes  integer not null default 60,
+  requires_consent  boolean not null default false,
+  catalog_key       text,
+  is_active         boolean not null default true,
+  sort_order        integer not null default 0,
+  created_at        timestamptz not null default now(),
+  updated_at        timestamptz not null default now()
+);
+
+create index if not exists idx_business_services_business_id on business_services (business_id);
+create index if not exists idx_business_services_catalog_key on business_services (business_id, catalog_key);
+
+drop trigger if exists update_business_services_updated_at on business_services;
+create trigger update_business_services_updated_at
+  before update on business_services
+  for each row execute function update_updated_at_column();
+
+alter table business_services enable row level security;
+
+drop policy if exists "Business owners can manage their services" on business_services;
+create policy "Business owners can manage their services"
+  on business_services for all using (is_business_owner(business_id));
+drop policy if exists "Public can view active services" on business_services;
+create policy "Public can view active services"
+  on business_services for select using (is_active);
+
+-- 9. AGENT SERVICES (join: which services each individual AI agent is scoped
+-- to discuss/quote)
+create table if not exists agent_services (
+  agent_id     uuid not null references ai_agents(id) on delete cascade,
+  service_id   uuid not null references business_services(id) on delete cascade,
+  business_id  uuid not null references businesses(id) on delete cascade,
+  created_at   timestamptz not null default now(),
+  primary key (agent_id, service_id)
+);
+
+create index if not exists idx_agent_services_business_id on agent_services (business_id);
+create index if not exists idx_agent_services_service_id on agent_services (service_id);
+
+alter table agent_services enable row level security;
+
+drop policy if exists "Business owners can manage agent-service links" on agent_services;
+create policy "Business owners can manage agent-service links"
+  on agent_services for all using (is_business_owner(business_id));
+
+-- 10. PACKAGES (prepaid session bundles — e.g. "6 sesiones de láser facial")
+create table if not exists packages (
   id              uuid primary key default gen_random_uuid(),
   business_id     uuid not null references businesses(id) on delete cascade,
-  listing_id      uuid references listings(id) on delete set null,
-  client_id       uuid references clients(id) on delete set null,
-  conversation_id uuid references conversations(id) on delete set null,
-  scheduled_at    timestamptz not null,
-  status          text not null default 'scheduled'
-    check (status in ('scheduled','pending_confirmation','completed','cancelled','no_show')),
-  notes           text,
+  service_id      uuid references business_services(id) on delete set null,
+  name            text not null,
+  description     text,
+  session_count   integer not null default 1 check (session_count > 0),
+  price           numeric(14,2) not null default 0,
+  validity_days   integer,
+  is_active       boolean not null default true,
   created_at      timestamptz not null default now(),
   updated_at      timestamptz not null default now()
+);
+
+create index if not exists idx_packages_business_id on packages (business_id);
+
+drop trigger if exists update_packages_updated_at on packages;
+create trigger update_packages_updated_at
+  before update on packages
+  for each row execute function update_updated_at_column();
+
+alter table packages enable row level security;
+
+drop policy if exists "Business owners can manage their packages" on packages;
+create policy "Business owners can manage their packages"
+  on packages for all using (is_business_owner(business_id));
+drop policy if exists "Public can view active packages" on packages;
+create policy "Public can view active packages"
+  on packages for select using (is_active);
+
+-- 11. CLIENT PACKAGE CREDITS (a client's own purchased instance of a package
+-- — tracks remaining sessions as they get redeemed against appointments)
+create table if not exists client_package_credits (
+  id                        uuid primary key default gen_random_uuid(),
+  business_id               uuid not null references businesses(id) on delete cascade,
+  client_id                 uuid not null references clients(id) on delete cascade,
+  package_id                uuid not null references packages(id) on delete restrict,
+  sessions_total            integer not null,
+  sessions_used             integer not null default 0,
+  payment_status            text not null default 'pending'
+    check (payment_status in ('pending', 'paid', 'refunded')),
+  stripe_checkout_session_id text,
+  purchased_at              timestamptz not null default now(),
+  expires_at                timestamptz,
+  created_at                timestamptz not null default now(),
+  updated_at                timestamptz not null default now()
+);
+
+create index if not exists idx_client_package_credits_business_id on client_package_credits (business_id);
+create index if not exists idx_client_package_credits_client_id on client_package_credits (client_id);
+
+drop trigger if exists update_client_package_credits_updated_at on client_package_credits;
+create trigger update_client_package_credits_updated_at
+  before update on client_package_credits
+  for each row execute function update_updated_at_column();
+
+alter table client_package_credits enable row level security;
+
+drop policy if exists "Business owners can manage their client package credits" on client_package_credits;
+create policy "Business owners can manage their client package credits"
+  on client_package_credits for all using (is_business_owner(business_id));
+drop policy if exists "Clients can view their own package credits" on client_package_credits;
+create policy "Clients can view their own package credits"
+  on client_package_credits for select using (
+    exists (select 1 from clients c where c.id = client_id and c.auth_user_id = auth.uid())
+  );
+
+-- 12. APPOINTMENTS
+create table if not exists appointments (
+  id                        uuid primary key default gen_random_uuid(),
+  business_id               uuid not null references businesses(id) on delete cascade,
+  client_id                 uuid references clients(id) on delete set null,
+  service_id                uuid references business_services(id) on delete set null,
+  package_credit_id         uuid references client_package_credits(id) on delete set null,
+  conversation_id           uuid references conversations(id) on delete set null,
+  scheduled_at              timestamptz not null,
+  status                    text not null default 'scheduled'
+    check (status in ('scheduled','pending_confirmation','completed','cancelled','no_show')),
+  notes                     text,
+  rescheduled_from          timestamptz,
+  requested_scheduled_at    timestamptz,
+  reschedule_requested_at   timestamptz,
+  confirmed_by_agent_at     timestamptz,
+  cancelled_at              timestamptz,
+  cancellation_reason       text,
+  cancelled_by              text check (cancelled_by is null or cancelled_by in ('client', 'business', 'system')),
+  payment_status            text not null default 'not_required'
+    check (payment_status in ('not_required', 'pending', 'paid', 'cash', 'refunded')),
+  payment_amount            numeric(14,2),
+  payment_currency          text not null default 'usd',
+  stripe_checkout_session_id text,
+  stripe_payment_intent_id   text,
+  paid_at                   timestamptz,
+  reminder_sent_at          timestamptz,
+  created_at                timestamptz not null default now(),
+  updated_at                timestamptz not null default now()
 );
 
 create index if not exists idx_appointments_business_id on appointments (business_id);
@@ -410,14 +481,151 @@ create policy "Clients can view their own appointments"
     exists (select 1 from clients c where c.id = client_id and c.auth_user_id = auth.uid())
   );
 
--- 11. AVAILABILITY (weekly working hours the AI checks before offering a slot)
+-- 13. TREATMENT RECORDS (simplified clinical note per visit — not a full EMR,
+-- just enough to operate safely: what was done, contraindication flags, next
+-- recommended date. notes_encrypted is encrypted at the application layer
+-- with src/lib/encryption.ts before it ever reaches Postgres.)
+create table if not exists treatment_records (
+  id                        uuid primary key default gen_random_uuid(),
+  business_id               uuid not null references businesses(id) on delete cascade,
+  client_id                 uuid not null references clients(id) on delete cascade,
+  appointment_id            uuid references appointments(id) on delete set null,
+  service_id                uuid references business_services(id) on delete set null,
+  treated_by                text,
+  notes_encrypted           text,
+  contraindications_flagged boolean not null default false,
+  next_recommended_date     date,
+  created_at                timestamptz not null default now(),
+  updated_at                timestamptz not null default now()
+);
+
+create index if not exists idx_treatment_records_business_id on treatment_records (business_id);
+create index if not exists idx_treatment_records_client_id on treatment_records (client_id);
+
+drop trigger if exists update_treatment_records_updated_at on treatment_records;
+create trigger update_treatment_records_updated_at
+  before update on treatment_records
+  for each row execute function update_updated_at_column();
+
+alter table treatment_records enable row level security;
+
+drop policy if exists "Business owners can manage their treatment records" on treatment_records;
+create policy "Business owners can manage their treatment records"
+  on treatment_records for all using (is_business_owner(business_id));
+drop policy if exists "Clients can view their own treatment records" on treatment_records;
+create policy "Clients can view their own treatment records"
+  on treatment_records for select using (
+    exists (select 1 from clients c where c.id = client_id and c.auth_user_id = auth.uid())
+  );
+
+-- 14. CONSENT FORMS (digital informed consent, required before certain
+-- treatments — botox, láser, peelings. content_encrypted holds the consent
+-- text/answers shown to the client, encrypted the same way as treatment
+-- notes. signature_name is the typed legal name that stands in for a
+-- signature.)
+create table if not exists consent_forms (
+  id                uuid primary key default gen_random_uuid(),
+  business_id       uuid not null references businesses(id) on delete cascade,
+  client_id         uuid not null references clients(id) on delete cascade,
+  service_id        uuid references business_services(id) on delete set null,
+  appointment_id    uuid references appointments(id) on delete set null,
+  title             text not null,
+  content_encrypted text not null,
+  status            text not null default 'pending'
+    check (status in ('pending', 'signed', 'declined')),
+  signature_name    text,
+  signed_at         timestamptz,
+  created_at        timestamptz not null default now(),
+  updated_at        timestamptz not null default now()
+);
+
+create index if not exists idx_consent_forms_business_id on consent_forms (business_id);
+create index if not exists idx_consent_forms_client_id on consent_forms (client_id);
+
+drop trigger if exists update_consent_forms_updated_at on consent_forms;
+create trigger update_consent_forms_updated_at
+  before update on consent_forms
+  for each row execute function update_updated_at_column();
+
+alter table consent_forms enable row level security;
+
+drop policy if exists "Business owners can manage their consent forms" on consent_forms;
+create policy "Business owners can manage their consent forms"
+  on consent_forms for all using (is_business_owner(business_id));
+drop policy if exists "Clients can view their own consent forms" on consent_forms;
+create policy "Clients can view their own consent forms"
+  on consent_forms for select using (
+    exists (select 1 from clients c where c.id = client_id and c.auth_user_id = auth.uid())
+  );
+-- Clients sign their own pending consent forms from the patient portal —
+-- restricted to filling in signature fields, never rewriting the content.
+drop policy if exists "Clients can sign their own pending consent forms" on consent_forms;
+create policy "Clients can sign their own pending consent forms"
+  on consent_forms for update using (
+    exists (select 1 from clients c where c.id = client_id and c.auth_user_id = auth.uid())
+    and status = 'pending'
+  );
+
+-- 15. BEFORE/AFTER PHOTOS (private by default — visible only in the
+-- dashboard and to the client themselves in the portal, never public)
+create table if not exists before_after_photos (
+  id                   uuid primary key default gen_random_uuid(),
+  business_id          uuid not null references businesses(id) on delete cascade,
+  client_id            uuid not null references clients(id) on delete cascade,
+  treatment_record_id  uuid references treatment_records(id) on delete set null,
+  photo_type           text not null check (photo_type in ('before', 'after')),
+  url                  text not null,
+  taken_at             timestamptz not null default now(),
+  created_at           timestamptz not null default now()
+);
+
+create index if not exists idx_before_after_photos_business_id on before_after_photos (business_id);
+create index if not exists idx_before_after_photos_client_id on before_after_photos (client_id);
+
+alter table before_after_photos enable row level security;
+
+drop policy if exists "Business owners can manage their before/after photos" on before_after_photos;
+create policy "Business owners can manage their before/after photos"
+  on before_after_photos for all using (is_business_owner(business_id));
+drop policy if exists "Clients can view their own before/after photos" on before_after_photos;
+create policy "Clients can view their own before/after photos"
+  on before_after_photos for select using (
+    exists (select 1 from clients c where c.id = client_id and c.auth_user_id = auth.uid())
+  );
+
+-- 16. AUDIT LOG (access trail for sensitive health data — clinical notes and
+-- consent forms. Writes happen from server-side service code only; there is
+-- no client-side insert policy on purpose.)
+create table if not exists audit_log (
+  id           uuid primary key default gen_random_uuid(),
+  business_id  uuid not null references businesses(id) on delete cascade,
+  actor_label  text not null,
+  action       text not null,
+  entity_type  text not null,
+  entity_id    uuid,
+  created_at   timestamptz not null default now()
+);
+
+create index if not exists idx_audit_log_business_id on audit_log (business_id);
+create index if not exists idx_audit_log_created_at on audit_log (created_at);
+
+alter table audit_log enable row level security;
+
+drop policy if exists "Business owners can view their audit log" on audit_log;
+create policy "Business owners can view their audit log"
+  on audit_log for select using (is_business_owner(business_id));
+drop policy if exists "Service role can write audit log" on audit_log;
+create policy "Service role can write audit log"
+  on audit_log for insert with check (auth.role() = 'service_role');
+
+-- 17. AVAILABILITY (weekly working hours the AI checks before offering a slot)
 create table if not exists business_availability (
   id            uuid primary key default gen_random_uuid(),
   business_id   uuid not null references businesses(id) on delete cascade,
   day_of_week   integer not null check (day_of_week between 0 and 6), -- 0 = Sunday
   start_time    time not null,
   end_time      time not null,
-  slot_minutes  integer not null default 30,
+  slot_minutes  integer not null default 30 check (slot_minutes > 0),
   is_active     boolean not null default true,
   created_at    timestamptz not null default now(),
   unique (business_id, day_of_week)
@@ -434,12 +642,14 @@ drop policy if exists "Public can view active availability" on business_availabi
 create policy "Public can view active availability"
   on business_availability for select using (is_active);
 
--- 12. KNOWLEDGE BASE (documents the AI agent can ground answers in)
+-- 18. KNOWLEDGE BASE (documents the AI agent can ground answers in)
 create table if not exists knowledge_documents (
   id            uuid primary key default gen_random_uuid(),
   business_id   uuid not null references businesses(id) on delete cascade,
   title         text not null,
   content       text not null,
+  category      text,
+  catalog_key   text,
   source_url    text,
   is_active     boolean not null default true,
   created_at    timestamptz not null default now(),
@@ -447,6 +657,8 @@ create table if not exists knowledge_documents (
 );
 
 create index if not exists idx_knowledge_documents_business_id on knowledge_documents (business_id);
+create index if not exists idx_knowledge_documents_catalog_key on knowledge_documents (business_id, catalog_key);
+create index if not exists idx_knowledge_documents_active on knowledge_documents (business_id, is_active);
 
 drop trigger if exists update_knowledge_documents_updated_at on knowledge_documents;
 create trigger update_knowledge_documents_updated_at
@@ -459,24 +671,76 @@ drop policy if exists "Business owners can manage their knowledge base" on knowl
 create policy "Business owners can manage their knowledge base"
   on knowledge_documents for all using (is_business_owner(business_id));
 
--- 13. WIDGETS (embeddable voice/chat widget configuration)
+-- 19. PLATFORM KNOWLEDGE (country/market-level facts shared by every business
+-- on EstetiCall — as opposed to knowledge_documents, which is each business's
+-- own private content. No business_id: read by every AI agent's system
+-- prompt. Managed from /admin/knowledge, gated by PLATFORM_ADMIN_EMAILS.)
+create table if not exists platform_knowledge_documents (
+  id            uuid primary key default gen_random_uuid(),
+  title         text not null,
+  content       text not null,
+  category      text,
+  source_url    text,
+  created_at    timestamptz not null default now(),
+  updated_at    timestamptz not null default now()
+);
+
+drop trigger if exists update_platform_knowledge_documents_updated_at on platform_knowledge_documents;
+create trigger update_platform_knowledge_documents_updated_at
+  before update on platform_knowledge_documents
+  for each row execute function update_updated_at_column();
+
+alter table platform_knowledge_documents enable row level security;
+
+drop policy if exists "Anyone can view platform knowledge" on platform_knowledge_documents;
+create policy "Anyone can view platform knowledge"
+  on platform_knowledge_documents for select using (true);
+
+-- 20. WIDGETS (embeddable voice/chat widget configuration — a business can
+-- have several, each optionally bound to a specific AI agent)
 create table if not exists widgets (
   id               uuid primary key default gen_random_uuid(),
-  business_id      uuid not null references businesses(id) on delete cascade unique,
+  business_id      uuid not null references businesses(id) on delete cascade,
+  agent_id         uuid references ai_agents(id) on delete set null,
+  name             text not null default 'Widget principal',
   is_enabled       boolean not null default true,
   primary_color    text not null default '#2563eb',
-  greeting_message text not null default 'Hi! Ask me about any of our listings.',
+  position         text not null default 'bottom-right'
+    check (position in ('bottom-right', 'bottom-left')),
+  theme            text not null default 'light' check (theme in ('light', 'dark')),
+  greeting_message text not null default '¡Hola! Pregúntame sobre nuestros tratamientos y disponibilidad.',
   allowed_origins  text[] not null default '{}',
+  impressions      integer not null default 0,
+  interactions     integer not null default 0,
   created_at       timestamptz not null default now(),
   updated_at       timestamptz not null default now()
 );
 
 create index if not exists idx_widgets_business_id on widgets (business_id);
+create index if not exists idx_widgets_agent_id on widgets (agent_id);
+create unique index if not exists idx_widgets_business_agent_unique
+  on widgets (business_id, agent_id)
+  where agent_id is not null;
 
 drop trigger if exists update_widgets_updated_at on widgets;
 create trigger update_widgets_updated_at
   before update on widgets
   for each row execute function update_updated_at_column();
+
+-- Atomic +1 for impressions/interactions — avoids read-modify-write races
+-- when the embed script fires from many concurrent page loads.
+create or replace function increment_widget_counter(widget_id uuid, column_name text)
+returns void as $$
+begin
+  if column_name = 'impressions' then
+    update widgets set impressions = impressions + 1 where id = widget_id;
+  elsif column_name = 'interactions' then
+    update widgets set interactions = interactions + 1 where id = widget_id;
+  else
+    raise exception 'Unknown widget counter column: %', column_name;
+  end if;
+end;
+$$ language plpgsql security definer;
 
 alter table widgets enable row level security;
 
@@ -487,17 +751,63 @@ drop policy if exists "Public can view enabled widget config" on widgets;
 create policy "Public can view enabled widget config"
   on widgets for select using (is_enabled);
 
--- 14. WEBSITES (site-builder config rendered at /sites/[slug])
+-- 21. WEBSITES (site-builder config rendered at /sites/[slug])
 create table if not exists websites (
-  id            uuid primary key default gen_random_uuid(),
-  business_id   uuid not null references businesses(id) on delete cascade unique,
-  is_published  boolean not null default false,
-  headline      text,
-  about         text,
-  theme         text not null default 'light',
-  custom_domain text unique,
-  created_at    timestamptz not null default now(),
-  updated_at    timestamptz not null default now()
+  id                    uuid primary key default gen_random_uuid(),
+  business_id           uuid not null references businesses(id) on delete cascade unique,
+  is_published          boolean not null default false,
+  template              text not null default 'clarity'
+    check (template in ('clarity', 'pulse', 'serenity')),
+  primary_color         text not null default '#166534',
+  secondary_color       text not null default '#16a34a',
+  font                  text not null default 'inter'
+    check (font in ('inter', 'playfair', 'poppins')),
+  ai_agent_id           uuid references ai_agents(id) on delete set null,
+  custom_domain         text unique,
+  -- Branding
+  logo_url              text,
+  site_title            text,
+  site_description      text,
+  -- Hero section
+  headline              text,
+  hero_subheadline      text,
+  hero_image_url        text,
+  cta_primary_text      text not null default 'Reservar una Cita',
+  cta_secondary_text    text not null default 'Llamar Ahora',
+  years_experience      integer,
+  clients_served        integer,
+  satisfaction_pct      integer,
+  -- About section
+  about_title           text not null default 'Sobre Nosotros',
+  about                 text,
+  about_story           text,
+  about_photo_url       text,
+  trust_badges          text[] not null default array[
+    'Especialistas Certificados',
+    'Productos y Equipos Aprobados',
+    'Consulta Virtual Disponible',
+    'Primera Valoración Gratuita'
+  ],
+  -- Footer
+  footer_tagline        text,
+  footer_copyright      text,
+  -- Website-level contact block (independent of businesses.phone/contact_email)
+  contact_phone         text,
+  contact_email         text,
+  contact_address       text,
+  contact_hours         text,
+  contact_maps_url      text,
+  -- Social links
+  social_youtube        text,
+  social_facebook       text,
+  social_instagram      text,
+  social_tiktok         text,
+  social_linkedin       text,
+  social_pinterest      text,
+  social_twitter        text,
+  theme                 text not null default 'light',
+  created_at            timestamptz not null default now(),
+  updated_at            timestamptz not null default now()
 );
 
 create index if not exists idx_websites_business_id on websites (business_id);
@@ -517,302 +827,10 @@ drop policy if exists "Public can view published websites" on websites;
 create policy "Public can view published websites"
   on websites for select using (is_published);
 
--- 15. NOTIFICATIONS
-create table if not exists notifications (
-  id           uuid primary key default gen_random_uuid(),
-  business_id  uuid not null references businesses(id) on delete cascade,
-  type         text not null
-    check (type in ('new_lead','appointment_booked','appointment_cancelled','subscription','system')),
-  title        text not null,
-  body         text,
-  is_read      boolean not null default false,
-  created_at   timestamptz not null default now()
-);
-
-create index if not exists idx_notifications_business_id on notifications (business_id);
-create index if not exists idx_notifications_is_read on notifications (is_read);
-
-alter table notifications enable row level security;
-
-drop policy if exists "Business owners can manage their notifications" on notifications;
-create policy "Business owners can manage their notifications"
-  on notifications for all using (is_business_owner(business_id));
-
--- 16. SUPPORT TICKETS
-create table if not exists support_tickets (
-  id           uuid primary key default gen_random_uuid(),
-  business_id  uuid not null references businesses(id) on delete cascade,
-  client_id    uuid references clients(id) on delete set null,
-  subject      text not null default 'Support Request',
-  status       text not null default 'open'
-    check (status in ('open','in_progress','resolved','closed')),
-  created_at   timestamptz not null default now(),
-  updated_at   timestamptz not null default now()
-);
-
-create index if not exists idx_support_tickets_business_id on support_tickets (business_id);
-create index if not exists idx_support_tickets_client_id on support_tickets (client_id);
-
-drop trigger if exists update_support_tickets_updated_at on support_tickets;
-create trigger update_support_tickets_updated_at
-  before update on support_tickets
-  for each row execute function update_updated_at_column();
-
-alter table support_tickets enable row level security;
-
-drop policy if exists "Clients can view their own tickets" on support_tickets;
-create policy "Clients can view their own tickets"
-  on support_tickets for select using (auth.uid() = client_id);
-drop policy if exists "Clients can create tickets" on support_tickets;
-create policy "Clients can create tickets"
-  on support_tickets for insert with check (auth.uid() = client_id);
-drop policy if exists "Business owners can manage all tickets" on support_tickets;
-create policy "Business owners can manage all tickets"
-  on support_tickets for all using (is_business_owner(business_id));
-
--- 17. SUPPORT MESSAGES
-create table if not exists support_messages (
-  id           uuid primary key default gen_random_uuid(),
-  ticket_id    uuid not null references support_tickets(id) on delete cascade,
-  business_id  uuid not null references businesses(id) on delete cascade,
-  sender       text not null check (sender in ('client','business')),
-  body         text not null,
-  created_at   timestamptz not null default now()
-);
-
-create index if not exists idx_support_messages_ticket_id on support_messages (ticket_id);
-create index if not exists idx_support_messages_business_id on support_messages (business_id);
-
-alter table support_messages enable row level security;
-
-drop policy if exists "Clients can view messages on their own tickets" on support_messages;
-create policy "Clients can view messages on their own tickets"
-  on support_messages for select using (
-    exists (
-      select 1 from support_tickets t
-      where t.id = ticket_id and t.client_id = auth.uid()
-    )
-  );
-drop policy if exists "Clients can send messages on their own tickets" on support_messages;
-create policy "Clients can send messages on their own tickets"
-  on support_messages for insert with check (
-    exists (
-      select 1 from support_tickets t
-      where t.id = ticket_id and t.client_id = auth.uid()
-    )
-  );
-drop policy if exists "Business owners can manage all support messages" on support_messages;
-create policy "Business owners can manage all support messages"
-  on support_messages for all using (is_business_owner(business_id));
-
--- 18. BUSINESS SERVICES (the offerings a business's AI agents can quote —
--- e.g. "Property Viewing", "Investment Consultation" — decoupled from
--- listings so this works for non-real-estate verticals too)
-create table if not exists business_services (
-  id            uuid primary key default gen_random_uuid(),
-  business_id   uuid not null references businesses(id) on delete cascade,
-  name          text not null,
-  description   text,
-  price         numeric(14,2),
-  is_active     boolean not null default true,
-  sort_order    integer not null default 0,
-  created_at    timestamptz not null default now(),
-  updated_at    timestamptz not null default now()
-);
-
-create index if not exists idx_business_services_business_id on business_services (business_id);
-
-drop trigger if exists update_business_services_updated_at on business_services;
-create trigger update_business_services_updated_at
-  before update on business_services
-  for each row execute function update_updated_at_column();
-
-alter table business_services enable row level security;
-
-drop policy if exists "Business owners can manage their services" on business_services;
-create policy "Business owners can manage their services"
-  on business_services for all using (is_business_owner(business_id));
-drop policy if exists "Public can view active services" on business_services;
-create policy "Public can view active services"
-  on business_services for select using (is_active);
-
--- 19. LISTINGS — state/zip + price display (additive, matches the reference
--- template's full address block and "Price Display" field on the edit form)
-alter table listings add column if not exists state text;
-alter table listings add column if not exists zip text;
-alter table listings add column if not exists price_display text not null default 'fixed'
-  check (price_display in ('fixed', 'negotiable', 'starting_at', 'contact'));
-
--- 20. LISTINGS — vacation rentals (day/week/month, common for tourist-zone
--- Airbnb-style properties in the DR) + CONVERSATIONS — sentiment, derived
--- from the transcript once a call ends (see src/services/sentiment.ts).
--- property_type already included 'land' (solares) from the start.
-alter table listings drop constraint if exists listings_listing_type_check;
-alter table listings add constraint listings_listing_type_check
-  check (listing_type in ('sale', 'rent', 'vacation_rental'));
-alter table listings add column if not exists rental_period text
-  check (rental_period in ('night', 'week', 'month'));
-alter table conversations add column if not exists sentiment text
-  check (sentiment in ('positive', 'neutral', 'negative'));
-
--- 21. APPOINTMENTS — reschedule/cancellation/payment tracking columns.
--- These already existed on the live project (added out-of-band before this
--- file tracked them) except for service_id; documenting them here so
--- schema.sql stops drifting from reality. clients.pre_approval_number backs
--- the "Pre-Approval #" field on the manual "New Viewing" form.
-alter table appointments add column if not exists rescheduled_from timestamptz;
-alter table appointments add column if not exists requested_scheduled_at timestamptz;
-alter table appointments add column if not exists reschedule_requested_at timestamptz;
-alter table appointments add column if not exists confirmed_by_agent_at timestamptz;
-alter table appointments add column if not exists cancelled_at timestamptz;
-alter table appointments add column if not exists cancellation_reason text;
-alter table appointments add column if not exists cancelled_by text
-  check (cancelled_by is null or cancelled_by in ('client', 'business', 'system'));
-alter table appointments add column if not exists payment_status text not null default 'not_required'
-  check (payment_status in ('not_required', 'pending', 'paid', 'cash', 'refunded'));
-alter table appointments add column if not exists payment_amount numeric(14,2);
-alter table appointments add column if not exists payment_currency text not null default 'usd';
-alter table appointments add column if not exists stripe_checkout_session_id text;
-alter table appointments add column if not exists stripe_payment_intent_id text;
-alter table appointments add column if not exists paid_at timestamptz;
-alter table appointments add column if not exists reminder_sent_at timestamptz;
-alter table appointments add column if not exists service_id uuid
-  references business_services(id) on delete set null;
-
-alter table clients add column if not exists pre_approval_number text;
-
--- 22. AI AGENTS — language field (matches the reference template's "Language"
--- field on the agent settings form) + AGENT SERVICES (join table: which
--- services each individual agent is scoped to discuss — different from
--- agent_listings, which scopes listings. Mirrors that same additive pattern.)
-alter table ai_agents add column if not exists language text not null default 'en';
-
-create table if not exists agent_services (
-  agent_id     uuid not null references ai_agents(id) on delete cascade,
-  service_id   uuid not null references business_services(id) on delete cascade,
-  business_id  uuid not null references businesses(id) on delete cascade,
-  created_at   timestamptz not null default now(),
-  primary key (agent_id, service_id)
-);
-
-create index if not exists idx_agent_services_business_id on agent_services (business_id);
-create index if not exists idx_agent_services_service_id on agent_services (service_id);
-
-alter table agent_services enable row level security;
-
-drop policy if exists "Business owners can manage agent-service links" on agent_services;
-create policy "Business owners can manage agent-service links"
-  on agent_services for all using (is_business_owner(business_id));
-
--- 23. BUSINESS SERVICES — duration, price type, and catalog tracking (matches
--- the reference template's "Duration (minutes)" + "Price Type" fields on the
--- service form, and its pre-built 32-service catalog across 8 specialties).
--- catalog_key links a created service back to the static catalog entry it
--- came from (src/constants/index.ts CATALOG_SERVICES) so the gallery can show
--- "Added to your catalog" instead of creating duplicates.
--- price_type has 4 options, matching the reference template's "Price Type"
--- dropdown: fixed, starting_at, price_range (uses price + price_max), and
--- call_for_price (price/price_max stay null; UI shows "Call for Price").
-alter table business_services add column if not exists duration_minutes integer not null default 60;
-alter table business_services add column if not exists price_type text not null default 'fixed'
-  check (price_type in ('fixed', 'starting_at', 'price_range', 'call_for_price'));
-alter table business_services add column if not exists price_max numeric;
-alter table business_services add column if not exists catalog_key text;
-
-create index if not exists idx_business_services_catalog_key on business_services (business_id, catalog_key);
-
--- 24. KNOWLEDGE BASE — category + catalog tracking (matches the reference
--- template's FAQ category tags and its pre-built 40-question FAQ library
--- across 9 topics). catalog_key links a document back to the static
--- template it came from (src/data/faqTemplates.ts) so the library can show
--- "Ya está en tu base de conocimiento" instead of creating duplicates.
-alter table knowledge_documents add column if not exists category text;
-alter table knowledge_documents add column if not exists catalog_key text;
-alter table knowledge_documents add column if not exists is_active boolean not null default true;
-
-create index if not exists idx_knowledge_documents_catalog_key on knowledge_documents (business_id, catalog_key);
-create index if not exists idx_knowledge_documents_active on knowledge_documents (business_id, is_active);
-
--- 25. WEBSITES — full site-builder rebuild (matches the reference template's
--- Website Builder: template picker, primary/secondary color, font, AI agent
--- assignment, branding, hero section stats/CTAs, footer, and a website-level
--- contact block distinct from the business's internal phone/email/address).
--- "Site URL" itself is NOT duplicated here — it's businesses.slug, already
--- unique and already what /sites/[slug] routes on.
-alter table websites add column if not exists template text not null default 'clarity'
-  check (template in ('clarity', 'pulse', 'serenity'));
-alter table websites add column if not exists primary_color text not null default '#166534';
-alter table websites add column if not exists secondary_color text not null default '#16a34a';
-alter table websites add column if not exists font text not null default 'inter'
-  check (font in ('inter', 'playfair', 'poppins'));
-alter table websites add column if not exists ai_agent_id uuid references ai_agents(id) on delete set null;
-
--- Branding
-alter table websites add column if not exists logo_url text;
-alter table websites add column if not exists site_title text;
-alter table websites add column if not exists site_description text;
-
--- Hero section (reuses existing `headline` as the hero headline; `about` as
--- the About Section body — both already existed, so not duplicated).
-alter table websites add column if not exists hero_subheadline text;
-alter table websites add column if not exists hero_image_url text;
-alter table websites add column if not exists cta_primary_text text not null default 'Book a Viewing';
-alter table websites add column if not exists cta_secondary_text text not null default 'Call Now';
-alter table websites add column if not exists years_experience integer;
-alter table websites add column if not exists clients_served integer;
-alter table websites add column if not exists satisfaction_pct integer;
-alter table websites add column if not exists about_title text not null default 'About Us';
-
--- Services featured on the public site — references the business's own
--- catalog (business_services, already built in Dashboard → Services)
--- instead of duplicating service data on the website.
-alter table websites add column if not exists featured_service_ids uuid[] not null default '{}';
-
--- Footer
-alter table websites add column if not exists footer_tagline text;
-alter table websites add column if not exists footer_copyright text;
-
--- Website-level contact block (independent of businesses.phone/contact_email
--- so the public site can show different copy than internal records).
-alter table websites add column if not exists contact_phone text;
-alter table websites add column if not exists contact_email text;
-alter table websites add column if not exists contact_address text;
-alter table websites add column if not exists contact_hours text;
-alter table websites add column if not exists contact_maps_url text;
-
--- Social media links — shown as brand icons in the site footer.
-alter table websites add column if not exists social_youtube text;
-alter table websites add column if not exists social_facebook text;
-alter table websites add column if not exists social_instagram text;
-alter table websites add column if not exists social_tiktok text;
-alter table websites add column if not exists social_linkedin text;
-alter table websites add column if not exists social_pinterest text;
-alter table websites add column if not exists social_twitter text;
-
--- 25a. WEBSITE SUBSCRIBERS — contact-form leads (and any other opt-in
--- source) captured from the public site. Always written through the admin
--- client from /api/website/subscribe since visitors have no Supabase
--- session, so there's no public insert policy here — only a read policy
--- for the business owner.
-create table if not exists website_subscribers (
-  id          uuid primary key default gen_random_uuid(),
-  business_id uuid not null references businesses(id) on delete cascade,
-  email       text not null,
-  name        text,
-  phone       text,
-  message     text,
-  source      text not null default 'website',
-  created_at  timestamptz not null default now()
-);
-create index if not exists idx_website_subscribers_business_id on website_subscribers (business_id);
-create index if not exists idx_website_subscribers_email on website_subscribers (email);
-alter table website_subscribers enable row level security;
-drop policy if exists "Business owners can view their website subscribers" on website_subscribers;
-create policy "Business owners can view their website subscribers"
-  on website_subscribers for select using (is_business_owner(business_id));
-
--- 26. WEBSITE TEAM MEMBERS (matches the reference template's "Team Members"
--- content section: Name, Role/Title, Bio, Photo, reorderable, Add/Remove).
+-- 22. WEBSITE CONTENT — team members, testimonials, specialties, FAQs, and
+-- the marketing-copy services list shown on the public site (independent
+-- from business_services, the catalog actually bookable through the AI
+-- agent — matches the reference template's split between the two).
 create table if not exists website_team_members (
   id          uuid primary key default gen_random_uuid(),
   business_id uuid not null references businesses(id) on delete cascade,
@@ -839,7 +857,6 @@ create policy "Public can view team members of published websites"
     exists (select 1 from websites where websites.business_id = website_team_members.business_id and websites.is_published)
   );
 
--- 27. WEBSITE TESTIMONIALS
 create table if not exists website_testimonials (
   id          uuid primary key default gen_random_uuid(),
   business_id uuid not null references businesses(id) on delete cascade,
@@ -866,11 +883,7 @@ create policy "Public can view testimonials of published websites"
     exists (select 1 from websites where websites.business_id = website_testimonials.business_id and websites.is_published)
   );
 
--- 28. WEBSITE SPECIALTIES — the reference template calls this panel
--- "Partners & Lenders" but the items it holds (Residential Sales, Commercial
--- Leasing, Property Management...) and its "+ Add Insurance" button are
--- generic template leftovers; what it actually powers on the public site is
--- the "Our Specialties" / "What We Offer" grid — named accordingly here.
+-- "Our Specialties" / "What We Offer" grid on the public site.
 create table if not exists website_specialties (
   id          uuid primary key default gen_random_uuid(),
   business_id uuid not null references businesses(id) on delete cascade,
@@ -889,7 +902,6 @@ create policy "Public can view specialties of published websites"
     exists (select 1 from websites where websites.business_id = website_specialties.business_id and websites.is_published)
   );
 
--- 29. WEBSITE FAQS
 create table if not exists website_faqs (
   id          uuid primary key default gen_random_uuid(),
   business_id uuid not null references businesses(id) on delete cascade,
@@ -909,65 +921,12 @@ create policy "Public can view FAQs of published websites"
     exists (select 1 from websites where websites.business_id = website_faqs.business_id and websites.is_published)
   );
 
-
--- 30. BUSINESSES — website + split city/state/zip (matches the reference
--- template's Business Profile form, where "address" is broken into Street
--- Address / City / State / ZIP Code) + appointment-payment Stripe keys
--- (matches the reference template's Settings → Stripe Payments tab: the
--- business's OWN Stripe account, used so their clients can pay viewing fees
--- online — separate from business_subscriptions.stripe_customer_id, which is
--- the platform owner's Stripe account billing this business for its plan).
-alter table businesses add column if not exists website text;
-alter table businesses add column if not exists city text;
-alter table businesses add column if not exists state text;
-alter table businesses add column if not exists zip_code text;
-alter table businesses add column if not exists stripe_publishable_key text;
-alter table businesses add column if not exists stripe_secret_key text;
-alter table businesses add column if not exists stripe_connected boolean not null default false;
-
--- 31. LISTINGS — property_type: add 'industrial' (naves industriales) and
--- 'other' (catch-all) to the existing house/apartment/townhouse/commercial/
--- condo/land set.
-alter table listings drop constraint if exists listings_property_type_check;
-alter table listings add constraint listings_property_type_check
-  check (property_type in ('house', 'apartment', 'townhouse', 'commercial', 'condo', 'land', 'industrial', 'other'));
-
--- 32. BUSINESS_AVAILABILITY — slot_minutes must be positive. A zero (or
--- negative) value sent getAvailableSlots() into an infinite loop — the
--- request would just hang until the serverless function timed out, which
--- the AI voice agent surfaced to callers as "technical problem checking
--- availability". The application code now guards against it too, but this
--- closes the gap at the source.
-alter table business_availability drop constraint if exists business_availability_slot_minutes_check;
-alter table business_availability add constraint business_availability_slot_minutes_check
-  check (slot_minutes > 0);
-
--- 33. WEBSITES — About Section: Story is a second, optional paragraph
--- (Mission stays required-ish via the existing `about` column); About Photo
--- is an uploaded image instead of the old placeholder icon; Trust Badges
--- were previously a hardcoded, unchangeable list in the renderer — they're
--- now a per-business array, seeded with the old hardcoded values so existing
--- published sites render identically until an owner edits them.
-alter table websites add column if not exists about_story text;
-alter table websites add column if not exists about_photo_url text;
-alter table websites add column if not exists trust_badges text[] not null default array[
-  'Licensed Real Estate Agents',
-  'Accepting New Clients',
-  'Virtual Viewings Available',
-  'Free Market Analysis'
-];
-
--- 34. WEBSITE SERVICES — the Website Builder's own Services list (icon,
--- name, description, duration, price), authored directly in the builder
--- like Team Members / Testimonials / FAQ. Replaces the old "pick from your
--- actual business_services" checkbox picker (websites.featured_service_ids,
--- left in place but no longer read/written) — the reference template's
--- Services section is independent marketing copy, not tied to the services
--- actually bookable through the AI agent.
+-- Marketing-copy treatments list authored directly in the builder (icon,
+-- name, description, duration, price) — separate from business_services.
 create table if not exists website_services (
   id          uuid primary key default gen_random_uuid(),
   business_id uuid not null references businesses(id) on delete cascade,
-  icon        text not null default 'home',
+  icon        text not null default 'sparkles',
   name        text not null default '',
   description text,
   duration    text,
@@ -991,12 +950,73 @@ create policy "Public can view services of published websites"
     exists (select 1 from websites where websites.business_id = website_services.business_id and websites.is_published)
   );
 
--- 35. SUPPORT TICKETS/MESSAGES — RLS bug fix. The original client policies
--- compared auth.uid() directly to client_id, but client_id is a foreign key
--- to clients.id (the row's own primary key), not to clients.auth_user_id —
--- those are different values, so the check could never pass and no client
--- could ever read or create their own tickets. Match the lookup pattern
--- already used correctly by the appointments/clients policies.
+-- Contact-form leads (and any other opt-in source) captured from the public
+-- site. Always written through the admin client from /api/website/subscribe
+-- since visitors have no Supabase session — no public insert policy here,
+-- only a read policy for the business owner.
+create table if not exists website_subscribers (
+  id          uuid primary key default gen_random_uuid(),
+  business_id uuid not null references businesses(id) on delete cascade,
+  email       text not null,
+  name        text,
+  phone       text,
+  message     text,
+  source      text not null default 'website',
+  created_at  timestamptz not null default now()
+);
+create index if not exists idx_website_subscribers_business_id on website_subscribers (business_id);
+create index if not exists idx_website_subscribers_email on website_subscribers (email);
+alter table website_subscribers enable row level security;
+drop policy if exists "Business owners can view their website subscribers" on website_subscribers;
+create policy "Business owners can view their website subscribers"
+  on website_subscribers for select using (is_business_owner(business_id));
+
+-- 23. NOTIFICATIONS
+create table if not exists notifications (
+  id           uuid primary key default gen_random_uuid(),
+  business_id  uuid not null references businesses(id) on delete cascade,
+  type         text not null
+    check (type in ('new_lead','appointment_booked','appointment_cancelled','subscription','system')),
+  title        text not null,
+  body         text,
+  is_read      boolean not null default false,
+  created_at   timestamptz not null default now()
+);
+
+create index if not exists idx_notifications_business_id on notifications (business_id);
+create index if not exists idx_notifications_is_read on notifications (is_read);
+
+alter table notifications enable row level security;
+
+drop policy if exists "Business owners can manage their notifications" on notifications;
+create policy "Business owners can manage their notifications"
+  on notifications for all using (is_business_owner(business_id));
+
+-- 24. SUPPORT TICKETS / MESSAGES
+create table if not exists support_tickets (
+  id           uuid primary key default gen_random_uuid(),
+  business_id  uuid not null references businesses(id) on delete cascade,
+  client_id    uuid references clients(id) on delete set null,
+  subject      text not null default 'Support Request',
+  status       text not null default 'open'
+    check (status in ('open','in_progress','resolved','closed')),
+  created_at   timestamptz not null default now(),
+  updated_at   timestamptz not null default now()
+);
+
+create index if not exists idx_support_tickets_business_id on support_tickets (business_id);
+create index if not exists idx_support_tickets_client_id on support_tickets (client_id);
+
+drop trigger if exists update_support_tickets_updated_at on support_tickets;
+create trigger update_support_tickets_updated_at
+  before update on support_tickets
+  for each row execute function update_updated_at_column();
+
+alter table support_tickets enable row level security;
+
+-- client_id is a foreign key to clients.id (the row's own primary key), not
+-- to clients.auth_user_id — the policies below join through clients to match
+-- the signed-in portal user, mirroring the appointments/clients pattern.
 drop policy if exists "Clients can view their own tickets" on support_tickets;
 create policy "Clients can view their own tickets"
   on support_tickets for select using (
@@ -1007,6 +1027,23 @@ create policy "Clients can create tickets"
   on support_tickets for insert with check (
     exists (select 1 from clients c where c.id = client_id and c.auth_user_id = auth.uid())
   );
+drop policy if exists "Business owners can manage all tickets" on support_tickets;
+create policy "Business owners can manage all tickets"
+  on support_tickets for all using (is_business_owner(business_id));
+
+create table if not exists support_messages (
+  id           uuid primary key default gen_random_uuid(),
+  ticket_id    uuid not null references support_tickets(id) on delete cascade,
+  business_id  uuid not null references businesses(id) on delete cascade,
+  sender       text not null check (sender in ('client','business')),
+  body         text not null,
+  created_at   timestamptz not null default now()
+);
+
+create index if not exists idx_support_messages_ticket_id on support_messages (ticket_id);
+create index if not exists idx_support_messages_business_id on support_messages (business_id);
+
+alter table support_messages enable row level security;
 
 drop policy if exists "Clients can view messages on their own tickets" on support_messages;
 create policy "Clients can view messages on their own tickets"
@@ -1026,55 +1063,11 @@ create policy "Clients can send messages on their own tickets"
       where t.id = ticket_id and c.auth_user_id = auth.uid()
     )
   );
+drop policy if exists "Business owners can manage all support messages" on support_messages;
+create policy "Business owners can manage all support messages"
+  on support_messages for all using (is_business_owner(business_id));
 
--- 36. PLATFORM KNOWLEDGE + WHATSAPP (Evolution API) — recovered from an
--- orphaned branch (claude/new-user-home-page-0xjc4d, 4 ago 2026) that never
--- got merged to main; ported here on 8 ago 2026 reconciled with everything
--- built on main since (Client Portal, idempotent schema, etc).
---
--- Platform knowledge: country/market-level facts shared by every business on
--- InmobilIACall (CONFOTUR/Ley 158-01, Ley 108-05) — as opposed to
--- knowledge_documents, which is each business's own private FAQ/policy
--- content. No business_id: one row here is read by every AI agent's system
--- prompt, in every business, without needing to be copied into each
--- tenant's own knowledge_documents. Managed from /admin/knowledge, gated by
--- PLATFORM_ADMIN_EMAILS (src/lib/platformAdmin.ts).
-create table if not exists platform_knowledge_documents (
-  id            uuid primary key default gen_random_uuid(),
-  title         text not null,
-  content       text not null,
-  category      text,
-  source_url    text,
-  created_at    timestamptz not null default now(),
-  updated_at    timestamptz not null default now()
-);
-
-drop trigger if exists update_platform_knowledge_documents_updated_at on platform_knowledge_documents;
-create trigger update_platform_knowledge_documents_updated_at
-  before update on platform_knowledge_documents
-  for each row execute function update_updated_at_column();
-
-alter table platform_knowledge_documents enable row level security;
-
--- Non-sensitive, published market knowledge — safe for every business (and
--- the public-facing AI agent) to read. Writes happen via the service role
--- only (see /api/admin/knowledge), since RLS here only grants public SELECT.
-drop policy if exists "Anyone can view platform knowledge" on platform_knowledge_documents;
-create policy "Anyone can view platform knowledge"
-  on platform_knowledge_documents for select using (true);
-
--- WhatsApp: adds 'whatsapp' as a channel/source value so Call Log,
--- Analytics, and Clients — which already read from
--- conversations/conversation_messages/clients without filtering by channel —
--- work for WhatsApp automatically, exactly like they did for the widget.
-alter table conversations drop constraint if exists conversations_channel_check;
-alter table conversations add constraint conversations_channel_check
-  check (channel in ('widget_voice','widget_chat','phone','whatsapp'));
-
-alter table clients drop constraint if exists clients_source_check;
-alter table clients add constraint clients_source_check
-  check (source in ('ai_call','widget_chat','manual','website_form','whatsapp'));
-
+-- 25. WHATSAPP (self-hosted Evolution API — https://github.com/EvolutionAPI/evolution-api)
 -- One WhatsApp connection per business (own number, own instance on the
 -- Evolution API server). instance_token is the per-instance token Evolution
 -- API issues on creation — separate from the global EVOLUTION_API_KEY, which
@@ -1107,187 +1100,16 @@ drop policy if exists "Business owners can manage their whatsapp connection" on 
 create policy "Business owners can manage their whatsapp connection"
   on whatsapp_connections for all using (is_business_owner(business_id));
 
--- 37. LISTINGS — Dominican Republic market fields (roadmap Fase 2):
--- currency (most RD inventory is quoted in USD, not always DOP — price
--- alone was ambiguous), confotur_eligible (Ley 158-01 tax exemption, a real
--- closing argument the AI agent should be able to mention), delivery_date
--- (expected completion date for pre-construction / off-plan projects,
--- common in the RD market).
-alter table listings add column if not exists currency text not null default 'USD';
-alter table listings drop constraint if exists listings_currency_check;
-alter table listings add constraint listings_currency_check check (currency in ('USD', 'DOP'));
-alter table listings add column if not exists confotur_eligible boolean not null default false;
-alter table listings add column if not exists delivery_date date;
-
--- 38. LISTINGS — land/solar-specific fields. Bedrooms, bathrooms, and
--- year_built are meaningless for a `land` listing (already hidden in the UI
--- for that property type) but the form had nothing land-specific to show
--- in their place. All optional/nullable — applies to any property_type,
--- though the UI only surfaces them when property_type = 'land'.
-alter table listings add column if not exists lot_frontage_m numeric(10,2);
-alter table listings add column if not exists lot_depth_m numeric(10,2);
-alter table listings add column if not exists cadastral_district text;
-alter table listings add column if not exists latitude numeric(10,7);
-alter table listings add column if not exists longitude numeric(10,7);
-
--- 39. PREVENTA PROJECTS — pre-construction/off-plan real estate projects.
--- Modeled as its own project + child unit-type tables (not a `listings` row)
--- because a real preventa project in this market sells multiple unit types
--- at once ("Tipo A" 3-bed, "Tipo B" 4-bed, etc.), each with its own price —
--- one listings row per property can't represent that.
-create table if not exists preventa_projects (
-  id                    uuid primary key default gen_random_uuid(),
-  business_id           uuid not null references businesses(id) on delete cascade,
-  project_code          text not null unique default ('PRJ-' || substr(gen_random_uuid()::text, 1, 8)),
-  name                  text not null,
-  description           text,
-  phase                 text not null default 'lanzamiento'
-    check (phase in ('lanzamiento','en_construccion','entrega')),
-  status                text not null default 'active'
-    check (status in ('active','paused','sold_out')),
-  developer_name        text,
-  address_line          text,
-  area_name             text,
-  city                  text,
-  state                 text,
-  zip                   text,
-  latitude              numeric(10,7),
-  longitude             numeric(10,7),
-  delivery_date         date,
-  reservation_amount    numeric(14,2),
-  reservation_currency  text not null default 'USD' check (reservation_currency in ('USD','DOP')),
-  down_payment_pct      numeric(5,2),
-  financing_notes       text,
-  finishes_description  text,
-  amenities             text[] not null default '{}',
-  promo_video_url       text,
-  virtual_tour_url      text,
-  cover_photo_url       text,
-  featured              boolean not null default false,
-  visible_to_ai_agent   boolean not null default true,
-  created_at            timestamptz not null default now(),
-  updated_at            timestamptz not null default now()
-);
-
-create index if not exists idx_preventa_projects_business_id on preventa_projects (business_id);
-create index if not exists idx_preventa_projects_status on preventa_projects (status);
-
-drop trigger if exists update_preventa_projects_updated_at on preventa_projects;
-create trigger update_preventa_projects_updated_at
-  before update on preventa_projects
-  for each row execute function update_updated_at_column();
-
-alter table preventa_projects enable row level security;
-
-drop policy if exists "Business owners can manage their preventa projects" on preventa_projects;
-create policy "Business owners can manage their preventa projects"
-  on preventa_projects for all using (is_business_owner(business_id));
-drop policy if exists "Public can view active preventa projects" on preventa_projects;
-create policy "Public can view active preventa projects"
-  on preventa_projects for select using (status = 'active');
-
--- 40. PREVENTA UNIT TYPES — "Tipo A", "Tipo B", "Penthouse", etc. within a
--- project, each with its own price/specs.
-create table if not exists preventa_unit_types (
-  id              uuid primary key default gen_random_uuid(),
-  project_id      uuid not null references preventa_projects(id) on delete cascade,
-  business_id     uuid not null references businesses(id) on delete cascade,
-  name            text not null,
-  bedrooms        integer not null default 0,
-  bathrooms       integer not null default 0,
-  area_sqft       integer not null default 0,
-  parking_spaces  integer not null default 0,
-  price           numeric(14,2) not null default 0,
-  currency        text not null default 'USD' check (currency in ('USD','DOP')),
-  price_display   text not null default 'fixed'
-    check (price_display in ('fixed','negotiable','starting_at','contact')),
-  notes           text,
-  sort_order      integer not null default 0,
-  created_at      timestamptz not null default now(),
-  updated_at      timestamptz not null default now()
-);
-
-create index if not exists idx_preventa_unit_types_project_id on preventa_unit_types (project_id);
-create index if not exists idx_preventa_unit_types_business_id on preventa_unit_types (business_id);
-
-drop trigger if exists update_preventa_unit_types_updated_at on preventa_unit_types;
-create trigger update_preventa_unit_types_updated_at
-  before update on preventa_unit_types
-  for each row execute function update_updated_at_column();
-
-alter table preventa_unit_types enable row level security;
-
-drop policy if exists "Business owners can manage their preventa unit types" on preventa_unit_types;
-create policy "Business owners can manage their preventa unit types"
-  on preventa_unit_types for all using (is_business_owner(business_id));
-drop policy if exists "Public can view unit types of active projects" on preventa_unit_types;
-create policy "Public can view unit types of active projects"
-  on preventa_unit_types for select using (
-    exists (select 1 from preventa_projects p where p.id = project_id and p.status = 'active')
-  );
-
--- 41. PREVENTA PROJECT PHOTOS — maqueta, piloto, renders, promotional stills.
-create table if not exists preventa_project_photos (
-  id           uuid primary key default gen_random_uuid(),
-  project_id   uuid not null references preventa_projects(id) on delete cascade,
-  business_id  uuid not null references businesses(id) on delete cascade,
-  url          text not null,
-  is_cover     boolean not null default false,
-  caption      text,
-  sort_order   integer not null default 0,
-  created_at   timestamptz not null default now()
-);
-
-create index if not exists idx_preventa_project_photos_project_id on preventa_project_photos (project_id);
-create index if not exists idx_preventa_project_photos_business_id on preventa_project_photos (business_id);
-create unique index if not exists uq_preventa_project_photos_one_cover
-  on preventa_project_photos (project_id) where (is_cover);
-
-alter table preventa_project_photos enable row level security;
-
-drop policy if exists "Business owners can manage their preventa project photos" on preventa_project_photos;
-create policy "Business owners can manage their preventa project photos"
-  on preventa_project_photos for all using (is_business_owner(business_id));
-drop policy if exists "Public can view photos of active preventa projects" on preventa_project_photos;
-create policy "Public can view photos of active preventa projects"
-  on preventa_project_photos for select using (
-    exists (select 1 from preventa_projects p where p.id = project_id and p.status = 'active')
-  );
-
--- 42. PREVENTA PROJECT AGENTS (join: which AI agent(s) lead with which
--- projects) — same ranking-only semantics as agent_listings: an assignment
--- makes an agent lead with that project when browsing unprompted, it never
--- hides the project from other agents (see buildSystemPrompt).
-create table if not exists preventa_project_agents (
-  agent_id     uuid not null references ai_agents(id) on delete cascade,
-  project_id   uuid not null references preventa_projects(id) on delete cascade,
-  business_id  uuid not null references businesses(id) on delete cascade,
-  created_at   timestamptz not null default now(),
-  primary key (agent_id, project_id)
-);
-
-create index if not exists idx_preventa_project_agents_business_id on preventa_project_agents (business_id);
-create index if not exists idx_preventa_project_agents_project_id on preventa_project_agents (project_id);
-
-alter table preventa_project_agents enable row level security;
-
-drop policy if exists "Business owners can manage preventa project-agent links" on preventa_project_agents;
-create policy "Business owners can manage preventa project-agent links"
-  on preventa_project_agents for all using (is_business_owner(business_id));
-
--- 43. BANK TRANSFER PAYMENTS — manual bank-transfer payment method for plan
--- upgrades, alongside Stripe/Paddle checkout. A bank transfer has no
--- real-time confirmation the way a card charge does, so this models an
--- explicit review queue instead of pretending it's instant: the business
--- submits proof of transfer, a platform admin (PLATFORM_ADMIN_EMAILS)
--- verifies the money actually landed in the real bank account, and only
--- then does approving it run the exact same plan-activation effect Stripe's
--- checkout.session.completed webhook produces — see billing.ts.
--- No update/delete policy for business owners on purpose: only the
--- service-role (admin) client can attach a receipt or approve/reject, with
--- ownership checked in application code — mirrors the listing-photos upload
--- route. Letting an authenticated business owner UPDATE their own row would
--- let them set status = 'approved' on themselves and get a free plan.
+-- 26. BANK TRANSFER PAYMENTS — manual bank-transfer payment method for plan
+-- upgrades, alongside Stripe checkout. A bank transfer has no real-time
+-- confirmation the way a card charge does, so this models an explicit review
+-- queue instead of pretending it's instant: the business submits proof of
+-- transfer, a platform admin (PLATFORM_ADMIN_EMAILS) verifies the money
+-- actually landed, and only then does approving it run the exact same
+-- plan-activation effect Stripe's checkout.session.completed webhook
+-- produces — see billing.ts. No update/delete policy for business owners on
+-- purpose: only the service-role (admin) client can attach a receipt or
+-- approve/reject, with ownership checked in application code.
 create table if not exists bank_transfer_payments (
   id                uuid primary key default gen_random_uuid(),
   business_id       uuid not null references businesses(id) on delete cascade,
@@ -1315,238 +1137,3 @@ create policy "Business owners can view their own bank transfer requests"
 drop policy if exists "Business owners can create their own bank transfer requests" on bank_transfer_payments;
 create policy "Business owners can create their own bank transfer requests"
   on bank_transfer_payments for insert with check (is_business_owner(business_id) and status = 'pending');
-
--- 44. CHANNEL PROVIDER ACCOUNTS — the business's own master account with a
--- certified Airbnb/Booking/VRBO channel-manager partner (Hostaway to start;
--- `provider` stays a column, not a hardcoded assumption, so Guesty/Lodgify
--- can be added later without a schema change). There is no such thing as a
--- direct "Airbnb API key" — Airbnb only grants API access to vetted PMS
--- partners, so every real-Airbnb feature in this app goes through this one
--- account. client_secret_encrypted is the Hostaway OAuth client secret,
--- ENCRYPTED at the application layer (src/lib/encryption.ts) before it ever
--- reaches Postgres — never store it, or read it back, as plaintext.
-create table if not exists channel_provider_accounts (
-  id                       uuid primary key default gen_random_uuid(),
-  business_id              uuid not null references businesses(id) on delete cascade,
-  provider                 text not null default 'hostaway' check (provider in ('hostaway')),
-  account_id               text,
-  client_secret_encrypted  text,
-  -- Each business connects its OWN Hostaway account, and Hostaway lets each
-  -- account define its own webhook signing secret — a single app-wide
-  -- HOSTAWAY_WEBHOOK_SECRET env var would only work for one tenant. Stored
-  -- encrypted for the same reason as client_secret_encrypted.
-  webhook_secret_encrypted text,
-  status                   text not null default 'pending'
-    check (status in ('pending','active','error','disabled')),
-  error_message            text,
-  connected_at             timestamptz,
-  created_at               timestamptz not null default now(),
-  updated_at               timestamptz not null default now()
-);
-
-create unique index if not exists uq_channel_provider_accounts_business_id
-  on channel_provider_accounts (business_id);
-
-drop trigger if exists update_channel_provider_accounts_updated_at on channel_provider_accounts;
-create trigger update_channel_provider_accounts_updated_at
-  before update on channel_provider_accounts
-  for each row execute function update_updated_at_column();
-
-alter table channel_provider_accounts enable row level security;
-
-drop policy if exists "Business owners can manage their channel provider account" on channel_provider_accounts;
-create policy "Business owners can manage their channel provider account"
-  on channel_provider_accounts for all using (is_business_owner(business_id));
-
--- 45. CHANNEL HOST CONNECTIONS — one row per THIRD-PARTY property owner's own
--- Airbnb/Booking/VRBO account under co-hosting, not one row per business.
--- Airbnb requires each owner to keep their own separate account (mixing
--- several owners' properties under one login violates its policies), so the
--- business's single channel_provider_accounts row fans out into many of
--- these — each carrying the commission_pct this business negotiated
--- directly with that owner (Airbnb is not involved in that cut; the formal
--- "Co-Host Network" marketplace isn't available in the Dominican Republic
--- yet, so these connections come from the agency's own client pipeline).
--- client_id optionally links back to an existing CRM lead, but onboarding a
--- property never requires one to exist first.
-create table if not exists channel_host_connections (
-  id                   uuid primary key default gen_random_uuid(),
-  business_id          uuid not null references businesses(id) on delete cascade,
-  provider_account_id  uuid not null references channel_provider_accounts(id) on delete cascade,
-  client_id            uuid references clients(id) on delete set null,
-  owner_name           text not null,
-  owner_phone          text,
-  owner_email          text,
-  channel              text not null check (channel in ('airbnb','booking','vrbo')),
-  external_account_id  text,
-  commission_pct       numeric(5,2) not null default 18
-    check (commission_pct >= 0 and commission_pct <= 100),
-  status               text not null default 'pending'
-    check (status in ('pending','active','error','disabled')),
-  error_message        text,
-  last_sync_at         timestamptz,
-  created_at           timestamptz not null default now(),
-  updated_at           timestamptz not null default now()
-);
-
-create index if not exists idx_channel_host_connections_business_id on channel_host_connections (business_id);
-create index if not exists idx_channel_host_connections_provider_account_id
-  on channel_host_connections (provider_account_id);
-
-drop trigger if exists update_channel_host_connections_updated_at on channel_host_connections;
-create trigger update_channel_host_connections_updated_at
-  before update on channel_host_connections
-  for each row execute function update_updated_at_column();
-
-alter table channel_host_connections enable row level security;
-
-drop policy if exists "Business owners can manage their channel host connections" on channel_host_connections;
-create policy "Business owners can manage their channel host connections"
-  on channel_host_connections for all using (is_business_owner(business_id));
-
--- 46. CHANNEL LISTINGS — mapping: a local `listings` row (must be
--- listing_type = 'vacation_rental', enforced in src/services/channels.ts,
--- not here, since it's a cross-table rule) linked to the specific owner's
--- channel_host_connections row it publishes under. nightly_price is the
--- normalized per-night rate actually pushed to the channel — `listings.price`
--- alone is ambiguous (it can be a sale price, a monthly rent, or a nightly
--- vacation rate depending on listing_type/rental_period), so this column is
--- always what gets sent, whether computed automatically or overridden.
-create table if not exists channel_listings (
-  id                   uuid primary key default gen_random_uuid(),
-  business_id          uuid not null references businesses(id) on delete cascade,
-  host_connection_id   uuid not null references channel_host_connections(id) on delete cascade,
-  listing_id           uuid not null references listings(id) on delete cascade,
-  external_listing_id  text,
-  channel_status       text not null default 'pending'
-    check (channel_status in ('pending','syncing','active','paused','error')),
-  nightly_price        numeric(14,2),
-  currency             text not null default 'USD' check (currency in ('USD','DOP')),
-  override_price       boolean not null default false,
-  error_message        text,
-  last_synced_at       timestamptz,
-  created_at           timestamptz not null default now(),
-  updated_at           timestamptz not null default now()
-);
-
-create index if not exists idx_channel_listings_business_id on channel_listings (business_id);
-create index if not exists idx_channel_listings_host_connection_id on channel_listings (host_connection_id);
-create index if not exists idx_channel_listings_listing_id on channel_listings (listing_id);
-create unique index if not exists uq_channel_listings_listing_host_connection
-  on channel_listings (listing_id, host_connection_id);
-
-drop trigger if exists update_channel_listings_updated_at on channel_listings;
-create trigger update_channel_listings_updated_at
-  before update on channel_listings
-  for each row execute function update_updated_at_column();
-
-alter table channel_listings enable row level security;
-
-drop policy if exists "Business owners can manage their channel listings" on channel_listings;
-create policy "Business owners can manage their channel listings"
-  on channel_listings for all using (is_business_owner(business_id));
-
--- 47. CHANNEL BOOKINGS — real reservations pulled in from Airbnb/Booking/VRBO
--- via the channel manager. This is the piece a pure "listing sync" plan is
--- missing: without persisted bookings there is no way to (a) block a
--- calendar date so the same property can't double-book across channels, or
--- (b) know how much co-host commission is owed. commission_pct/amount are
--- snapshotted at booking time — the owner's negotiated rate can change later
--- without rewriting the history of what was actually earned on past stays.
-create table if not exists channel_bookings (
-  id                   uuid primary key default gen_random_uuid(),
-  business_id          uuid not null references businesses(id) on delete cascade,
-  channel_listing_id   uuid not null references channel_listings(id) on delete cascade,
-  external_booking_id  text,
-  guest_name           text,
-  guest_email          text,
-  guest_phone          text,
-  check_in             date not null,
-  check_out            date not null,
-  nights               integer not null default 0,
-  gross_amount         numeric(14,2) not null default 0,
-  currency             text not null default 'USD' check (currency in ('USD','DOP')),
-  commission_pct       numeric(5,2) not null default 0,
-  commission_amount    numeric(14,2) not null default 0,
-  commission_status    text not null default 'pending'
-    check (commission_status in ('pending','invoiced','paid')),
-  status               text not null default 'confirmed'
-    check (status in ('confirmed','cancelled','completed')),
-  created_at           timestamptz not null default now(),
-  updated_at           timestamptz not null default now()
-);
-
-create index if not exists idx_channel_bookings_business_id on channel_bookings (business_id);
-create index if not exists idx_channel_bookings_channel_listing_id on channel_bookings (channel_listing_id);
-create index if not exists idx_channel_bookings_check_in on channel_bookings (check_in);
-create unique index if not exists uq_channel_bookings_listing_external_id
-  on channel_bookings (channel_listing_id, external_booking_id)
-  where external_booking_id is not null;
-
-drop trigger if exists update_channel_bookings_updated_at on channel_bookings;
-create trigger update_channel_bookings_updated_at
-  before update on channel_bookings
-  for each row execute function update_updated_at_column();
-
-alter table channel_bookings enable row level security;
-
-drop policy if exists "Business owners can manage their channel bookings" on channel_bookings;
-create policy "Business owners can manage their channel bookings"
-  on channel_bookings for all using (is_business_owner(business_id));
-
--- 48. CHANNEL SYNC LOG — audit trail for every push/pull/webhook event across
--- the channel-manager integration, scoped to whichever host connection or
--- listing it concerns (both nullable: a webhook whose payload doesn't match
--- anything local still gets logged for visibility instead of silently
--- dropped).
-create table if not exists channel_sync_log (
-  id                   uuid primary key default gen_random_uuid(),
-  business_id          uuid not null references businesses(id) on delete cascade,
-  host_connection_id   uuid references channel_host_connections(id) on delete set null,
-  listing_id           uuid references listings(id) on delete set null,
-  action               text not null check (action in ('push','pull','sync','connect','disconnect','webhook')),
-  direction            text not null check (direction in ('outbound','inbound')),
-  status               text not null default 'success'
-    check (status in ('success','error','pending')),
-  payload              jsonb,
-  error_message        text,
-  created_at           timestamptz not null default now()
-);
-
-create index if not exists idx_channel_sync_log_business_id on channel_sync_log (business_id);
-create index if not exists idx_channel_sync_log_created_at on channel_sync_log (created_at);
-
-alter table channel_sync_log enable row level security;
-
-drop policy if exists "Business owners can view their channel sync log" on channel_sync_log;
-create policy "Business owners can view their channel sync log"
-  on channel_sync_log for select using (is_business_owner(business_id));
-
--- 49. BOOKING.COM AFFILIATE SETTINGS — unlike Airbnb (closed its open
--- affiliate program in 2021, now invite-only for large-audience creators),
--- Booking.com runs a genuinely open, self-serve affiliate program. This just
--- stores the business's own affiliate ID ("aid") so the website builder
--- (src/services/websites.ts) can render a tracked search widget — no API
--- credentials, no channel manager involved.
-create table if not exists booking_affiliate_settings (
-  id           uuid primary key default gen_random_uuid(),
-  business_id  uuid not null references businesses(id) on delete cascade,
-  affiliate_id text,
-  is_enabled   boolean not null default false,
-  created_at   timestamptz not null default now(),
-  updated_at   timestamptz not null default now()
-);
-
-create unique index if not exists uq_booking_affiliate_settings_business_id
-  on booking_affiliate_settings (business_id);
-
-drop trigger if exists update_booking_affiliate_settings_updated_at on booking_affiliate_settings;
-create trigger update_booking_affiliate_settings_updated_at
-  before update on booking_affiliate_settings
-  for each row execute function update_updated_at_column();
-
-alter table booking_affiliate_settings enable row level security;
-
-drop policy if exists "Business owners can manage their booking affiliate settings" on booking_affiliate_settings;
-create policy "Business owners can manage their booking affiliate settings"
-  on booking_affiliate_settings for all using (is_business_owner(business_id));

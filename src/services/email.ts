@@ -49,14 +49,14 @@ export async function sendAppointmentConfirmationEmail(opts: {
   clientName: string
   businessName: string
   scheduledAt: string
-  listingTitle?: string
+  serviceName?: string
 }) {
   return sendEmail({
     to: opts.to,
     subject: `Tu cita con ${opts.businessName} fue confirmada`,
     html: `
       <p>Hola ${opts.clientName},</p>
-      <p>Tu cita${opts.listingTitle ? ` para <strong>${opts.listingTitle}</strong>` : ''}
+      <p>Tu cita${opts.serviceName ? ` para <strong>${opts.serviceName}</strong>` : ''}
       con <strong>${opts.businessName}</strong> quedó confirmada para el
       <strong>${formatEmailDateTime(opts.scheduledAt)}</strong>.</p>
       <p>¡Te esperamos!</p>
@@ -68,14 +68,14 @@ export async function sendAppointmentCompletedEmail(opts: {
   to: string
   clientName: string
   businessName: string
-  listingTitle?: string
+  serviceName?: string
 }) {
   return sendEmail({
     to: opts.to,
     subject: `Tu cita con ${opts.businessName} fue completada`,
     html: `
       <p>Hola ${opts.clientName},</p>
-      <p>Tu cita${opts.listingTitle ? ` para <strong>${opts.listingTitle}</strong>` : ''}
+      <p>Tu cita${opts.serviceName ? ` para <strong>${opts.serviceName}</strong>` : ''}
       con <strong>${opts.businessName}</strong> se marcó como completada. Gracias por tu tiempo,
       esperamos poder ayudarte pronto con el siguiente paso.</p>
     `,
@@ -87,7 +87,7 @@ export async function sendAppointmentCancelledEmail(opts: {
   clientName: string
   businessName: string
   scheduledAt: string
-  listingTitle?: string
+  serviceName?: string
   reason?: string
 }) {
   return sendEmail({
@@ -95,7 +95,7 @@ export async function sendAppointmentCancelledEmail(opts: {
     subject: `Tu cita con ${opts.businessName} fue cancelada`,
     html: `
       <p>Hola ${opts.clientName},</p>
-      <p>Tu cita${opts.listingTitle ? ` para <strong>${opts.listingTitle}</strong>` : ''}
+      <p>Tu cita${opts.serviceName ? ` para <strong>${opts.serviceName}</strong>` : ''}
       con <strong>${opts.businessName}</strong>, programada para el
       <strong>${formatEmailDateTime(opts.scheduledAt)}</strong>, fue cancelada.</p>
       ${opts.reason ? `<p>Motivo: ${opts.reason}</p>` : ''}
@@ -113,7 +113,7 @@ export async function sendAppointmentCancelledOwnerEmail(opts: {
   businessName: string
   clientName: string
   scheduledAt: string
-  listingTitle?: string
+  serviceName?: string
   reason?: string
 }) {
   return sendEmail({
@@ -121,7 +121,7 @@ export async function sendAppointmentCancelledOwnerEmail(opts: {
     subject: `Cita cancelada por el cliente — ${opts.clientName}`,
     html: `
       <p><strong>${opts.clientName}</strong> canceló su cita con <strong>${opts.businessName}</strong>${
-      opts.listingTitle ? ` para <strong>${opts.listingTitle}</strong>` : ''
+      opts.serviceName ? ` para <strong>${opts.serviceName}</strong>` : ''
     }, programada para el <strong>${formatEmailDateTime(opts.scheduledAt)}</strong>.</p>
       ${opts.reason ? `<p>Motivo: ${opts.reason}</p>` : ''}
     `,
@@ -314,7 +314,6 @@ export async function sendPublicBookingConfirmationEmail(opts: {
   businessName: string
   serviceName?: string
   scheduledAt: string
-  budget?: string
   businessAddress?: string
   businessPhone?: string
   businessContactEmail?: string
@@ -323,24 +322,23 @@ export async function sendPublicBookingConfirmationEmail(opts: {
   const portalUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? ''}/portal/${opts.appointmentId}`
   return sendEmail({
     to: opts.to,
-    subject: `Viewing Confirmed — ${opts.businessName}`,
+    subject: `Appointment Confirmed — ${opts.businessName}`,
     html: `
       <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
         <div style="background:#166534;color:#fff;padding:20px;border-radius:12px 12px 0 0;">
-          <p style="margin:0;font-size:18px;font-weight:600;">✓ Viewing Confirmed</p>
+          <p style="margin:0;font-size:18px;font-weight:600;">✓ Appointment Confirmed</p>
           <p style="margin:4px 0 0;opacity:0.85;">${opts.businessName}</p>
         </div>
         <div style="border:1px solid #e5e7eb;border-top:none;border-radius:0 0 12px 12px;padding:20px;">
           <p>Hi ${opts.clientName},</p>
-          <p>Your ${opts.serviceName ?? 'viewing'} has been successfully booked. Here are your details:</p>
+          <p>Your ${opts.serviceName ?? 'appointment'} has been successfully booked. Here are your details:</p>
           <table style="width:100%;font-size:14px;border-collapse:collapse;">
             <tr><td style="padding:6px 0;color:#6b7280;">Date &amp; Time</td><td style="padding:6px 0;font-weight:600;">${formatEmailDateTime(opts.scheduledAt)}</td></tr>
-            ${opts.serviceName ? `<tr><td style="padding:6px 0;color:#6b7280;">Property / Service</td><td style="padding:6px 0;font-weight:600;">${opts.serviceName}</td></tr>` : ''}
-            ${opts.budget ? `<tr><td style="padding:6px 0;color:#6b7280;">Budget Range</td><td style="padding:6px 0;font-weight:600;">${opts.budget}</td></tr>` : ''}
-            ${opts.businessAddress ? `<tr><td style="padding:6px 0;color:#6b7280;">Agency Location</td><td style="padding:6px 0;font-weight:600;">${opts.businessAddress}</td></tr>` : ''}
+            ${opts.serviceName ? `<tr><td style="padding:6px 0;color:#6b7280;">Treatment</td><td style="padding:6px 0;font-weight:600;">${opts.serviceName}</td></tr>` : ''}
+            ${opts.businessAddress ? `<tr><td style="padding:6px 0;color:#6b7280;">Location</td><td style="padding:6px 0;font-weight:600;">${opts.businessAddress}</td></tr>` : ''}
             <tr><td style="padding:6px 0;color:#6b7280;">Contact</td><td style="padding:6px 0;font-weight:600;">${opts.businessPhone ?? ''} ${opts.businessContactEmail ? `· ${opts.businessContactEmail}` : ''}</td></tr>
           </table>
-          <p style="margin:16px 0;color:#6b7280;font-size:13px;">If you need to reschedule or cancel, please contact us at least 24 hours in advance. You can also manage your viewings through our client portal.</p>
+          <p style="margin:16px 0;color:#6b7280;font-size:13px;">If you need to reschedule or cancel, please contact us at least 24 hours in advance. You can also manage your appointments through our client portal.</p>
           <p><a href="${portalUrl}" style="background:#166534;color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none;font-weight:600;">View in Client Portal →</a></p>
         </div>
       </div>
