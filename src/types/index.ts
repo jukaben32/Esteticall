@@ -102,6 +102,27 @@ export interface PortalSupportTicket extends SupportTicketWithClient {
   business_name: string | null
 }
 
+export interface PortalPackageCredit extends ClientPackageCreditWithDetails {
+  business: Pick<Business, 'id' | 'name'> | null
+}
+
+export interface PortalConsentForm {
+  id: string
+  business_id: string
+  client_id: string
+  service_id: string | null
+  appointment_id: string | null
+  title: string
+  content: string
+  status: ConsentForm['status']
+  signature_name: string | null
+  signed_at: string | null
+  created_at: string
+  updated_at: string
+  service: Pick<BusinessService, 'id' | 'name'> | null
+  business: Pick<Business, 'id' | 'name'> | null
+}
+
 // ─── Scheduling ───────────────────────────────────────────────────────────
 export interface AvailableSlot {
   date: string // YYYY-MM-DD

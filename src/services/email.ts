@@ -64,6 +64,29 @@ export async function sendAppointmentConfirmationEmail(opts: {
   })
 }
 
+// Sent by the reminder cron (src/app/api/cron/appointment-reminders) a fixed
+// window before scheduled_at — see src/services/reminders.ts for the window
+// and the reminder_sent_at guard that keeps this from firing twice.
+export async function sendAppointmentReminderEmail(opts: {
+  to: string
+  clientName: string
+  businessName: string
+  scheduledAt: string
+  serviceName?: string
+}) {
+  return sendEmail({
+    to: opts.to,
+    subject: `Recordatorio: tu cita con ${opts.businessName}`,
+    html: `
+      <p>Hola ${opts.clientName},</p>
+      <p>Te recordamos tu cita${opts.serviceName ? ` de <strong>${opts.serviceName}</strong>` : ''}
+      con <strong>${opts.businessName}</strong>, programada para el
+      <strong>${formatEmailDateTime(opts.scheduledAt)}</strong>.</p>
+      <p>Si necesitas reprogramar o cancelar, contáctanos con al menos 24 horas de anticipación.</p>
+    `,
+  })
+}
+
 export async function sendAppointmentCompletedEmail(opts: {
   to: string
   clientName: string

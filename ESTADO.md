@@ -49,24 +49,32 @@ remote de GitHub configurado todavía).
     fotos en el bucket privado `patient-photos` con URLs firmadas de 1 hora
     (`src/services/beforeAfterPhotos.ts`, `BeforeAfterGallery.tsx`).
   - Las tres quedan enlazadas en `DashboardSidebar.tsx`.
+- **Recordatorios automáticos de citas** — `vercel.json` declara un cron cada
+  30 min que pega a `/api/cron/appointment-reminders`
+  (`src/services/reminders.ts`): manda WhatsApp si el negocio tiene conexión
+  activa, si no cae a email por Resend, y marca `reminder_sent_at` para no
+  repetir. Protegido con `CRON_SECRET` (Vercel lo manda automático como
+  `Authorization: Bearer` cuando la variable existe).
+- **Portal del paciente ampliado** — `/portal/paquetes` (créditos de sesiones
+  restantes por paquete) y `/portal/consentimientos` (firma de consentimientos
+  pendientes directamente desde el portal, con el nombre completo como firma)
+  — antes solo existían citas y soporte. `PortalNav` actualizado con los
+  nuevos enlaces.
+- `npx tsc --noEmit` y `npm run build` siguen pasando limpio con todo esto.
 
 ## PENDIENTE
 
-1. **Bucket de Supabase Storage** — crear el bucket privado `patient-photos`
-   a mano en el dashboard de Supabase (Storage → New bucket → Public: OFF)
-   antes de usar Antes y Después; ver nota en `.env.example`.
-2. **Recordatorios automáticos** — cron (Vercel Cron o Supabase Edge
-   Function) que use WhatsApp/Resend para recordar citas y bajar el
-   no-show. `appointments.reminder_sent_at` ya existe en el schema para
-   soportarlo.
-3. **Portal del paciente** — mostrar paquetes con créditos restantes y
-   firma de consentimientos pendientes desde `/portal` (hoy solo se
-   gestionan desde el dashboard del negocio).
-4. **Proyecto Supabase real** — este repo tiene `schema.sql` listo pero
-   nunca se aplicó contra un proyecto Supabase real; falta crearlo, correr
-   el schema, crear el bucket del punto 1 y cargar las variables de entorno
-   (ver `.env.example`).
-5. **Deploy** — configurar Vercel apuntando a este repo una vez exista un
-   remote de GitHub (o desplegar directo desde local).
-6. **Stripe/WhatsApp reales** — cargar keys de Stripe (modo test primero) y
-   levantar una instancia de Evolution API si se quiere WhatsApp funcional.
+Todo lo que queda requiere cuentas/credenciales reales que solo el usuario
+puede proveer — no es código pendiente, es configuración de infraestructura:
+
+1. **Proyecto Supabase real** — crear el proyecto, correr `supabase/schema.sql`,
+   y crear el bucket privado `patient-photos` (Storage → New bucket → Public:
+   OFF) para que Antes y Después funcione.
+2. **Variables de entorno reales** — llenar `.env.local` a partir de
+   `.env.example` (Supabase, OpenAI, Resend, `HEALTH_DATA_ENCRYPTION_KEY`,
+   `CRON_SECRET`).
+3. **Deploy en Vercel** — crear un remote de GitHub (o conectar el repo local
+   directo) y desplegar; el cron de recordatorios (`vercel.json`) solo corre
+   una vez desplegado, no en local.
+4. **Stripe/WhatsApp reales** — keys de Stripe (modo test primero) y una
+   instancia propia de Evolution API si se quiere WhatsApp funcional.

@@ -1,6 +1,19 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '@/types/database'
-import type { Appointment, PortalAppointment, SupportTicket, SupportMessage, PortalSupportTicket } from '@/types'
+import type {
+  Appointment,
+  PortalAppointment,
+  SupportTicket,
+  SupportMessage,
+  PortalSupportTicket,
+  ClientPackageCredit,
+  Package,
+  PortalPackageCredit,
+  ConsentForm,
+  BusinessService,
+  PortalConsentForm,
+} from '@/types'
+import { decryptSecret } from '@/lib/encryption'
 
 type DB = SupabaseClient<Database>
 
@@ -238,4 +251,101 @@ export async function addClientMessageToTicket(
   if (error) throw error
   await admin.from('support_tickets').update({ updated_at: new Date().toISOString() }).eq('id', ticketId)
   return data
+}
+
+// ─── Paquetes / créditos de sesiones ──────────────────────────────────────
+
+type PackageCreditJoinRow = ClientPackageCredit & {
+  clients: { id: string; name: string; phone: string | null; email: string | null } | null
+  packages: Pick<Package, 'id' | 'name' | 'session_count' | 'price'> | null
+  businesses: { id: string; name: string } | null
+}
+
+export async function listPackageCreditsForClientUser(admin: DB, userId: string): Promise<PortalPackageCredit[]> {
+  const clientRows = await listClientRowsForUser(admin, userId)
+  if (clientRows.length === 0) return []
+  const { data, error } = await admin
+    .from('client_package_credits')
+    .select('*, clients(id, name, phone, email), packages(id, name, session_count, price), businesses(id, name)')
+    .in(
+      'client_id',
+      clientRows.map((c) => c.id)
+    )
+    .order('purchased_at', { ascending: false })
+  if (error) throw error
+  return ((data ?? []) as unknown as PackageCreditJoinRow[]).map((row) => {
+    const { clients, packages, businesses, ...rest } = row
+    return { ...rest, client: clients, package: packages, business: businesses }
+  })
+}
+
+// ─── Consentimientos informados ────────────────────────────────────────────
+
+type ConsentFormJoinRow = ConsentForm & {
+  business_services: Pick<BusinessService, 'id' | 'name'> | null
+  businesses: { id: string; name: string } | null
+}
+
+function mapPortalConsentForm(row: ConsentFormJoinRow): PortalConsentForm {
+  const { business_services, businesses, content_encrypted, ...rest } = row
+  return {
+    ...rest,
+    content: decryptSecret(content_encrypted),
+    service: business_services,
+    business: businesses,
+  }
+}
+
+const PORTAL_CONSENT_FORM_SELECT = '*, business_services(id, name), businesses(id, name)'
+
+export async function listConsentFormsForClientUser(admin: DB, userId: string): Promise<PortalConsentForm[]> {
+  const clientRows = await listClientRowsForUser(admin, userId)
+  if (clientRows.length === 0) return []
+  const { data, error } = await admin
+    .from('consent_forms')
+    .select(PORTAL_CONSENT_FORM_SELECT)
+    .in(
+      'client_id',
+      clientRows.map((c) => c.id)
+    )
+    .order('created_at', { ascending: false })
+  if (error) throw error
+  return ((data ?? []) as unknown as ConsentFormJoinRow[]).map(mapPortalConsentForm)
+}
+
+// Ownership-checked single fetch — the sign route calls this first and 404s
+// rather than trusting the consentFormId in the URL belongs to whoever is
+// signed in, same pattern as getOwnedAppointmentForClientUser.
+export async function getOwnedConsentFormForClientUser(
+  admin: DB,
+  userId: string,
+  consentFormId: string
+): Promise<PortalConsentForm | null> {
+  const clientRows = await listClientRowsForUser(admin, userId)
+  if (clientRows.length === 0) return null
+  const { data, error } = await admin
+    .from('consent_forms')
+    .select(PORTAL_CONSENT_FORM_SELECT)
+    .eq('id', consentFormId)
+    .in(
+      'client_id',
+      clientRows.map((c) => c.id)
+    )
+    .maybeSingle()
+  if (error) throw error
+  if (!data) return null
+  return mapPortalConsentForm(data as unknown as ConsentFormJoinRow)
+}
+
+export async function signOwnedConsentForm(
+  admin: DB,
+  consentFormId: string,
+  signatureName: string
+): Promise<void> {
+  const { error } = await admin
+    .from('consent_forms')
+    .update({ status: 'signed', signature_name: signatureName, signed_at: new Date().toISOString() })
+    .eq('id', consentFormId)
+    .eq('status', 'pending')
+  if (error) throw error
 }
