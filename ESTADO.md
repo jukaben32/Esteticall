@@ -87,23 +87,34 @@ esta configuración se compartió en el chat — recomendado rotarlo desde
 Supabase (Account → Access Tokens) una vez terminada la puesta en marcha,
 ya que da acceso de administración a toda la cuenta, no solo a este proyecto.
 
+## OPENAI + RESEND (25 agosto 2026)
+
+- `OPENAI_API_KEY` cargada y verificada — el modelo `gpt-realtime` responde.
+- `RESEND_API_KEY` cargada y verificada — correo de prueba entregado a
+  `jcbjm03@gmail.com` (usado también como `RESEND_DEV_OVERRIDE_TO` y
+  `PLATFORM_ADMIN_EMAILS`). `RESEND_FROM_EMAIL` en el remitente compartido
+  `onboarding@resend.dev` (funciona sin verificar dominio propio — para
+  producción real conviene verificar un dominio propio en Resend).
+- Servidor de dev reiniciado para tomar las variables nuevas.
+
+Con esto, el agente de voz y los correos transaccionales (confirmación de
+cita, recordatorios, notificaciones al negocio) ya deberían funcionar
+probando desde `http://localhost:3000`.
+
 ## PENDIENTE
 
 Lo que queda son credenciales de terceros que el usuario debe decidir cuándo
 cargar (en `.env.local`, ver `.env.example` para cada una):
 
-1. **`OPENAI_API_KEY`** — sin esto el agente de voz (Realtime API) no
-   funciona.
-2. **`RESEND_API_KEY`** — sin esto no salen correos (confirmaciones de
-   cita, recordatorios). Mientras tanto el signup ya funciona por el punto
-   anterior (autoconfirm), pero las notificaciones por email no.
-3. **Stripe** (`NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`, `STRIPE_SECRET_KEY`,
+1. **Stripe** (`NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`, `STRIPE_SECRET_KEY`,
    `STRIPE_WEBHOOK_SECRET`) — modo test primero.
-4. **WhatsApp** (`EVOLUTION_API_URL`, `EVOLUTION_API_KEY`) — requiere
+2. **WhatsApp** (`EVOLUTION_API_URL`, `EVOLUTION_API_KEY`) — requiere
    levantar tu propia instancia de Evolution API en un VPS; sin esto
    `/dashboard/whatsapp` muestra "no configurado" en vez de fallar.
-5. **Deploy en Vercel** — crear un remote de GitHub (o conectar el repo
+3. **Deploy en Vercel** — crear un remote de GitHub (o conectar el repo
    local directo) y desplegar; el cron de recordatorios (`vercel.json`)
    solo corre una vez desplegado, no en local. Ahí también hay que cargar
-   `CRON_SECRET` como env var del proyecto en Vercel (mismo valor que en
-   `.env.local`, o generar uno nuevo).
+   todas las variables de `.env.local` (incluido `CRON_SECRET`) como env
+   vars del proyecto en Vercel.
+4. **Dominio propio en Resend** — antes de producción real, verificar un
+   dominio propio para no depender del remitente compartido de pruebas.
