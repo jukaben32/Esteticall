@@ -7,11 +7,13 @@ import { formatDateTime } from '@/lib/formatDate'
 type DB = SupabaseClient<Database>
 
 // How far ahead of an appointment the reminder goes out. Runs on a cron that
-// fires every 30 min (see vercel.json) — an appointment crosses into this
-// window at some point and gets caught within that cadence, so there's no
-// need for a matching upper/lower band, just "within N hours, not yet
-// reminded" + the reminder_sent_at guard so it never fires twice.
-const REMINDER_HOURS_BEFORE = Number(process.env.APPOINTMENT_REMINDER_HOURS_BEFORE ?? 24)
+// fires once a day (see vercel.json — Vercel's Hobby plan only allows daily
+// cron jobs; a higher-frequency schedule needs the Pro plan). Default is 30h,
+// wider than the 24h cadence between runs, so an appointment created for
+// "tomorrow at this time" still falls inside the window on the very next run
+// instead of being missed until the run after. The reminder_sent_at guard is
+// what actually prevents duplicates, not the window width.
+const REMINDER_HOURS_BEFORE = Number(process.env.APPOINTMENT_REMINDER_HOURS_BEFORE ?? 30)
 
 type ReminderCandidateRow = {
   id: string

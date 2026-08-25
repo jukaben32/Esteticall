@@ -4,7 +4,7 @@ import { sendDueAppointmentReminders } from '@/services/reminders'
 
 export const dynamic = 'force-dynamic'
 
-// Invoked by Vercel Cron (see vercel.json) every 30 minutes. Vercel signs
+// Invoked by Vercel Cron (see vercel.json) once a day. Vercel signs
 // cron requests with an `Authorization: Bearer ${CRON_SECRET}` header
 // automatically whenever CRON_SECRET is set as a project env var — this
 // check is what stops anyone else from hitting the route and mass-texting
