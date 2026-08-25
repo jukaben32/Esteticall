@@ -26,7 +26,7 @@ function slugifyInstanceName(businessId: string): string {
   // Evolution API instance names are used in URL paths, so keep them
   // filesystem/URL-safe. Prefixed so instances from different apps sharing
   // the same Evolution API server are easy to tell apart.
-  return `inmobiliacall-${businessId}`
+  return `esteticall-${businessId}`
 }
 
 // Creates (or re-creates) the Evolution API instance for this business, wires

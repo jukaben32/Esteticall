@@ -22,7 +22,7 @@ function slugify(name: string) {
 // A query param alone doesn't survive the email-confirmation detour (the
 // user leaves the app, clicks a link in their inbox, and comes back on
 // /login with no query string), so localStorage is the durable carrier.
-const PENDING_PLAN_KEY = 'inmobiliacall_pending_plan'
+const PENDING_PLAN_KEY = 'esteticall_pending_plan'
 
 export default function SignupPage() {
   return (
@@ -164,7 +164,7 @@ function SignupForm() {
           type="text"
           value={businessName}
           onChange={(e) => setBusinessName(e.target.value)}
-          placeholder="Mi Agencia Inmobiliaria"
+          placeholder="Mi Spa Estético"
           className="input-field"
           required
         />

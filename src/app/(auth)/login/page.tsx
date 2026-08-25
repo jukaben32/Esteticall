@@ -52,7 +52,7 @@ function LoginForm() {
       <div className="mb-2">
         <h1 className="font-display text-2xl font-semibold text-[var(--text-1)]">Bienvenido de nuevo</h1>
         <p className="text-sm text-[var(--text-3)]">
-          Inicia sesión en tu panel de Inmobil<span className="text-[var(--teal-700)] font-medium">IA</span>Call
+          Inicia sesión en tu panel de Esteti<span className="text-[var(--teal-700)] font-medium">C</span>all
         </p>
       </div>
       {error && <p className="text-sm text-red-600">{error}</p>}

@@ -17,7 +17,7 @@ export function WidgetConfigForm({
   const [form, setForm] = useState({
     isEnabled: initialWidget?.is_enabled ?? true,
     primaryColor: initialWidget?.primary_color ?? '#0E7C5A',
-    greetingMessage: initialWidget?.greeting_message ?? '¡Hola! Pregúntame sobre cualquiera de nuestras propiedades.',
+    greetingMessage: initialWidget?.greeting_message ?? '¡Hola! Pregúntame sobre nuestros tratamientos y disponibilidad.',
     allowedOrigins: (initialWidget?.allowed_origins ?? []).join('\n'),
   })
   const [saving, setSaving] = useState(false)
@@ -96,7 +96,7 @@ export function WidgetConfigForm({
         </div>
         <div>
           <label className="text-xs text-[var(--text-3)]">
-            Orígenes permitidos (uno por línea, ej. https://miinmobiliaria.com) — déjalo vacío para permitir cualquier sitio
+            Orígenes permitidos (uno por línea, ej. https://miclinica.com) — déjalo vacío para permitir cualquier sitio
           </label>
           <textarea
             value={form.allowedOrigins}

@@ -1,19 +1,19 @@
 // Static library shown in the "FAQ Templates" panel of the Knowledge page —
-// mirrors the reference product's pre-written 40-question library across 9
-// real-estate topics. `key` is persisted on the created knowledge_documents
-// row (as `catalog_key`) so we can tell "already added" apart from a
-// coincidentally-similar custom question.
+// a pre-written 40-question library across 9 medspa/aesthetic-clinic topics.
+// `key` is persisted on the created knowledge_documents row (as `catalog_key`)
+// so we can tell "already added" apart from a coincidentally-similar custom
+// question.
 
 export type FaqCategoryId =
-  | 'viewings'
-  | 'buying'
-  | 'selling'
-  | 'renting'
+  | 'appointments'
+  | 'facial_treatments'
+  | 'body_treatments'
+  | 'injectables'
+  | 'laser_hair_removal'
   | 'hours_location'
-  | 'investment'
-  | 'new_construction'
-  | 'market_pricing'
-  | 'process_legal'
+  | 'packages_memberships'
+  | 'safety_contraindications'
+  | 'payments_policies'
 
 export type FaqCategory = {
   id: FaqCategoryId
@@ -28,311 +28,309 @@ export type FaqTemplate = {
 }
 
 export const FAQ_CATEGORIES: FaqCategory[] = [
-  { id: 'viewings', label: 'Visitas a propiedades' },
-  { id: 'buying', label: 'Compra' },
-  { id: 'selling', label: 'Venta' },
-  { id: 'renting', label: 'Alquiler' },
+  { id: 'appointments', label: 'Citas' },
+  { id: 'facial_treatments', label: 'Tratamientos faciales' },
+  { id: 'body_treatments', label: 'Tratamientos corporales' },
+  { id: 'injectables', label: 'Toxina botulínica y rellenos' },
+  { id: 'laser_hair_removal', label: 'Depilación láser' },
   { id: 'hours_location', label: 'Horario y ubicación' },
-  { id: 'investment', label: 'Propiedades de inversión' },
-  { id: 'new_construction', label: 'Construcción nueva' },
-  { id: 'market_pricing', label: 'Mercado y precios' },
-  { id: 'process_legal', label: 'Proceso y legal' },
+  { id: 'packages_memberships', label: 'Paquetes y membresías' },
+  { id: 'safety_contraindications', label: 'Seguridad y contraindicaciones' },
+  { id: 'payments_policies', label: 'Pagos y políticas' },
 ]
 
 export const FAQ_TEMPLATES: FaqTemplate[] = [
-  // Visitas a propiedades (6)
+  // Citas (6)
   {
-    key: 'viewings-schedule',
-    categoryId: 'viewings',
-    question: '¿Cómo agendo una visita a una propiedad?',
+    key: 'appointments-schedule',
+    categoryId: 'appointments',
+    question: '¿Cómo agendo una cita?',
     answer:
-      'Puedes agendar una visita directamente por teléfono, por nuestro chat o pidiéndole a nuestro agente de IA que te reserve un horario. Solo necesitamos la propiedad que te interesa y tu disponibilidad.',
+      'Puedes agendar directamente por teléfono, por nuestro chat o pidiéndole a nuestro agente de IA que te reserve un horario. Solo necesitamos el tratamiento que te interesa y tu disponibilidad.',
   },
   {
-    key: 'viewings-cancellation',
-    categoryId: 'viewings',
-    question: '¿Cuál es su política de cancelación para visitas?',
+    key: 'appointments-cancellation',
+    categoryId: 'appointments',
+    question: '¿Cuál es su política de cancelación de citas?',
     answer:
-      'Puedes cancelar o reprogramar sin costo con al menos 2 horas de anticipación. Te lo agradecemos para poder ofrecer ese horario a otro cliente interesado.',
+      'Puedes cancelar o reprogramar sin costo con al menos 24 horas de anticipación. Te lo agradecemos para poder ofrecer ese horario a otro paciente.',
   },
   {
-    key: 'viewings-duration',
-    categoryId: 'viewings',
-    question: '¿Cuánto dura normalmente una visita a una propiedad?',
+    key: 'appointments-duration',
+    categoryId: 'appointments',
+    question: '¿Cuánto dura normalmente una cita?',
     answer:
-      'La mayoría de las visitas duran entre 30 y 60 minutos, dependiendo del tamaño de la propiedad y de cuántas preguntas tengas. Con gusto extendemos el tiempo si lo necesitas.',
+      'Depende del tratamiento — desde 20 minutos para una sesión de láser hasta 90 minutos para tratamientos combinados. Te confirmamos la duración exacta al agendar.',
   },
   {
-    key: 'viewings-multiple',
-    categoryId: 'viewings',
-    question: '¿Puedo agendar varias visitas en un mismo día?',
+    key: 'appointments-first-visit',
+    categoryId: 'appointments',
+    question: '¿Qué debo esperar en mi primera cita?',
     answer:
-      'Sí, muchos clientes visitan varias propiedades el mismo día para comparar. Organizamos el recorrido para que sea cómodo y eficiente en cuanto a tiempo y traslados.',
+      'Comenzamos con una valoración inicial donde revisamos tus objetivos, antecedentes de salud relevantes y te recomendamos el tratamiento adecuado antes de proceder.',
   },
   {
-    key: 'viewings-virtual',
-    categoryId: 'viewings',
-    question: '¿Puedo hacer un recorrido virtual de la propiedad?',
+    key: 'appointments-reminders',
+    categoryId: 'appointments',
+    question: '¿Me envían recordatorio de mi cita?',
     answer:
-      'Sí, ofrecemos recorridos virtuales por videollamada para propiedades seleccionadas, ideal si no puedes visitar en persona o vives fuera de la ciudad.',
+      'Sí, enviamos un recordatorio automático por WhatsApp o correo antes de tu cita para que no se te olvide.',
   },
   {
-    key: 'viewings-guests',
-    categoryId: 'viewings',
-    question: '¿Puedo llevar a mi familia o pareja a la visita?',
+    key: 'appointments-late-arrival',
+    categoryId: 'appointments',
+    question: '¿Qué pasa si llego tarde a mi cita?',
     answer:
-      'Por supuesto. Te recomendamos avisarnos con anticipación cuántas personas asistirán para coordinar mejor el horario y la logística de la visita.',
-  },
-
-  // Compra (6)
-  {
-    key: 'buying-getting-started',
-    categoryId: 'buying',
-    question: '¿Cómo empiezo el proceso de compra de una vivienda?',
-    answer:
-      'Comenzamos entendiendo tu presupuesto, la zona que te interesa y tus prioridades. A partir de ahí te mostramos propiedades que encajen y te acompañamos en cada paso hasta el cierre.',
-  },
-  {
-    key: 'buying-extra-costs',
-    categoryId: 'buying',
-    question: '¿Qué costos adicionales debo presupuestar más allá del precio de compra?',
-    answer:
-      'Además del precio de la propiedad, generalmente hay que considerar gastos notariales, impuesto de transferencia, avalúo y, si aplica, comisión del banco. Te damos un estimado detallado antes de avanzar.',
-  },
-  {
-    key: 'buying-pre-approval',
-    categoryId: 'buying',
-    question: '¿Necesito estar pre-aprobado antes de visitar propiedades?',
-    answer:
-      'No es obligatorio, pero sí muy recomendable. Tener una pre-aprobación te da claridad sobre tu presupuesto real y agiliza la oferta cuando encuentres la propiedad indicada.',
-  },
-  {
-    key: 'buying-closing-time',
-    categoryId: 'buying',
-    question: '¿Cuánto tiempo toma cerrar la compra de una propiedad?',
-    answer:
-      'En promedio, entre 30 y 60 días desde que se acepta la oferta, dependiendo de si hay financiamiento bancario de por medio y de la rapidez en los trámites legales.',
-  },
-  {
-    key: 'buying-offer-below-price',
-    categoryId: 'buying',
-    question: '¿Puedo hacer una oferta por debajo del precio de lista?',
-    answer:
-      'Sí, es común negociar. Te ayudamos a preparar una oferta competitiva basada en propiedades comparables recientes en la misma zona.',
-  },
-  {
-    key: 'buying-required-documents',
-    categoryId: 'buying',
-    question: '¿Qué documentos necesito para hacer una oferta?',
-    answer:
-      'Normalmente pedimos una identificación válida, carta de pre-aprobación bancaria (si aplica financiamiento) y comprobante de fondos para el inicial. Te confirmamos la lista exacta según tu caso.',
+      'Intentamos acomodarte, pero una tardanza puede reducir el tiempo disponible para tu tratamiento o requerir reprogramar, según la agenda del día.',
   },
 
-  // Venta (6)
+  // Tratamientos faciales (5)
   {
-    key: 'selling-getting-started',
-    categoryId: 'selling',
-    question: '¿Cómo empiezo a vender mi propiedad con ustedes?',
+    key: 'facial-hydrafacial',
+    categoryId: 'facial_treatments',
+    question: '¿Qué es un HydraFacial y qué beneficios tiene?',
     answer:
-      'Empezamos con una visita para evaluar tu propiedad, te damos una recomendación de precio y preparamos el material de mercadeo (fotos, descripción y publicación) para listarla.',
+      'Es un tratamiento de limpieza, exfoliación e hidratación profunda en una sola sesión, ideal para revitalizar la piel sin tiempo de recuperación.',
   },
   {
-    key: 'selling-price-determination',
-    categoryId: 'selling',
-    question: '¿Cómo determinan el precio de lista de mi propiedad?',
+    key: 'facial-frequency',
+    categoryId: 'facial_treatments',
+    question: '¿Cada cuánto debo hacerme un facial?',
     answer:
-      'Analizamos ventas recientes de propiedades comparables en tu zona, el estado y las características de tu propiedad, y las condiciones actuales del mercado para sugerir un precio competitivo.',
+      'Recomendamos un facial de mantenimiento cada 4 a 6 semanas, aunque esto varía según tu tipo de piel y objetivos — te lo confirmamos en tu valoración.',
   },
   {
-    key: 'selling-time-to-sell',
-    categoryId: 'selling',
-    question: '¿Cuánto tiempo tarda normalmente en venderse una propiedad?',
+    key: 'facial-downtime',
+    categoryId: 'facial_treatments',
+    question: '¿Los faciales médicos tienen tiempo de recuperación?',
     answer:
-      'Depende de la zona, el precio y la demanda del momento, pero en promedio nuestras propiedades bien posicionadas se venden entre 2 y 4 meses.',
+      'La mayoría no requiere tiempo de recuperación y puedes retomar tus actividades normales de inmediato. Tratamientos más intensos como el peeling profundo sí pueden causar enrojecimiento temporal.',
   },
   {
-    key: 'selling-commission',
-    categoryId: 'selling',
-    question: '¿Qué comisión cobran por la venta?',
+    key: 'facial-acne',
+    categoryId: 'facial_treatments',
+    question: '¿Tienen tratamientos para el acné?',
     answer:
-      'Nuestra comisión se conversa caso por caso según el tipo de propiedad y el servicio contratado. Te la confirmamos por escrito antes de firmar cualquier acuerdo.',
+      'Sí, ofrecemos limpieza profunda, microneedling y terapia de luz LED, entre otros, diseñados para mejorar el acné activo y sus cicatrices.',
   },
   {
-    key: 'selling-repairs-needed',
-    categoryId: 'selling',
-    question: '¿Necesito hacer reparaciones antes de listar mi propiedad?',
+    key: 'facial-results',
+    categoryId: 'facial_treatments',
+    question: '¿Cuándo veré resultados de un tratamiento facial?',
     answer:
-      'No siempre es necesario, pero pequeñas mejoras (pintura, limpieza profunda, reparaciones menores) suelen aumentar el interés y el valor percibido. Te damos recomendaciones específicas tras la visita inicial.',
-  },
-  {
-    key: 'selling-marketing',
-    categoryId: 'selling',
-    question: '¿Cómo promocionan mi propiedad para encontrar compradores?',
-    answer:
-      'Publicamos tu propiedad en nuestros portales, redes sociales y base de clientes interesados, con fotos profesionales y, cuando aplica, recorrido virtual.',
+      'Algunos tratamientos muestran mejoras inmediatas (como el HydraFacial), mientras que otros como el microneedling requieren varias sesiones para ver el resultado completo.',
   },
 
-  // Alquiler (5)
+  // Tratamientos corporales (5)
   {
-    key: 'renting-requirements',
-    categoryId: 'renting',
-    question: '¿Qué necesito para alquilar una propiedad?',
+    key: 'body-criolipolisis',
+    categoryId: 'body_treatments',
+    question: '¿Cómo funciona la criolipólisis?',
     answer:
-      'Generalmente pedimos identificación, comprobante de ingresos y referencias. Para algunos alquileres también solicitamos un fiador o depósito adicional.',
+      'Utiliza frío controlado para eliminar células de grasa localizada de forma no invasiva. Los resultados suelen notarse entre 4 y 12 semanas después de la sesión.',
   },
   {
-    key: 'renting-deposit',
-    categoryId: 'renting',
-    question: '¿Cuál es el depósito de garantía requerido?',
+    key: 'body-sessions-needed',
+    categoryId: 'body_treatments',
+    question: '¿Cuántas sesiones necesito para ver resultados corporales?',
     answer:
-      'El depósito suele equivaler a uno o dos meses de alquiler, según la propiedad. Te confirmamos el monto exacto antes de firmar el contrato.',
+      'Depende del tratamiento y tu objetivo — algunos pacientes ven cambios desde la primera sesión, aunque generalmente recomendamos un plan de varias sesiones para resultados óptimos.',
   },
   {
-    key: 'renting-pets',
-    categoryId: 'renting',
-    question: '¿Aceptan mascotas en las propiedades en alquiler?',
+    key: 'body-not-weight-loss',
+    categoryId: 'body_treatments',
+    question: '¿Los tratamientos corporales sirven para bajar de peso?',
     answer:
-      'Depende de cada propiedad — algunas sí aceptan mascotas, otras no. Cuéntanos qué mascota tienes y te confirmamos cuáles opciones disponibles la permiten.',
+      'No — están diseñados para reducir grasa localizada o reafirmar la piel, no como método de pérdida de peso general. Te explicamos qué esperar de forma realista antes de empezar.',
   },
   {
-    key: 'renting-minimum-term',
-    categoryId: 'renting',
-    question: '¿Cuál es la duración mínima del contrato de alquiler?',
+    key: 'body-post-care',
+    categoryId: 'body_treatments',
+    question: '¿Qué cuidados debo tener después de un tratamiento corporal?',
     answer:
-      'La mayoría de nuestros contratos son de 12 meses, aunque también tenemos algunas opciones de corto plazo. Te indicamos las condiciones de cada propiedad específica.',
+      'En general recomendamos hidratación abundante, evitar exposición solar directa en la zona tratada y seguir las indicaciones específicas que te damos al finalizar la sesión.',
   },
   {
-    key: 'renting-included',
-    categoryId: 'renting',
-    question: '¿Qué está incluido en el precio del alquiler?',
+    key: 'body-combine-treatments',
+    categoryId: 'body_treatments',
+    question: '¿Puedo combinar varios tratamientos corporales?',
     answer:
-      'Varía según la propiedad — algunas incluyen mantenimiento de áreas comunes, agua o internet. Te damos el detalle exacto de qué incluye cada propiedad antes de que decidas.',
+      'Sí, muchos pacientes combinan tratamientos (por ejemplo, radiofrecuencia con presoterapia) para potenciar resultados. Te armamos un plan personalizado en tu consulta.',
+  },
+
+  // Toxina botulínica y rellenos (5)
+  {
+    key: 'injectables-how-long',
+    categoryId: 'injectables',
+    question: '¿Cuánto dura el efecto de la toxina botulínica?',
+    answer:
+      'El efecto suele durar entre 3 y 4 meses, después de los cuales el músculo recupera su movimiento gradual y es momento de una nueva sesión si deseas mantener el resultado.',
+  },
+  {
+    key: 'injectables-pain',
+    categoryId: 'injectables',
+    question: '¿Duele la aplicación de toxina botulínica o rellenos?',
+    answer:
+      'La mayoría de los pacientes describe una molestia leve, similar a un pellizco. Usamos agujas muy finas y, si lo prefieres, podemos aplicar anestésico tópico antes del procedimiento.',
+  },
+  {
+    key: 'injectables-when-results',
+    categoryId: 'injectables',
+    question: '¿Cuándo veré los resultados de la toxina botulínica?',
+    answer:
+      'El efecto comienza a notarse entre 3 y 7 días después de la aplicación, con el resultado completo visible alrededor de las 2 semanas.',
+  },
+  {
+    key: 'injectables-filler-duration',
+    categoryId: 'injectables',
+    question: '¿Cuánto duran los rellenos de ácido hialurónico?',
+    answer:
+      'Generalmente entre 6 y 18 meses, dependiendo de la zona tratada, el producto usado y el metabolismo de cada paciente.',
+  },
+  {
+    key: 'injectables-who-applies',
+    categoryId: 'injectables',
+    question: '¿Quién aplica la toxina botulínica y los rellenos?',
+    answer:
+      'Todos nuestros procedimientos inyectables son realizados por personal médico calificado y con experiencia en medicina estética.',
+  },
+
+  // Depilación láser (4)
+  {
+    key: 'laser-sessions-needed',
+    categoryId: 'laser_hair_removal',
+    question: '¿Cuántas sesiones de depilación láser necesito?',
+    answer:
+      'En promedio recomendamos entre 6 y 8 sesiones, espaciadas según el ciclo de crecimiento del vello, para obtener una reducción duradera.',
+  },
+  {
+    key: 'laser-pre-care',
+    categoryId: 'laser_hair_removal',
+    question: '¿Cómo debo prepararme antes de una sesión de láser?',
+    answer:
+      'Evita la exposición solar directa, no te depiles con cera o pinza (rasurar sí está bien) y llega con la piel limpia, sin cremas ni maquillaje en la zona a tratar.',
+  },
+  {
+    key: 'laser-skin-tones',
+    categoryId: 'laser_hair_removal',
+    question: '¿La depilación láser funciona en todos los tonos de piel?',
+    answer:
+      'Contamos con tecnología apta para distintos fototipos de piel. En tu valoración evaluamos tu tono de piel y color de vello para confirmar que el tratamiento es adecuado para ti.',
+  },
+  {
+    key: 'laser-permanent',
+    categoryId: 'laser_hair_removal',
+    question: '¿La depilación láser es permanente?',
+    answer:
+      'Produce una reducción duradera y significativa del vello, aunque algunos pacientes requieren sesiones de mantenimiento ocasionales según su ciclo hormonal y tipo de vello.',
   },
 
   // Horario y ubicación (4)
   {
-    key: 'hours-agency-hours',
+    key: 'hours-clinic-hours',
     categoryId: 'hours_location',
-    question: '¿Cuál es el horario de la agencia?',
-    answer: 'Atendemos de lunes a viernes de 8:00 a.m. a 6:00 p.m., y sábados de 9:00 a.m. a 1:00 p.m.',
+    question: '¿Cuál es el horario de la clínica?',
+    answer: 'Atendemos de lunes a viernes de 9:00 a.m. a 7:00 p.m., y sábados de 9:00 a.m. a 2:00 p.m.',
   },
   {
     key: 'hours-location-parking',
     categoryId: 'hours_location',
     question: '¿Dónde están ubicados y hay estacionamiento disponible?',
     answer:
-      'Estamos ubicados en el centro de la ciudad, con estacionamiento gratuito para clientes. Visita nuestro sitio web para la dirección completa y cómo llegar.',
+      'Estamos ubicados en el centro de la ciudad, con estacionamiento disponible para pacientes. Visita nuestro sitio web para la dirección completa y cómo llegar.',
   },
   {
-    key: 'hours-after-hours-meeting',
+    key: 'hours-weekend-appointments',
     categoryId: 'hours_location',
-    question: '¿Puedo reunirme con un agente fuera de horario?',
-    answer:
-      'Sí, con cita previa podemos coordinar reuniones fuera del horario regular para adaptarnos a tu disponibilidad.',
+    question: '¿Atienden los fines de semana?',
+    answer: 'Sí, tenemos disponibilidad los sábados y, en casos puntuales, también domingos con cita previa.',
   },
   {
-    key: 'hours-weekend-showings',
+    key: 'hours-parking-accessibility',
     categoryId: 'hours_location',
-    question: '¿Atienden los fines de semana para mostrar propiedades?',
-    answer: 'Sí, hacemos visitas los sábados y, en casos puntuales, también los domingos con cita previa.',
+    question: '¿La clínica es accesible para personas con movilidad reducida?',
+    answer: 'Sí, nuestras instalaciones cuentan con acceso adaptado. Avísanos si necesitas alguna facilidad adicional.',
   },
 
-  // Propiedades de inversión (4)
+  // Paquetes y membresías (4)
   {
-    key: 'investment-roi',
-    categoryId: 'investment',
-    question: '¿Qué retorno de inversión puedo esperar de una propiedad?',
+    key: 'packages-what-are',
+    categoryId: 'packages_memberships',
+    question: '¿Qué incluyen los paquetes de sesiones?',
     answer:
-      'El retorno varía según la zona, el tipo de propiedad y si es alquiler tradicional o vacacional. Te compartimos datos de rentabilidad de propiedades comparables para que decidas con información real.',
+      'Un paquete agrupa varias sesiones del mismo tratamiento (por ejemplo, 6 sesiones de láser) a un precio preferencial frente a pagarlas una por una.',
   },
   {
-    key: 'investment-rental-potential',
-    categoryId: 'investment',
-    question: '¿Ayudan a identificar propiedades con potencial de alquiler?',
+    key: 'packages-expiration',
+    categoryId: 'packages_memberships',
+    question: '¿Los paquetes tienen fecha de vencimiento?',
     answer:
-      'Sí, filtramos oportunidades según demanda de alquiler en la zona, plusvalía esperada y costos de mantenimiento para que evalúes el potencial real de cada propiedad.',
+      'Sí, cada paquete tiene una vigencia (generalmente entre 6 y 12 meses) para usar todas sus sesiones. Te la confirmamos al momento de la compra.',
   },
   {
-    key: 'investment-foreign-investors',
-    categoryId: 'investment',
-    question: '¿Trabajan con inversionistas extranjeros?',
+    key: 'packages-transferable',
+    categoryId: 'packages_memberships',
+    question: '¿Puedo transferir mi paquete a otra persona?',
     answer:
-      'Sí, tenemos experiencia guiando a inversionistas extranjeros en todo el proceso, incluyendo documentación, transferencias internacionales y aspectos legales locales.',
+      'Depende del tipo de paquete — contáctanos con tu caso específico y te confirmamos si es transferible.',
   },
   {
-    key: 'investment-maintenance-costs',
-    categoryId: 'investment',
-    question: '¿Qué gastos de mantenimiento debo considerar como inversionista?',
+    key: 'packages-remaining-sessions',
+    categoryId: 'packages_memberships',
+    question: '¿Cómo sé cuántas sesiones me quedan de mi paquete?',
     answer:
-      'Generalmente hay que presupuestar mantenimiento general, condominio (si aplica), seguro e impuestos anuales. Te damos un estimado detallado por propiedad.',
-  },
-
-  // Construcción nueva (3)
-  {
-    key: 'new-construction-availability',
-    categoryId: 'new_construction',
-    question: '¿Tienen proyectos de construcción nueva disponibles?',
-    answer:
-      'Sí, trabajamos con varios desarrolladores y tenemos proyectos en distintas etapas de construcción. Te mostramos las opciones disponibles según tu presupuesto y zona de interés.',
-  },
-  {
-    key: 'new-construction-customization',
-    categoryId: 'new_construction',
-    question: '¿Puedo personalizar los acabados en una propiedad nueva?',
-    answer:
-      'Depende del proyecto y la etapa de construcción en que se encuentre. En varios de nuestros proyectos sí es posible elegir acabados dentro de un catálogo definido por el desarrollador.',
-  },
-  {
-    key: 'new-construction-warranty',
-    categoryId: 'new_construction',
-    question: '¿Qué garantías ofrecen las propiedades de construcción nueva?',
-    answer:
-      'Las propiedades nuevas suelen incluir garantía de estructura y de instalaciones por parte del desarrollador. Te compartimos los términos exactos de cada proyecto antes de firmar.',
+      'Puedes preguntarnos en cualquier momento por teléfono, WhatsApp o en tu portal de paciente, donde verás tus sesiones usadas y restantes.',
   },
 
-  // Mercado y precios (3)
+  // Seguridad y contraindicaciones (4)
   {
-    key: 'market-current-conditions',
-    categoryId: 'market_pricing',
-    question: '¿Cómo está el mercado inmobiliario actualmente?',
+    key: 'safety-pregnancy',
+    categoryId: 'safety_contraindications',
+    question: '¿Puedo hacerme tratamientos estéticos si estoy embarazada o lactando?',
     answer:
-      'El mercado varía por zona y tipo de propiedad. Con gusto te compartimos un análisis actualizado de la zona que te interesa para que tomes una decisión informada.',
+      'La mayoría de los tratamientos inyectables, láser y algunos corporales no se recomiendan durante el embarazo o la lactancia. Siempre preguntamos antes de agendar tratamientos sensibles y te orientamos sobre alternativas seguras.',
   },
   {
-    key: 'market-price-negotiable',
-    categoryId: 'market_pricing',
-    question: '¿Los precios de las propiedades suelen ser negociables?',
+    key: 'safety-allergies',
+    categoryId: 'safety_contraindications',
+    question: '¿Qué pasa si tengo alergias o tomo medicamentos?',
     answer:
-      'En muchos casos sí hay margen de negociación, especialmente si la propiedad lleva tiempo en el mercado. Te ayudamos a preparar una oferta razonable basada en datos reales.',
+      'Es importante que nos informes cualquier alergia o medicamento que tomes antes de tu tratamiento, ya que algunos pueden requerir ajustes o contraindicar ciertos procedimientos.',
   },
   {
-    key: 'market-area-comparison',
-    categoryId: 'market_pricing',
-    question: '¿Cómo se comparan los precios en esta zona con otras similares?',
+    key: 'safety-side-effects',
+    categoryId: 'safety_contraindications',
+    question: '¿Cuáles son los efectos secundarios más comunes?',
     answer:
-      'Te compartimos un comparativo de precios por metro cuadrado entre distintas zonas para que entiendas dónde obtienes mejor valor según tus prioridades.',
+      'Varían según el tratamiento — enrojecimiento leve, sensibilidad temporal o hinchazón son los más comunes y suelen resolverse en horas o pocos días. Te explicamos los riesgos específicos de tu tratamiento antes de proceder.',
+  },
+  {
+    key: 'safety-medical-consultation',
+    categoryId: 'safety_contraindications',
+    question: '¿Necesito consulta médica antes de un tratamiento invasivo?',
+    answer:
+      'Sí, tratamientos como toxina botulínica, rellenos o hilos tensores requieren una valoración médica previa para confirmar que eres candidato adecuado.',
   },
 
-  // Proceso y legal (3)
+  // Pagos y políticas (3)
   {
-    key: 'process-legal-documents',
-    categoryId: 'process_legal',
-    question: '¿Qué documentos legales se necesitan para cerrar una compra?',
-    answer:
-      'Generalmente se requiere el contrato de compraventa, certificado de título, cédula o pasaporte, y documentación del financiamiento si aplica. Te acompañamos en cada trámite.',
+    key: 'payments-methods',
+    categoryId: 'payments_policies',
+    question: '¿Qué métodos de pago aceptan?',
+    answer: 'Aceptamos tarjetas de crédito/débito, transferencia bancaria y efectivo. Algunos tratamientos también admiten pago en línea al agendar.',
   },
   {
-    key: 'process-notary-registration',
-    categoryId: 'process_legal',
-    question: '¿Ustedes gestionan el proceso notarial y de registro?',
+    key: 'payments-no-show',
+    categoryId: 'payments_policies',
+    question: '¿Qué pasa si no asisto a mi cita sin avisar?',
     answer:
-      'Coordinamos con abogados y notarios de confianza para que el proceso de cierre y registro de la propiedad sea claro y sin contratiempos.',
+      'Una inasistencia sin aviso puede generar un cargo o afectar la disponibilidad para reagendar. Te pedimos avisar con al menos 24 horas de anticipación si necesitas cancelar.',
   },
   {
-    key: 'process-title-issues',
-    categoryId: 'process_legal',
-    question: '¿Qué pasa si surgen problemas legales con el título de la propiedad?',
+    key: 'payments-refunds',
+    categoryId: 'payments_policies',
+    question: '¿Puedo pedir reembolso de un paquete no utilizado?',
     answer:
-      'Antes de cualquier compra verificamos el estado legal del título. Si surge algún inconveniente, te lo comunicamos de inmediato y te asesoramos sobre las opciones antes de continuar.',
+      'Evaluamos cada caso de forma individual según las sesiones ya utilizadas y el tiempo transcurrido desde la compra. Contáctanos y te damos una respuesta clara.',
   },
 ]

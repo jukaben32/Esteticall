@@ -1,103 +1,57 @@
-# Real Estate AI Calling Agent SaaS
+# EstetiCall
 
-![alt text](https://www.daulathussain.com/wp-content/uploads/2026/07/Build-Deploy-Real-Estate-AI-Calling-Agent-SaaS-Appointment-Bookig-System-Property-Buy-Sell-Rent-Next.js-Stripe-Multi-AI-Agents.jpg)
+SaaS multi-tenant para spas médico-estéticos y clínicas de medicina estética:
+agente de IA (voz + WhatsApp) que atiende consultas, agenda citas, ofrece
+paquetes de sesiones y hace cribado básico de contraindicaciones antes de
+tratamientos sensibles — más un dashboard completo para el negocio y un
+portal de autoservicio para sus pacientes.
 
-- [Final Source Code](https://www.theblockchaincoders.com/sourceCode/build-and-deploy-real-estate-ai-calling-agent-saas-+-appointment-bookig-system-or-property-buy-sell-and-rent-or-next.js-stripe-and-multi-ai-agents)
+Adaptado del frame [Real-Estate-Multi-AI-Agent-SaaS](https://github.com/jukaben32/Real-Estate-Multi-AI-Agent-SaaS)
+(InmobilIACall) — mismo stack y arquitectura multi-tenant, dominio reescrito
+para el vertical de spas/clínicas estéticas.
 
-#### Setup Video
+## Stack
 
-- [Final Code Setup video](https://youtu.be/zg2BP6cglVU?si=Vn3UF8a-VJXaP-Ev)
+- **Next.js 16** (App Router) + React 19 + TypeScript + Tailwind CSS
+- **Supabase** — auth + Postgres + RLS multi-tenant (`businesses` como tenant raíz)
+- **OpenAI Realtime API** — agente de voz en tiempo real
+- **Stripe** — suscripciones de plataforma + fallback de transferencia bancaria
+- **WhatsApp** vía Evolution API (self-hosted)
+- **Resend** — correo transaccional
 
-## Project Overview
-
-Build & Deploy Real Estate AI Calling Agent SaaS + Appointment Bookig System | Property Buy, Sell & Rent | Next.js, Stripe & Multi AI Agents
-
-Build a complete Real Estate AI Calling Agent SaaS from scratch using Next.js, Stripe, and Multi AI Agents. In this project, you'll create an AI-powered platform that helps real estate businesses automate property inquiries, schedule appointments, qualify leads, and manage buy, sell, and rental requests—all with intelligent AI voice agents.
-
-In this tutorial, you'll learn how to build and deploy a production-ready SaaS application with modern technologies and real-world features.
-
-## 🔥 What You'll Build
-
-- AI Voice Calling Agents for Real Estate
-- Property Buy, Sell & Rent Assistant
-- Multi AI Agent Architecture
-- AI Appointment Booking System
-- Lead Qualification & Customer Management
-- Agent Dashboard
-- Property Management System
-- Stripe Subscription & Payment Integration
-- Authentication & User Management
-- Responsive Modern UI with Next.js
-- Production Deployment
-
-## 💻 Tech Stack
-
-- Next.js
-- React.js
-- TypeScript
-- Tailwind CSS
-- Node.js
-- AI Voice Agents
-- Stripe
-- PostgreSQL
-- Prisma ORM
-- REST APIs
-
-This project is perfect for developers who want to learn how to build AI-powered SaaS applications, automate real estate businesses, integrate AI calling agents, and monetize their products using Stripe subscriptions.
-
-If you enjoy this tutorial, don't forget to Like, Share, and Subscribe for more AI, SaaS, Next.js, Blockchain, and Full Stack development projects.
-
-## Instruction
-
-Kindly follow the following Instructions to run the project in your system and install the necessary requirements
-
-#### Deploying Blockchain & Dapp
+## Estructura
 
 ```
-  WATCH: Digital Ocean
-  Get : $200 Free Credit
-  URL: https://m.do.co/c/fbe1551c5ae1
+src/
+  app/
+    (auth)/login, (auth)/signup      Autenticación
+    (dashboard)/dashboard/           Panel del negocio
+    (portal)/portal/                 Portal de autoservicio del paciente
+    sites/[slug]/                    Sitio público por negocio (website builder)
+    embed/[businessId]/              Widget de voz embebible
+    admin/                           Panel de plataforma (conocimiento, transferencias)
+    api/                             Rutas de API
+  ai/                                Definición y ejecución de las tools del agente IA
+  services/                         Acceso a datos (Supabase)
+  components/                       UI reutilizable
+  lib/                              Clientes de Supabase, cifrado, utilidades
+supabase/
+  schema.sql                        Esquema completo de la base de datos
 ```
 
-```
-  WATCH: Hostinger
-  Get : Discount 75%
-  URL: https://www.hostg.xyz/aff_c?offer_id=6&aff_id=139422
-```
+## Cómo levantar en local
 
-### MULTI-CURRENCY ICO DAPP
-
-```
-  PROJECT: MULTI-CURRENCY ICO DAPP
-  Code: https://www.theblockchaincoders.com/sourceCode/multi-currency-ico-dapp-using-next.js-solidity-and-wagmi
-  VIDEO: https://youtu.be/j8NO8ea5zVo?si=jCmvfXmpmefwjhO5
+```bash
+npm ci
+cp .env.example .env.local     # y rellenar los valores reales
+npm run dev                    # http://localhost:3000
 ```
 
-#### Install Vs Code Editor
+Verificaciones antes de commitear: `npx tsc --noEmit` y `npm run build`.
 
-```
-  GET: VsCode Editor
-  URL: https://code.visualstudio.com/download
-```
+Variables de entorno mínimas para arrancar: `NEXT_PUBLIC_SUPABASE_URL`,
+`NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` y
+`NEXT_PUBLIC_APP_URL`. Ver `.env.example` para el resto (OpenAI, Stripe,
+Resend, WhatsApp/Evolution API, cifrado de datos de salud).
 
-#### NodeJs & NPM Version
-
-```
-  NodeJs: 20 / LATEST
-  URL: https://nodejs.org/en/download
-  Video: https://youtu.be/PIR0oBVowXU?si=9eNdR29u37F2ujJJ
-```
-
-All you need to follow the complete project and follow the instructions which are explained in the tutorial by Daulat
-
-## Important Links
-
-- [Get Pro Blockchain Developer Course](https://www.theblockchaincoders.com/pro-nft-marketplace)
-- [Support Creator](https://bit.ly/Support-Creator)
-- [All Projects Source Code](https://www.theblockchaincoders.com/SourceCode)
-
-## Authors
-
-- [@theblockchaincoders.com](https://www.theblockchaincoders.com/)
-- [@consultancy](https://www.theblockchaincoders.com/consultancy)
-- [@youtube](https://www.youtube.com/@daulathussain)
+`.env.local` nunca se commitea — está en `.gitignore`.

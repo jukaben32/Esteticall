@@ -46,87 +46,22 @@ export const WEBSITE_BUILDER_FEATURES = [
 ] as const
 
 // Seeded into website_specialties the first time a business opens the
-// builder's Partners & Lenders panel with nothing in it yet — matches the
-// reference template's starting content instead of leaving new sites with
-// an empty, unlabeled "+ Add Insurance" button and no sense of what goes
-// there. Owners are free to edit or delete every one of these afterward.
+// builder's "Our Specialties" panel with nothing in it yet, so new sites
+// don't start with an empty, unlabeled grid. Owners are free to edit or
+// delete every one of these afterward.
 export const DEFAULT_WEBSITE_SPECIALTIES = [
-  'Residential Sales',
-  'Commercial Leasing',
-  'Property Management',
-  'Investment Properties',
-  'New Construction',
-  'Luxury Estates',
+  'Toxina Botulínica',
+  'Rellenos Dérmicos',
+  'Depilación Láser',
+  'Faciales Médicos',
+  'Tratamientos Corporales',
+  'Medicina Estética',
 ] as const
 
 // 0 means "unlimited" in the env contract.
 export function isWithinLimit(used: number, limit: number): boolean {
   return limit === 0 || used < limit
 }
-
-export const PROPERTY_TYPES = [
-  { value: 'house', label: 'House' },
-  { value: 'apartment', label: 'Apartment' },
-  { value: 'townhouse', label: 'Townhouse' },
-  { value: 'commercial', label: 'Commercial' },
-  { value: 'condo', label: 'Condo' },
-  { value: 'land', label: 'Land' },
-  { value: 'industrial', label: 'Industrial' },
-  { value: 'other', label: 'Other' },
-] as const
-
-export const LISTING_STATUSES = [
-  { value: 'available', label: 'Available', color: 'green' },
-  { value: 'pending', label: 'Pending', color: 'amber' },
-  { value: 'sold', label: 'Sold', color: 'slate' },
-  { value: 'rented', label: 'Rented', color: 'blue' },
-  { value: 'withdrawn', label: 'Withdrawn', color: 'red' },
-] as const
-
-// Most Dominican Republic real estate inventory is quoted in USD even
-// though the local currency is DOP — price alone was ambiguous without this.
-export const CURRENCIES = [
-  { value: 'USD', label: 'USD ($)' },
-  { value: 'DOP', label: 'DOP (RD$)' },
-] as const
-
-export const PRICE_DISPLAY_OPTIONS = [
-  { value: 'fixed', label: 'Precio fijo' },
-  { value: 'negotiable', label: 'Negociable' },
-  { value: 'starting_at', label: 'Desde' },
-  { value: 'contact', label: 'Consultar precio' },
-] as const
-
-export const LISTING_TYPES = [
-  { value: 'sale', label: 'For Sale' },
-  { value: 'rent', label: 'For Rent' },
-  { value: 'vacation_rental', label: 'Vacation Rental' },
-] as const
-
-export const RENTAL_PERIODS = [
-  { value: 'night', label: 'Por noche' },
-  { value: 'week', label: 'Por semana' },
-  { value: 'month', label: 'Por mes' },
-] as const
-
-export const AMENITIES = [
-  'Pool',
-  'Garage',
-  'Garden',
-  'Balcony',
-  'Fireplace',
-  'Air Conditioning',
-  'Pet Friendly',
-  'Gym',
-  'Elevator',
-  'Security System',
-  'Laundry',
-  'Storage',
-  'Solar Panels',
-  'Smart Home',
-  'Sea View',
-  'City View',
-] as const
 
 // Voices supported by the OpenAI Realtime API.
 export const AGENT_VOICES = [
@@ -329,142 +264,142 @@ export const AGENT_TEMPLATE_ACCENT_STYLES: Record<
 }
 
 export const AGENT_TEMPLATE_CATEGORIES = [
-  'Compra y venta residencial',
-  'Experiencia y seguimiento de compradores',
-  'Propiedades de lujo y premium',
-  'Rentas residenciales y comerciales',
-  'Representación de vendedores y listados',
-  'Propiedades comerciales y de inversión',
+  'Consultas y valoraciones',
+  'Experiencia y seguimiento del paciente',
+  'Tratamientos premium y VIP',
+  'Depilación láser y corporales',
+  'Coordinación de tratamientos',
+  'Membresías y paquetes',
 ] as const
 
 export const AGENT_TEMPLATES: AgentTemplate[] = [
   {
     id: 'alexis',
     name: 'Alexis',
-    role: 'Agente de Ventas Residencial',
+    role: 'Consultora de Tratamientos Faciales',
     badge: 'Más popular',
     icon: 'home',
     accent: 'emerald',
-    category: 'Compra y venta residencial',
-    features: ['Agendar visitas a propiedades', 'Agendar consultas con compradores', 'Consultas sobre listados'],
-    bestFor: 'Agencias residenciales, representación de compradores',
+    category: 'Consultas y valoraciones',
+    features: ['Agendar citas de valoración', 'Explicar tratamientos disponibles', 'Resolver dudas sobre precios'],
+    bestFor: 'Spas médico-estéticos, clínicas de medicina estética',
     voice: 'sage',
     personality: 'professional',
     personalityLabel: 'Profesional',
     sensitivity: 0.5,
-    greetingMessage: '¡Hola! Gracias por llamar. Soy Alexis, ¿en qué propiedad estás interesado hoy?',
+    greetingMessage: '¡Hola! Gracias por contactarnos. Soy Alexis, ¿en qué tratamiento estás interesado hoy?',
     systemPrompt:
-      'Eres Alexis, un agente de ventas residencial profesional y directo. Ayuda a los compradores a encontrar propiedades, agenda visitas y captura sus datos de contacto.',
+      'Eres Alexis, una consultora de tratamientos estéticos profesional y cercana. Ayudas a los pacientes a elegir el tratamiento adecuado, agendas citas y capturas sus datos de contacto.',
   },
   {
     id: 'grace',
     name: 'Grace',
-    role: 'Coordinadora de Relaciones con Clientes',
-    badge: 'Favorito de clientes',
+    role: 'Coordinadora de Experiencia del Paciente',
+    badge: 'Favorito de pacientes',
     icon: 'heart',
     accent: 'gold',
-    category: 'Experiencia y seguimiento de compradores',
-    features: ['Soporte cálido al cliente', 'Seguimiento post-visita', 'Orientación de zona'],
-    bestFor: 'Agencias de compradores, especialistas en reubicación',
+    category: 'Experiencia y seguimiento del paciente',
+    features: ['Soporte cálido al paciente', 'Seguimiento post-tratamiento', 'Cuidados y recomendaciones'],
+    bestFor: 'Clínicas boutique, spas de bienestar',
     voice: 'shimmer',
     personality: 'friendly',
     personalityLabel: 'Amigable',
     sensitivity: 0.8,
     greetingMessage:
-      '¡Hola! Gracias por llamar. Soy Grace, tu concierge inmobiliaria. Estoy aquí para que encontrar tu propiedad ideal sea lo más fácil posible.',
+      '¡Hola! Gracias por contactarnos. Soy Grace, tu asistente de bienestar. Estoy aquí para que tu experiencia sea lo más cómoda posible.',
     systemPrompt:
-      'Eres Grace, una concierge de clientes cálida y cercana para una agencia inmobiliaria. Haces que los compradores se sientan cómodos y acompañados en su proceso.',
+      'Eres Grace, una asistente cálida y cercana para un spa médico-estético. Haces que los pacientes se sientan cómodos y acompañados antes y después de sus tratamientos.',
   },
   {
     id: 'maxwell',
     name: 'Maxwell',
-    role: 'Especialista en Propiedades de Lujo',
-    badge: 'Agencias premium',
+    role: 'Especialista en Tratamientos VIP',
+    badge: 'Clínicas premium',
     icon: 'star',
     accent: 'ink',
-    category: 'Propiedades de lujo y premium',
-    features: ['Consultas privadas de exhibición', 'Servicio privado al cliente', 'Resúmenes de inversión'],
-    bestFor: 'Agencias de lujo, especialistas en bienes raíces premium',
+    category: 'Tratamientos premium y VIP',
+    features: ['Consultas privadas', 'Atención personalizada', 'Protocolos a medida'],
+    bestFor: 'Clínicas de lujo, medicina estética premium',
     voice: 'ballad',
     personality: 'professional',
     personalityLabel: 'Formal',
     sensitivity: 0.2,
     greetingMessage:
-      'Buenas tardes, gracias por comunicarse. Soy Maxwell, especialista en propiedades de lujo. Será un placer asistirle.',
+      'Buenas tardes, gracias por comunicarse. Soy Maxwell, especialista en tratamientos VIP. Será un placer asistirle.',
     systemPrompt:
-      'Eres Maxwell, un especialista formal y discreto en propiedades de lujo. Tu tono es refinado, paciente y orientado al detalle.',
+      'Eres Maxwell, un especialista formal y discreto en tratamientos estéticos premium. Tu tono es refinado, paciente y orientado al detalle.',
   },
   {
     id: 'luna',
     name: 'Luna',
-    role: 'Coordinadora de Recepción de Rentas',
-    badge: 'Enfoque en rentas',
+    role: 'Coordinadora de Depilación Láser',
+    badge: 'Enfoque en láser',
     icon: 'building2',
     accent: 'sage',
-    category: 'Rentas residenciales y comerciales',
-    features: ['Agendar visitas de renta', 'Guía de aplicación', 'Consultas de contrato'],
-    bestFor: 'Administradoras de propiedades, agencias de renta',
+    category: 'Depilación láser y corporales',
+    features: ['Agendar sesiones de láser', 'Explicar el plan de sesiones', 'Consultas sobre cuidados previos'],
+    bestFor: 'Centros de depilación láser, clínicas corporales',
     voice: 'shimmer',
     personality: 'friendly',
     personalityLabel: 'Amigable',
     sensitivity: 0.5,
-    greetingMessage: '¡Hola! Soy Luna. Puedo ayudarte a agendar una visita o resolver dudas sobre nuestras rentas disponibles.',
+    greetingMessage: '¡Hola! Soy Luna. Puedo ayudarte a agendar tu sesión de láser o resolver dudas sobre el tratamiento.',
     systemPrompt:
-      'Eres Luna, coordinadora de rentas amigable y eficiente. Ayudas a los interesados a agendar visitas y explicas el proceso de aplicación con claridad.',
+      'Eres Luna, coordinadora de depilación láser amigable y eficiente. Ayudas a los pacientes a agendar sesiones y explicas el cuidado antes/después con claridad.',
   },
   {
     id: 'aria',
     name: 'Aria',
-    role: 'Coordinadora de Nuevos Listados',
-    badge: 'Enfoque en vendedores',
+    role: 'Coordinadora de Nuevos Pacientes',
+    badge: 'Primera consulta',
     icon: 'clipboard-list',
     accent: 'moss',
-    category: 'Representación de vendedores y listados',
-    features: ['Citas de listado', 'Análisis de mercado (CMA)', 'Preguntas frecuentes de vendedores'],
-    bestFor: 'Agentes listadores, representación de vendedores',
+    category: 'Consultas y valoraciones',
+    features: ['Primera valoración', 'Historial y contraindicaciones', 'Preguntas frecuentes'],
+    bestFor: 'Clínicas en crecimiento, primera línea de contacto',
     voice: 'coral',
     personality: 'friendly',
     personalityLabel: 'Amigable',
     sensitivity: 0.5,
-    greetingMessage: '¡Hola! Soy Aria. Si estás pensando en vender tu propiedad, te ayudo a coordinar los siguientes pasos.',
+    greetingMessage: '¡Hola! Soy Aria. Si es tu primera vez con nosotros, te ayudo a agendar tu valoración inicial.',
     systemPrompt:
-      'Eres Aria, coordinadora de nuevos listados enfocada en vendedores. Agendas citas de listado, explicas el análisis de mercado y resuelves dudas frecuentes con claridad.',
+      'Eres Aria, coordinadora de nuevos pacientes enfocada en la primera consulta. Agendas valoraciones, recopilas antecedentes relevantes y resuelves dudas frecuentes con claridad.',
   },
   {
     id: 'victor',
     name: 'Victor',
-    role: 'Asesor de Bienes Raíces Comerciales',
-    badge: 'Enfoque comercial',
+    role: 'Asesor de Medicina Estética',
+    badge: 'Enfoque clínico',
     icon: 'building',
     accent: 'forest',
-    category: 'Propiedades comerciales y de inversión',
-    features: ['Muestras comerciales', 'Manejo de consultas de inversión', 'Consultas de arrendamiento'],
-    bestFor: 'Corredoras comerciales, firmas de inversión',
+    category: 'Coordinación de tratamientos',
+    features: ['Explicación de procedimientos', 'Coordinación con especialistas', 'Cribado de contraindicaciones'],
+    bestFor: 'Clínicas médico-estéticas, consultorios de dermatología',
     voice: 'echo',
     personality: 'professional',
     personalityLabel: 'Profesional',
     sensitivity: 0.3,
-    greetingMessage: 'Buenas, soy Victor, asesor de bienes raíces comerciales. ¿En qué tipo de propiedad está interesado?',
+    greetingMessage: 'Buenas, soy Victor, asesor de medicina estética. ¿En qué tratamiento está interesado?',
     systemPrompt:
-      'Eres Victor, asesor comercial enfocado y analítico. Manejas muestras de propiedades comerciales, consultas de inversión y arrendamiento con precisión.',
+      'Eres Victor, asesor clínico enfocado y cuidadoso. Explicas procedimientos médico-estéticos, coordinas con el equipo clínico y siempre preguntas por contraindicaciones (embarazo, alergias, medicamentos) antes de agendar tratamientos sensibles.',
   },
   {
     id: 'nova',
     name: 'Nova',
-    role: 'Coordinadora de Inversión Inmobiliaria',
-    badge: 'Enfoque en inversionistas',
+    role: 'Coordinadora de Paquetes y Membresías',
+    badge: 'Enfoque en paquetes',
     icon: 'bar-chart-3',
     accent: 'bronze',
-    category: 'Propiedades comerciales y de inversión',
-    features: ['Consultas de inversión', 'Sesiones de estrategia de portafolio', 'Solicitudes de informe de mercado'],
-    bestFor: 'Agencias de propiedades de inversión, firmas de patrimonio',
+    category: 'Membresías y paquetes',
+    features: ['Consultas de paquetes', 'Explicación de membresías', 'Seguimiento de sesiones restantes'],
+    bestFor: 'Spas con programas de membresía, clínicas con paquetes de sesiones',
     voice: 'ash',
     personality: 'professional',
     personalityLabel: 'Formal',
     sensitivity: 0.2,
-    greetingMessage: 'Buenas, soy Nova, coordinadora de inversión inmobiliaria. ¿En qué puedo ayudarte hoy?',
+    greetingMessage: 'Buenas, soy Nova, coordinadora de paquetes y membresías. ¿En qué puedo ayudarte hoy?',
     systemPrompt:
-      'Eres Nova, coordinadora de inversión precisa y analítica. Explicas cap rate, NOI y retorno de inversión con datos concretos, nunca inventados.',
+      'Eres Nova, coordinadora de paquetes precisa y clara. Explicas paquetes de sesiones, membresías y precios con datos concretos, nunca inventados.',
   },
 ]
 
@@ -491,25 +426,25 @@ export interface WidgetTemplate {
 }
 
 export const WIDGET_TEMPLATE_CATEGORIES = [
-  'Home Buying & Selling',
-  'Buyer Experience & Follow-Up',
-  'Luxury & Premium Properties',
-  'Residential & Commercial Rentals',
-  'Seller Representation & Listings',
-  'Commercial & Investment Properties',
+  'Consultations & Assessments',
+  'Patient Experience & Follow-Up',
+  'Premium & VIP Treatments',
+  'Laser & Body Treatments',
+  'Treatment Coordination',
+  'Packages & Memberships',
 ] as const
 
 export const WIDGET_TEMPLATES: WidgetTemplate[] = [
   {
     id: 'alexis',
     name: 'Alexis',
-    role: 'Residential Sales Agent',
+    role: 'Treatment Consultant',
     badge: 'Most Popular',
-    category: 'Home Buying & Selling',
-    features: ['Property viewing booking', 'Buyer consultation scheduling', 'Listing inquiries'],
-    bestFor: 'Residential agencies, Buyer representation',
+    category: 'Consultations & Assessments',
+    features: ['Treatment consultation booking', 'Pricing inquiries', 'Availability check'],
+    bestFor: 'Medspas, aesthetic clinics',
     toneLabel: 'Sage · Professional',
-    greetingMessage: "Hi! Thanks for stopping by — I'm Alexis. What kind of property are you looking for today?",
+    greetingMessage: "Hi! Thanks for stopping by — I'm Alexis. What treatment are you interested in today?",
     primaryColor: '#166534',
     position: 'bottom-right',
     theme: 'light',
@@ -517,13 +452,13 @@ export const WIDGET_TEMPLATES: WidgetTemplate[] = [
   {
     id: 'grace',
     name: 'Grace',
-    role: 'Client Relations Coordinator',
-    badge: 'Client Favorite',
-    category: 'Buyer Experience & Follow-Up',
-    features: ['Warm client support', 'Follow-up scheduling', 'Neighborhood guidance'],
-    bestFor: 'Buyer agencies, Relocation specialists',
+    role: 'Patient Experience Coordinator',
+    badge: 'Patient Favorite',
+    category: 'Patient Experience & Follow-Up',
+    features: ['Warm patient support', 'Post-treatment follow-up', 'Aftercare guidance'],
+    bestFor: 'Boutique clinics, Wellness spas',
     toneLabel: 'Shimmer · Friendly',
-    greetingMessage: "Hi there! I'm Grace, your concierge. I'm here to make finding your next home as easy as possible.",
+    greetingMessage: "Hi there! I'm Grace, your wellness assistant. I'm here to make your visit as comfortable as possible.",
     primaryColor: '#db2777',
     position: 'bottom-right',
     theme: 'light',
@@ -531,11 +466,11 @@ export const WIDGET_TEMPLATES: WidgetTemplate[] = [
   {
     id: 'maxwell',
     name: 'Maxwell',
-    role: 'Luxury Property Specialist',
-    badge: 'High-End Agencies',
-    category: 'Luxury & Premium Properties',
-    features: ['Exclusive showing consultations', 'Private client service', 'Investment briefings'],
-    bestFor: 'Luxury agencies, Estate specialists',
+    role: 'VIP Treatment Specialist',
+    badge: 'High-End Clinics',
+    category: 'Premium & VIP Treatments',
+    features: ['Private consultations', 'Personalized care', 'Custom protocols'],
+    bestFor: 'Luxury clinics, Premium aesthetics',
     toneLabel: 'Onyx · Formal',
     greetingMessage: 'Good afternoon, thank you for reaching out. This is Maxwell — it would be my pleasure to assist you.',
     primaryColor: '#1e3a8a',
@@ -545,13 +480,13 @@ export const WIDGET_TEMPLATES: WidgetTemplate[] = [
   {
     id: 'luna',
     name: 'Luna',
-    role: 'Rental Intake Coordinator',
-    badge: 'Rental Focused',
-    category: 'Residential & Commercial Rentals',
-    features: ['Rental showing scheduling', 'Application guidance', 'Lease inquiries'],
-    bestFor: 'Property management firms, Rental agencies',
+    role: 'Laser Treatment Coordinator',
+    badge: 'Laser Focused',
+    category: 'Laser & Body Treatments',
+    features: ['Laser session booking', 'Session plan guidance', 'Pre-care instructions'],
+    bestFor: 'Laser hair removal centers, Body clinics',
     toneLabel: 'Shimmer · Friendly',
-    greetingMessage: "Hi! I'm Luna. I can help you book a showing or answer questions about our available rentals.",
+    greetingMessage: "Hi! I'm Luna. I can help you book your laser session or answer questions about the treatment.",
     primaryColor: '#0d9488',
     position: 'bottom-right',
     theme: 'light',
@@ -559,13 +494,13 @@ export const WIDGET_TEMPLATES: WidgetTemplate[] = [
   {
     id: 'owen',
     name: 'Owen',
-    role: 'Listing Specialist',
-    badge: 'For Sellers',
-    category: 'Seller Representation & Listings',
-    features: ['Seller consultations', 'Valuation updates', 'Photo session scheduling'],
-    bestFor: 'Listing agents, Seller representation teams',
+    role: 'New Patient Coordinator',
+    badge: 'First Visit',
+    category: 'Consultations & Assessments',
+    features: ['Initial assessment booking', 'Intake questions', 'FAQ support'],
+    bestFor: 'Growing clinics, First point of contact',
     toneLabel: 'Echo · Professional',
-    greetingMessage: "Hi, I'm Owen. Thinking about selling your property? I'm happy to walk you through the process.",
+    greetingMessage: "Hi, I'm Owen. First time with us? I'm happy to help you book your initial assessment.",
     primaryColor: '#2563eb',
     position: 'bottom-right',
     theme: 'light',
@@ -573,13 +508,13 @@ export const WIDGET_TEMPLATES: WidgetTemplate[] = [
   {
     id: 'nora',
     name: 'Nora',
-    role: 'Commercial Investment Advisor',
-    badge: 'Commercial & Investment',
-    category: 'Commercial & Investment Properties',
-    features: ['Investment property analysis', 'Cap rate & ROI', 'Commercial inquiries'],
-    bestFor: 'Commercial firms, Institutional investors',
+    role: 'Packages & Memberships Advisor',
+    badge: 'Packages & Memberships',
+    category: 'Packages & Memberships',
+    features: ['Package inquiries', 'Membership details', 'Remaining sessions tracking'],
+    bestFor: 'Membership-based spas, Session-package clinics',
     toneLabel: 'Ash · Formal',
-    greetingMessage: "Hello, I'm Nora, commercial investment advisor. What type of property are you interested in?",
+    greetingMessage: "Hello, I'm Nora, packages and memberships advisor. What would you like to know?",
     primaryColor: '#7c3aed',
     position: 'bottom-right',
     theme: 'light',
@@ -603,67 +538,67 @@ export interface CatalogService {
 }
 
 export const SERVICE_CATALOG_CATEGORIES = [
-  'Ventas Residenciales',
-  'Rentas de Propiedades',
-  'Bienes Raíces Comerciales',
-  'Administración de Propiedades',
-  'Inversión y Financiamiento',
-  'Propiedades de Lujo',
-  'Construcción Nueva',
-  'Cierre y Transacciones',
+  'Toxina Botulínica y Rellenos',
+  'Depilación Láser',
+  'Faciales Médicos',
+  'Tratamientos Corporales',
+  'Skincare y Peelings',
+  'Medicina Estética Avanzada',
+  'Bienestar y Spa',
+  'Consultas y Valoraciones',
 ] as const
 
-// Pre-built catalog matching the reference template's "32 services across 8
-// specialties" — clicking a card creates a business_services row tagged with
-// this `key` so it shows "Added to your catalog" instead of duplicating.
+// Pre-built catalog of 32 treatments across 8 specialties — clicking a card
+// creates a business_services row tagged with this `key` so it shows
+// "Added to your catalog" instead of duplicating.
 export const CATALOG_SERVICES: CatalogService[] = [
-  // Ventas Residenciales (6)
-  { key: 'buyer_consultation', category: 'Ventas Residenciales', name: 'Consulta con Comprador', description: 'Sesión individual para entender necesidades, presupuesto y tiempos antes de iniciar la búsqueda.', durationMinutes: 60, priceType: 'fixed', price: 0 },
-  { key: 'property_viewing', category: 'Ventas Residenciales', name: 'Visita a Propiedad', description: 'Recorrido guiado de una propiedad listada con walkthrough completo y desglose de características.', durationMinutes: 60, priceType: 'fixed', price: 0 },
-  { key: 'market_analysis_cma', category: 'Ventas Residenciales', name: 'Análisis de Mercado (CMA)', description: 'Análisis comparativo de mercado para determinar el valor preciso de una propiedad según ventas recientes.', durationMinutes: 45, priceType: 'fixed', price: 0 },
-  { key: 'listing_appointment', category: 'Ventas Residenciales', name: 'Cita de Listado', description: 'Consulta en la propiedad para evaluarla, asesorar sobre precio y delinear el proceso de venta.', durationMinutes: 90, priceType: 'fixed', price: 0 },
-  { key: 'offer_negotiation', category: 'Ventas Residenciales', name: 'Sesión de Negociación de Oferta', description: 'Sesión dedicada a revisar, preparar y negociar ofertas de compra en representación del cliente.', durationMinutes: 60, priceType: 'fixed', price: 0 },
-  { key: 'contract_review', category: 'Ventas Residenciales', name: 'Revisión de Contrato', description: 'Revisión detallada del contrato de compra, contingencias y términos explicados en lenguaje claro.', durationMinutes: 45, priceType: 'fixed', price: 0 },
+  // Toxina Botulínica y Rellenos (4)
+  { key: 'botox_frente', category: 'Toxina Botulínica y Rellenos', name: 'Toxina Botulínica - Frente', description: 'Suaviza líneas de expresión en la frente con toxina botulínica.', durationMinutes: 30, priceType: 'starting_at', price: 250 },
+  { key: 'botox_patas_gallo', category: 'Toxina Botulínica y Rellenos', name: 'Toxina Botulínica - Patas de Gallo', description: 'Reduce las líneas de expresión alrededor de los ojos.', durationMinutes: 30, priceType: 'starting_at', price: 200 },
+  { key: 'rellenos_labios', category: 'Toxina Botulínica y Rellenos', name: 'Rellenos de Labios con Ácido Hialurónico', description: 'Aumento y definición de labios con ácido hialurónico.', durationMinutes: 45, priceType: 'starting_at', price: 350 },
+  { key: 'rellenos_pomulos', category: 'Toxina Botulínica y Rellenos', name: 'Rellenos Faciales - Pómulos', description: 'Restaura volumen y contorno facial con ácido hialurónico.', durationMinutes: 45, priceType: 'starting_at', price: 450 },
 
-  // Rentas de Propiedades (5)
-  { key: 'rental_property_showing', category: 'Rentas de Propiedades', name: 'Muestra de Propiedad en Renta', description: 'Muestra programada de unidades de renta disponibles con recorrido completo y orientación de aplicación.', durationMinutes: 45, priceType: 'fixed', price: 0 },
-  { key: 'tenant_screening', category: 'Rentas de Propiedades', name: 'Consulta de Selección de Inquilino', description: 'Revisión de requisitos de aplicación de renta, criterios de selección y tiempos del proceso.', durationMinutes: 30, priceType: 'fixed', price: 0 },
-  { key: 'lease_signing', category: 'Rentas de Propiedades', name: 'Cita de Firma de Contrato', description: 'Sesión presencial o virtual para revisar, explicar y ejecutar el contrato de arrendamiento.', durationMinutes: 60, priceType: 'fixed', price: 0 },
-  { key: 'move_in_inspection', category: 'Rentas de Propiedades', name: 'Inspección de Mudanza', description: 'Recorrido detallado de la propiedad en renta para documentar su condición y completar el checklist de entrada.', durationMinutes: 60, priceType: 'fixed', price: 0 },
-  { key: 'rental_portfolio_review', category: 'Rentas de Propiedades', name: 'Revisión de Portafolio de Rentas', description: 'Evaluación del portafolio de inversión en renta con análisis de vacancia y recomendaciones de optimización.', durationMinutes: 60, priceType: 'starting_at', price: 150 },
+  // Depilación Láser (4)
+  { key: 'laser_axilas', category: 'Depilación Láser', name: 'Depilación Láser - Axilas', description: 'Sesión de depilación láser para axilas.', durationMinutes: 20, priceType: 'fixed', price: 60 },
+  { key: 'laser_piernas', category: 'Depilación Láser', name: 'Depilación Láser - Piernas Completas', description: 'Sesión de depilación láser para piernas completas.', durationMinutes: 60, priceType: 'fixed', price: 200 },
+  { key: 'laser_facial', category: 'Depilación Láser', name: 'Depilación Láser Facial', description: 'Sesión de depilación láser para rostro (bozo, mentón).', durationMinutes: 20, priceType: 'fixed', price: 50 },
+  { key: 'laser_biquini', category: 'Depilación Láser', name: 'Depilación Láser - Zona Íntima', description: 'Sesión de depilación láser en zona íntima.', durationMinutes: 30, priceType: 'fixed', price: 90 },
 
-  // Bienes Raíces Comerciales (4)
-  { key: 'commercial_property_viewing', category: 'Bienes Raíces Comerciales', name: 'Visita a Propiedad Comercial', description: 'Recorrido guiado del espacio comercial con zonificación, metraje y opciones de layout.', durationMinutes: 60, priceType: 'fixed', price: 0 },
-  { key: 'commercial_lease_consultation', category: 'Bienes Raíces Comerciales', name: 'Consulta de Arrendamiento Comercial', description: 'Revisión a fondo de términos de arrendamiento comercial, estructuras NNN, cargos CAM y mejoras del inquilino.', durationMinutes: 60, priceType: 'starting_at', price: 200 },
-  { key: 'investment_property_analysis', category: 'Bienes Raíces Comerciales', name: 'Análisis de Propiedad de Inversión', description: 'Cap rate, NOI y análisis de retorno sobre efectivo invertido para propiedades comerciales de inversión.', durationMinutes: 90, priceType: 'starting_at', price: 300 },
-  { key: 'business_relocation', category: 'Bienes Raíces Comerciales', name: 'Consulta de Reubicación de Negocio', description: 'Planeación estratégica para reubicar oficina o local, incluyendo evaluación de necesidades y selección de sitio.', durationMinutes: 60, priceType: 'fixed', price: 0 },
+  // Faciales Médicos (4)
+  { key: 'facial_hydrafacial', category: 'Faciales Médicos', name: 'HydraFacial', description: 'Limpieza, exfoliación e hidratación profunda en una sola sesión.', durationMinutes: 60, priceType: 'fixed', price: 150 },
+  { key: 'facial_limpieza_profunda', category: 'Faciales Médicos', name: 'Limpieza Facial Profunda', description: 'Extracción profesional y desincrustación de impurezas.', durationMinutes: 60, priceType: 'fixed', price: 80 },
+  { key: 'facial_dermapen', category: 'Faciales Médicos', name: 'Dermapen - Microneedling', description: 'Estimula colágeno para mejorar textura y cicatrices de acné.', durationMinutes: 60, priceType: 'starting_at', price: 180 },
+  { key: 'facial_radiofrecuencia', category: 'Faciales Médicos', name: 'Radiofrecuencia Facial', description: 'Tensado de piel no invasivo con radiofrecuencia.', durationMinutes: 45, priceType: 'starting_at', price: 150 },
 
-  // Administración de Propiedades (4)
-  { key: 'property_management_onboarding', category: 'Administración de Propiedades', name: 'Incorporación de Administración', description: 'Consulta inicial para transferir responsabilidades de administración, configurar sistemas y delinear el reporte al propietario.', durationMinutes: 90, priceType: 'fixed', price: 0 },
-  { key: 'annual_property_review', category: 'Administración de Propiedades', name: 'Revisión Anual de Propiedad', description: 'Revisión integral del desempeño de la propiedad, tarifas de renta, historial de mantenimiento y metas del propietario.', durationMinutes: 60, priceType: 'fixed', price: 0 },
-  { key: 'maintenance_coordination', category: 'Administración de Propiedades', name: 'Coordinación de Mantenimiento', description: 'Llamada para coordinar reparaciones, proveedores y tiempos de mantenimiento con el propietario.', durationMinutes: 30, priceType: 'fixed', price: 0 },
-  { key: 'owner_financial_reporting', category: 'Administración de Propiedades', name: 'Reporte Financiero al Propietario', description: 'Sesión para revisar estados de cuenta, ingresos por renta y gastos del periodo con el propietario.', durationMinutes: 45, priceType: 'fixed', price: 0 },
+  // Tratamientos Corporales (4)
+  { key: 'corporal_criolipolisis', category: 'Tratamientos Corporales', name: 'Criolipólisis', description: 'Reducción de grasa localizada mediante congelación controlada.', durationMinutes: 60, priceType: 'starting_at', price: 300 },
+  { key: 'corporal_radiofrecuencia', category: 'Tratamientos Corporales', name: 'Radiofrecuencia Corporal', description: 'Tratamiento reafirmante para flacidez corporal.', durationMinutes: 60, priceType: 'starting_at', price: 180 },
+  { key: 'corporal_masaje_reductor', category: 'Tratamientos Corporales', name: 'Masaje Reductor', description: 'Masaje corporal enfocado en reducción de medidas.', durationMinutes: 50, priceType: 'fixed', price: 70 },
+  { key: 'corporal_presoterapia', category: 'Tratamientos Corporales', name: 'Presoterapia', description: 'Drenaje linfático asistido para reducir retención de líquidos.', durationMinutes: 40, priceType: 'fixed', price: 60 },
 
-  // Inversión y Financiamiento (4)
-  { key: 'financing_prequalification', category: 'Inversión y Financiamiento', name: 'Llamada de Pre-calificación', description: 'Orientación inicial sobre opciones de financiamiento y pre-calificación antes de iniciar la búsqueda.', durationMinutes: 30, priceType: 'fixed', price: 0 },
-  { key: 'cash_flow_analysis', category: 'Inversión y Financiamiento', name: 'Análisis de Flujo de Caja', description: 'Proyección de ingresos y gastos para evaluar la rentabilidad de una propiedad de inversión.', durationMinutes: 60, priceType: 'fixed', price: 0 },
-  { key: 'refinance_consultation', category: 'Inversión y Financiamiento', name: 'Consulta de Refinanciamiento', description: 'Revisión de opciones de refinanciamiento para propietarios e inversionistas.', durationMinutes: 45, priceType: 'fixed', price: 0 },
-  { key: 'exchange_consultation', category: 'Inversión y Financiamiento', name: 'Consulta de Intercambio de Propiedades', description: 'Orientación sobre estrategias de intercambio para diferir impuestos en la venta de propiedades de inversión.', durationMinutes: 60, priceType: 'fixed', price: 0 },
+  // Skincare y Peelings (4)
+  { key: 'peeling_quimico', category: 'Skincare y Peelings', name: 'Peeling Químico', description: 'Exfoliación química para renovar la piel y mejorar su textura.', durationMinutes: 45, priceType: 'starting_at', price: 120 },
+  { key: 'skincare_consulta', category: 'Skincare y Peelings', name: 'Consulta de Skincare Personalizada', description: 'Evaluación de piel y recomendación de rutina personalizada.', durationMinutes: 30, priceType: 'fixed', price: 0 },
+  { key: 'peeling_despigmentante', category: 'Skincare y Peelings', name: 'Peeling Despigmentante', description: 'Tratamiento para manchas y uniformidad del tono de piel.', durationMinutes: 45, priceType: 'starting_at', price: 140 },
+  { key: 'skincare_mascarilla_led', category: 'Skincare y Peelings', name: 'Terapia de Luz LED', description: 'Sesión de fototerapia LED para acné, rejuvenecimiento o cicatrización.', durationMinutes: 30, priceType: 'fixed', price: 70 },
 
-  // Propiedades de Lujo (3)
-  { key: 'private_showing', category: 'Propiedades de Lujo', name: 'Consulta de Exhibición Privada', description: 'Recorrido privado y exclusivo de una propiedad de lujo, con atención personalizada.', durationMinutes: 90, priceType: 'fixed', price: 0 },
-  { key: 'luxury_market_briefing', category: 'Propiedades de Lujo', name: 'Informe de Mercado de Lujo', description: 'Resumen del segmento premium: tendencias, comparables y posicionamiento de precio.', durationMinutes: 45, priceType: 'fixed', price: 0 },
-  { key: 'concierge_relocation', category: 'Propiedades de Lujo', name: 'Servicio de Reubicación Concierge', description: 'Acompañamiento integral para clientes que se reubican, desde la búsqueda hasta el cierre.', durationMinutes: 60, priceType: 'fixed', price: 0 },
+  // Medicina Estética Avanzada (4)
+  { key: 'plasma_rico_plaquetas', category: 'Medicina Estética Avanzada', name: 'Plasma Rico en Plaquetas (PRP)', description: 'Rejuvenecimiento facial o capilar con plasma autólogo.', durationMinutes: 60, priceType: 'starting_at', price: 350 },
+  { key: 'hilos_tensores', category: 'Medicina Estética Avanzada', name: 'Hilos Tensores', description: 'Efecto lifting no quirúrgico con hilos reabsorbibles.', durationMinutes: 60, priceType: 'starting_at', price: 500 },
+  { key: 'mesoterapia_facial', category: 'Medicina Estética Avanzada', name: 'Mesoterapia Facial', description: 'Microinyecciones de vitaminas y ácido hialurónico para hidratar la piel.', durationMinutes: 45, priceType: 'starting_at', price: 150 },
+  { key: 'bichectomia_consulta', category: 'Medicina Estética Avanzada', name: 'Consulta de Bichectomía', description: 'Valoración para reducción de volumen en mejillas.', durationMinutes: 30, priceType: 'fixed', price: 0 },
 
-  // Construcción Nueva (3)
-  { key: 'new_construction_walkthrough', category: 'Construcción Nueva', name: 'Recorrido de Construcción Nueva', description: 'Visita guiada a un desarrollo de construcción nueva, con detalle de acabados y opciones disponibles.', durationMinutes: 60, priceType: 'fixed', price: 0 },
-  { key: 'builder_consultation', category: 'Construcción Nueva', name: 'Consulta con Constructora', description: 'Sesión para conectar al cliente con el equipo de la constructora y resolver dudas del proyecto.', durationMinutes: 45, priceType: 'fixed', price: 0 },
-  { key: 'custom_home_planning', category: 'Construcción Nueva', name: 'Sesión de Planeación de Casa a Medida', description: 'Consulta inicial para definir alcance, presupuesto y tiempos de un proyecto de casa a medida.', durationMinutes: 90, priceType: 'fixed', price: 0 },
+  // Bienestar y Spa (4)
+  { key: 'spa_masaje_relajante', category: 'Bienestar y Spa', name: 'Masaje Relajante', description: 'Masaje corporal completo para liberar tensión y estrés.', durationMinutes: 60, priceType: 'fixed', price: 65 },
+  { key: 'spa_dia_completo', category: 'Bienestar y Spa', name: 'Día de Spa Completo', description: 'Paquete de bienestar con varios tratamientos en un solo día.', durationMinutes: 180, priceType: 'starting_at', price: 250 },
+  { key: 'spa_manicure_pedicure', category: 'Bienestar y Spa', name: 'Manicure y Pedicure Spa', description: 'Cuidado completo de manos y pies con exfoliación e hidratación.', durationMinutes: 75, priceType: 'fixed', price: 55 },
+  { key: 'spa_ritual_facial_corporal', category: 'Bienestar y Spa', name: 'Ritual Facial y Corporal', description: 'Combinación de tratamiento facial y corporal relajante.', durationMinutes: 90, priceType: 'starting_at', price: 130 },
 
-  // Cierre y Transacciones (3)
-  { key: 'closing_coordination', category: 'Cierre y Transacciones', name: 'Llamada de Coordinación de Cierre', description: 'Coordinación de fechas, documentos y requisitos pendientes antes del cierre de la transacción.', durationMinutes: 30, priceType: 'fixed', price: 0 },
-  { key: 'title_escrow_consultation', category: 'Cierre y Transacciones', name: 'Consulta de Título y Custodia', description: 'Explicación del proceso de título y cuenta en custodia (escrow) antes del cierre.', durationMinutes: 30, priceType: 'fixed', price: 0 },
-  { key: 'final_walkthrough', category: 'Cierre y Transacciones', name: 'Recorrido Final', description: 'Inspección final de la propiedad justo antes del cierre para confirmar su condición.', durationMinutes: 30, priceType: 'fixed', price: 0 },
+  // Consultas y Valoraciones (4)
+  { key: 'consulta_valoracion_inicial', category: 'Consultas y Valoraciones', name: 'Valoración Inicial', description: 'Primera consulta para evaluar objetivos y diseñar un plan de tratamiento.', durationMinutes: 30, priceType: 'fixed', price: 0 },
+  { key: 'consulta_seguimiento', category: 'Consultas y Valoraciones', name: 'Consulta de Seguimiento', description: 'Revisión de resultados y ajuste del plan de tratamiento.', durationMinutes: 20, priceType: 'fixed', price: 0 },
+  { key: 'consulta_medica_especializada', category: 'Consultas y Valoraciones', name: 'Consulta Médico-Estética Especializada', description: 'Evaluación con médico especialista para tratamientos avanzados.', durationMinutes: 45, priceType: 'starting_at', price: 50 },
+  { key: 'consulta_plan_paquete', category: 'Consultas y Valoraciones', name: 'Diseño de Plan de Paquete', description: 'Sesión para armar un paquete de tratamientos personalizado.', durationMinutes: 30, priceType: 'fixed', price: 0 },
 ]
 
 export const OPENAI_REALTIME_MODEL = process.env.OPENAI_REALTIME_MODEL ?? 'gpt-realtime'

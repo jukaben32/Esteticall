@@ -16,7 +16,7 @@ function slugify(name: string) {
 // Mirrors the same key /signup writes when a landing-page paid-plan card
 // sends someone to /signup?plan=pro|business — this is the path that
 // survives the email-confirmation detour (see the comment in signup/page.tsx).
-const PENDING_PLAN_KEY = 'inmobiliacall_pending_plan'
+const PENDING_PLAN_KEY = 'esteticall_pending_plan'
 
 // Lands here when a user has a confirmed, logged-in session but no business
 // row yet — e.g. their first signup attempt failed partway through (RLS

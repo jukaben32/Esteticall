@@ -10,8 +10,8 @@ const FEATURES = [
   },
   {
     icon: CalendarCheck,
-    title: 'Agenda visitas automáticamente',
-    body: 'Los clientes agendan mientras conversan.',
+    title: 'Agenda citas automáticamente',
+    body: 'Tus pacientes agendan mientras conversan.',
   },
   {
     icon: BarChart3,
@@ -42,10 +42,10 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
         <div className="relative">
           <Link href="/" className="flex items-center gap-2.5">
             <span className="grid place-items-center w-10 h-10 rounded-xl bg-[var(--teal-700)] text-white font-display font-bold text-lg">
-              I
+              E
             </span>
             <span className="font-display font-semibold text-xl">
-              Inmobil<span className="text-[var(--teal-400)]">IA</span>Call
+              Esteti<span className="text-[var(--teal-400)]">C</span>all
             </span>
           </Link>
 
@@ -54,11 +54,11 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
           </p>
 
           <h1 className="font-display text-3xl xl:text-4xl font-semibold leading-tight mt-10 max-w-md">
-            El recepcionista IA de tu agencia <span className="text-[var(--teal-400)]">nunca duerme</span>.
+            El recepcionista IA de tu spa <span className="text-[var(--teal-400)]">nunca duerme</span>.
           </h1>
           <p className="text-[var(--bg-page)]/65 mt-4 max-w-sm text-[15px] leading-relaxed">
-            Atiende clientes, agenda visitas y captura leads automáticamente — mientras tú te enfocas en cerrar
-            tratos.
+            Atiende pacientes, agenda citas y captura leads automáticamente — mientras tú te enfocas en los
+            tratamientos.
           </p>
 
           <div className="mt-10 space-y-5">
@@ -90,10 +90,10 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
       <div className="flex flex-col items-center justify-center p-4 sm:p-8">
         <Link href="/" className="flex lg:hidden items-center gap-2 mb-6">
           <span className="grid place-items-center w-10 h-10 rounded-xl bg-[var(--teal-700)] text-white font-display font-bold text-lg">
-            I
+            E
           </span>
           <span className="font-display font-semibold text-lg text-[var(--text-1)]">
-            Inmobil<span className="text-[var(--teal-700)]">IA</span>Call
+            Esteti<span className="text-[var(--teal-700)]">C</span>all
           </span>
         </Link>
 

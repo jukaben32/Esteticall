@@ -3,13 +3,13 @@ import type { ReactNode } from 'react'
 import '@/styles/globals.css'
 
 export const metadata: Metadata = {
-  title: 'InmobilIACall',
-  description: 'AI calling agents for real estate — property info, viewings, and lead capture on autopilot.',
+  title: 'EstetiCall',
+  description: 'Agentes de IA para spas médico-estéticos — información de tratamientos, citas y captura de leads en piloto automático.',
 }
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="es">
       <body>{children}</body>
     </html>
   )

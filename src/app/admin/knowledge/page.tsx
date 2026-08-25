@@ -11,7 +11,7 @@ export default async function AdminKnowledgePage() {
       <div className="mb-4">
         <h1 className="font-display font-semibold text-xl text-[var(--text-1)]">Conocimiento de plataforma</h1>
         <p className="text-sm text-[var(--text-3)]">
-          Hechos de mercado (leyes, impuestos, procesos) que todo negocio afiliado a InmobilIACall hereda
+          Hechos de mercado (regulaciones sanitarias, procesos) que todo negocio afiliado a EstetiCall hereda
           automáticamente en el prompt de su agente IA — no hace falta cargarlo negocio por negocio.
         </p>
       </div>
