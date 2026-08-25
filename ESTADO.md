@@ -1,6 +1,6 @@
 # ESTETICALL — ESTADO DEL PROYECTO
 
-> Última actualización: 24 agosto 2026.
+> Última actualización: 25 agosto 2026.
 
 ## RESUMEN RÁPIDO
 
@@ -10,8 +10,24 @@ arquitectura multi-tenant; el dominio (schema, agente IA, catálogo,
 componentes) fue reescrito para tratamientos/citas/paquetes en vez de
 propiedades.
 
-Repo local: `Documents/MisProyectos/SaaS/esteticall` (repo git local, sin
-remote de GitHub configurado todavía).
+- Repo: **https://github.com/jukaben32/Esteticall** (público)
+- Producción: **https://esteticall-juans-projects-0e0054fc.vercel.app**
+- Cada push a `main` redespliega solo (proyecto Vercel conectado al repo).
+
+## DEPLOY EN VERCEL (25 agosto 2026)
+
+- Repo creado y subido a GitHub, proyecto Vercel `esteticall` creado y
+  enlazado al repo (team `juans-projects-0e0054fc`, plan Hobby).
+- Cron de recordatorios ajustado de cada 30 min a **una vez al día**
+  (`vercel.json`) — el plan Hobby no permite cron jobs más frecuentes que
+  diarios. Con plan Pro se puede volver a bajar la cadencia.
+- Las 26 variables de entorno de `.env.local` cargadas en Vercel (Production/
+  Preview/Development) vía la API con un access token que el usuario generó
+  y compartió — **ya se puede/debe borrar ese token** desde
+  vercel.com/account/tokens, no hace falta para nada más.
+- Deploy verificado: `/`, `/login` y `/signup` responden 200 en producción
+  (antes daban 500 por falta de variables — el error era literalmente
+  "Your project's URL and Key are required to create a Supabase client").
 
 ## HECHO Y VERIFICADO
 
@@ -107,14 +123,10 @@ Lo que queda son credenciales de terceros que el usuario debe decidir cuándo
 cargar (en `.env.local`, ver `.env.example` para cada una):
 
 1. **Stripe** (`NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`, `STRIPE_SECRET_KEY`,
-   `STRIPE_WEBHOOK_SECRET`) — modo test primero.
+   `STRIPE_WEBHOOK_SECRET`) — modo test primero. Cargar en `.env.local` y en
+   las env vars del proyecto en Vercel una vez se tengan.
 2. **WhatsApp** (`EVOLUTION_API_URL`, `EVOLUTION_API_KEY`) — requiere
    levantar tu propia instancia de Evolution API en un VPS; sin esto
    `/dashboard/whatsapp` muestra "no configurado" en vez de fallar.
-3. **Deploy en Vercel** — crear un remote de GitHub (o conectar el repo
-   local directo) y desplegar; el cron de recordatorios (`vercel.json`)
-   solo corre una vez desplegado, no en local. Ahí también hay que cargar
-   todas las variables de `.env.local` (incluido `CRON_SECRET`) como env
-   vars del proyecto en Vercel.
-4. **Dominio propio en Resend** — antes de producción real, verificar un
+3. **Dominio propio en Resend** — antes de producción real, verificar un
    dominio propio para no depender del remitente compartido de pruebas.
