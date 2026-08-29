@@ -130,47 +130,55 @@ export default function LandingPage() {
           </div>
 
           <div className="animate-fade-up">
-            <div className="card-raised p-5 max-w-md ml-auto">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <span className="grid place-items-center w-10 h-10 rounded-full bg-[var(--teal-50)] text-[var(--teal-700)] font-display font-bold">
-                    A
+            <div className="relative">
+              <div className="card-raised p-5 max-w-md ml-auto">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <span className="grid place-items-center w-10 h-10 rounded-full bg-[var(--teal-50)] text-[var(--teal-700)] font-display font-bold">
+                      A
+                    </span>
+                    <div>
+                      <p className="text-sm font-semibold text-[var(--text-1)]">Alexis · Agente IA</p>
+                      <p className="text-xs text-[var(--text-3)] flex items-center gap-1.5">
+                        <span className="inline-block w-2 h-2 rounded-full bg-[var(--teal-700)] pulse-ring" /> Llamada en curso
+                      </p>
+                    </div>
+                  </div>
+                  <span className="text-xs font-medium text-[var(--teal-700)] bg-[var(--teal-50)] px-2.5 py-1 rounded-full">
+                    02:14
                   </span>
-                  <div>
-                    <p className="text-sm font-semibold text-[var(--text-1)]">Alexis · Agente IA</p>
-                    <p className="text-xs text-[var(--text-3)] flex items-center gap-1.5">
-                      <span className="inline-block w-2 h-2 rounded-full bg-[var(--teal-700)] pulse-ring" /> Llamada en curso
-                    </p>
+                </div>
+
+                <div className="mt-5 space-y-3 text-sm">
+                  <div className="bg-[var(--bg-raised)] rounded-2xl rounded-tl-sm p-3 max-w-[85%]">
+                    <p className="text-xs text-[var(--text-3)] mb-0.5">Alexis</p>
+                    Hola María, soy Alexis de Piel &amp; Spa. ¿Le interesa agendar su sesión de HydraFacial?
+                  </div>
+                  <div className="bg-[var(--teal-50)] rounded-2xl rounded-tr-sm p-3 max-w-[85%] ml-auto text-[var(--text-2)]">
+                    <p className="text-xs text-[var(--teal-800)] mb-0.5">María R.</p>
+                    ¡Sí! Me gustaría agendar para este jueves.
+                  </div>
+                  <div className="bg-[var(--bg-raised)] rounded-2xl rounded-tl-sm p-3 max-w-[85%]">
+                    <p className="text-xs text-[var(--text-3)] mb-0.5">Alexis</p>
+                    Perfecto, ¿le viene bien el jueves a las 4:00 PM?
                   </div>
                 </div>
-                <span className="text-xs font-medium text-[var(--teal-700)] bg-[var(--teal-50)] px-2.5 py-1 rounded-full">
-                  02:14
-                </span>
-              </div>
 
-              <div className="mt-5 space-y-3 text-sm">
-                <div className="bg-[var(--bg-raised)] rounded-2xl rounded-tl-sm p-3 max-w-[85%]">
-                  <p className="text-xs text-[var(--text-3)] mb-0.5">Alexis</p>
-                  Hola María, soy Alexis de Piel &amp; Spa. ¿Le interesa agendar su sesión de HydraFacial?
-                </div>
-                <div className="bg-[var(--teal-50)] rounded-2xl rounded-tr-sm p-3 max-w-[85%] ml-auto text-[var(--text-2)]">
-                  <p className="text-xs text-[var(--teal-800)] mb-0.5">María R.</p>
-                  ¡Sí! Me gustaría agendar para este jueves.
-                </div>
-                <div className="bg-[var(--bg-raised)] rounded-2xl rounded-tl-sm p-3 max-w-[85%]">
-                  <p className="text-xs text-[var(--text-3)] mb-0.5">Alexis</p>
-                  Perfecto, ¿le viene bien el jueves a las 4:00 PM?
+                <div className="mt-4 flex items-center gap-3 bg-[var(--teal-700)] text-white rounded-2xl p-3">
+                  <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+                    <path d="M20 6 9 17l-5-5" />
+                  </svg>
+                  <div className="text-xs leading-tight">
+                    <p className="font-semibold">Cita agendada</p>
+                    <p className="opacity-90">Jue 17 jul · 4:00 PM · HydraFacial</p>
+                  </div>
                 </div>
               </div>
 
-              <div className="mt-4 flex items-center gap-3 bg-[var(--teal-700)] text-white rounded-2xl p-3">
-                <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-                  <path d="M20 6 9 17l-5-5" />
-                </svg>
-                <div className="text-xs leading-tight">
-                  <p className="font-semibold">Cita agendada</p>
-                  <p className="opacity-90">Jue 17 jul · 4:00 PM · HydraFacial</p>
-                </div>
+              <div className="absolute -top-6 -left-8 hidden w-[180px] rounded-[10px] border border-[var(--border)] bg-[var(--bg-surface)] p-4 shadow-elevated md:block">
+                <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--teal-700)]">En vivo</div>
+                <div className="mt-1 font-display text-2xl font-semibold text-[var(--text-1)]">340+</div>
+                <div className="text-xs text-[var(--text-3)]">citas agendadas este mes</div>
               </div>
             </div>
 
@@ -299,8 +307,9 @@ export default function LandingPage() {
       </section>
 
       {/* Precios */}
-      <section id="pricing" className="py-16 sm:py-24">
-        <div className="max-w-7xl mx-auto px-5 sm:px-8">
+      <section id="pricing" className="relative overflow-hidden py-16 sm:py-24">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_15%_20%,rgba(14,124,90,0.07),transparent_32%),radial-gradient(circle_at_85%_75%,rgba(182,138,62,0.06),transparent_30%)]" />
+        <div className="relative max-w-7xl mx-auto px-5 sm:px-8">
           <div className="max-w-2xl mx-auto text-center">
             <p className="text-xs font-semibold uppercase tracking-widest text-[var(--teal-700)]">Precios</p>
             <h2 className="mt-3 font-display font-semibold text-[var(--text-1)] text-3xl sm:text-4xl tracking-tight">
