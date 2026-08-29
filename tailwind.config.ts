@@ -48,14 +48,18 @@ const config: Config = {
           900: "#0a3d40",
         },
       },
+      // Tightened from the original template scale (8-18px) to a more
+      // considered, less "bubbly SaaS default" range - same spirit as the
+      // Noir Ink Studio refinement, calibrated softer here to stay warm
+      // and spa-appropriate rather than fully architectural.
       borderRadius: {
-        DEFAULT: "8px",
-        sm:  "6px",
-        md:  "8px",
-        lg:  "10px",
-        xl:  "12px",
-        "2xl": "14px",
-        "3xl": "18px",
+        DEFAULT: "4px",
+        sm:  "3px",
+        md:  "5px",
+        lg:  "7px",
+        xl:  "9px",
+        "2xl": "12px",
+        "3xl": "16px",
       },
       boxShadow: {
         xs:       "0 1px 2px 0 rgb(13 115 119 / 0.04)",

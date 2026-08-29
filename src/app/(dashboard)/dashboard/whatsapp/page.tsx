@@ -85,7 +85,7 @@ export default async function WhatsappPage() {
             {IMPLEMENTATION_NOTES.map((note) => {
               const Icon = note.icon
               return (
-                <div key={note.title} className="flex gap-3 rounded-[22px] border border-[var(--border)] bg-white/75 p-4">
+                <div key={note.title} className="flex gap-3 rounded-[13px] border border-[var(--border)] bg-white/75 p-4">
                   <div className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-[var(--bg-subtle)] text-[var(--teal-700)]">
                     <Icon className="h-5 w-5" />
                   </div>
@@ -98,7 +98,7 @@ export default async function WhatsappPage() {
             })}
           </div>
 
-          <div className="mt-6 rounded-[24px] border border-[var(--border)] bg-[var(--bg-raised)] p-4">
+          <div className="mt-6 rounded-[14px] border border-[var(--border)] bg-[var(--bg-raised)] p-4">
             <div className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--text-3)]">
               Required environment
             </div>

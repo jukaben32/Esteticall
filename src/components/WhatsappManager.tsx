@@ -24,7 +24,7 @@ function InfoChip({
   value: string
 }) {
   return (
-    <div className="rounded-[20px] border border-[var(--border)] bg-white/80 p-4">
+    <div className="rounded-[12px] border border-[var(--border)] bg-white/80 p-4">
       <div className="text-[10px] font-semibold uppercase tracking-[0.24em] text-[var(--text-3)]">{label}</div>
       <div className="mt-2 text-sm font-semibold text-[var(--text-1)]">{value}</div>
     </div>
@@ -233,7 +233,7 @@ export function WhatsappManager({
           </div>
 
           <div className="border-t border-[var(--border)] bg-[var(--bg-raised)] p-6 lg:border-l lg:border-t-0">
-            <div className="rounded-[24px] border border-[var(--border)] bg-white/70 p-4">
+            <div className="rounded-[14px] border border-[var(--border)] bg-white/70 p-4">
               <div className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--text-3)]">
                 Setup flow
               </div>
@@ -259,7 +259,7 @@ export function WhatsappManager({
               </div>
             </div>
 
-            <div className="mt-4 rounded-[24px] border border-[var(--border)] bg-white/70 p-4">
+            <div className="mt-4 rounded-[14px] border border-[var(--border)] bg-white/70 p-4">
               <div className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--text-3)]">
                 Environment
               </div>
@@ -344,7 +344,7 @@ export function WhatsappManager({
               <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.22em] text-[var(--text-3)]">
                 Auto reply
               </label>
-              <label className="inline-flex items-center gap-3 rounded-[18px] border border-[var(--border)] bg-white/80 px-4 py-3">
+              <label className="inline-flex items-center gap-3 rounded-[11px] border border-[var(--border)] bg-white/80 px-4 py-3">
                 <input
                   type="checkbox"
                   checked={connection.is_enabled}
@@ -362,7 +362,7 @@ export function WhatsappManager({
             <InfoChip label="Agent" value={selectedAgent?.name ?? 'Not assigned'} />
           </div>
 
-          <div className="rounded-[24px] border border-[var(--border)] bg-[var(--bg-raised)] p-4">
+          <div className="rounded-[14px] border border-[var(--border)] bg-[var(--bg-raised)] p-4">
             <div className="flex items-center gap-2 text-sm font-semibold text-[var(--text-1)]">
               <ShieldCheck className="h-4 w-4 text-[var(--teal-700)]" />
               WhatsApp uses the same clinic knowledge base
@@ -376,7 +376,7 @@ export function WhatsappManager({
 
         <div className="border-t border-[var(--border)] bg-[var(--bg-raised)] p-6 lg:border-l lg:border-t-0">
           {connection.status === 'connecting' && qrCode ? (
-            <div className="rounded-[28px] border border-[var(--border)] bg-white/80 p-5 text-center">
+            <div className="rounded-[16px] border border-[var(--border)] bg-white/80 p-5 text-center">
               <div className="mx-auto grid h-11 w-11 place-items-center rounded-2xl bg-[var(--bg-subtle)] text-[var(--teal-700)]">
                 <QrCode className="h-5 w-5" />
               </div>
@@ -394,7 +394,7 @@ export function WhatsappManager({
               />
             </div>
           ) : (
-            <div className="rounded-[28px] border border-[var(--border)] bg-white/80 p-5">
+            <div className="rounded-[16px] border border-[var(--border)] bg-white/80 p-5">
               <div className="flex items-center gap-2 text-sm font-semibold text-[var(--text-1)]">
                 <Sparkles className="h-4 w-4 text-[var(--teal-700)]" />
                 Connection ready

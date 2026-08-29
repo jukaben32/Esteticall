@@ -59,7 +59,7 @@
   .card-surface {
     background: var(--bg-surface);
     border: 1px solid var(--border);
-    border-radius: 16px;
+    border-radius: 10px;
     box-shadow: 0 1px 4px rgba(14,32,25,0.05), 0 0 0 0 transparent;
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
   }
@@ -71,14 +71,14 @@
   .card-raised {
     background: var(--bg-surface);
     border: 1px solid var(--border);
-    border-radius: 16px;
+    border-radius: 10px;
     box-shadow: 0 2px 12px rgba(14,32,25,0.07);
   }
 
   .card-glow {
     background: var(--bg-surface);
     border: 1px solid rgba(14,124,90,0.32);
-    border-radius: 16px;
+    border-radius: 10px;
     box-shadow: 0 0 0 4px rgba(14,124,90,0.06), 0 4px 24px rgba(14,124,90,0.12);
   }
 
@@ -86,7 +86,7 @@
   .stat-card {
     background: var(--bg-surface);
     border: 1px solid var(--border);
-    border-radius: 16px;
+    border-radius: 10px;
     border-left: 3px solid var(--teal-700);
     box-shadow: 0 1px 4px rgba(14,32,25,0.05);
     transition: border-color 0.2s, box-shadow 0.2s;
